@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: state.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-02T17:35:41-05:00
+ * @Last modified time: 2020-04-03T00:09:21-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -19,6 +19,12 @@ export enum PROJECT_STATUS {
   PS_DELETED = -1,
   PS_DISABLED = 0,
   PS_ENABLED = 1,
+}
+
+export enum APPLICATION_STATUS {
+  AS_DELETED = -1,
+  AS_DISABLED = 0,
+  AS_ENABLED = 1,
 }
 
 export enum LIFETIME_TYPES {
