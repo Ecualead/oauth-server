@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: errors.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-02T17:38:35-05:00
+ * @Last modified time: 2020-04-03T00:10:39-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -21,6 +21,7 @@ export enum ERRORS {
   INVALID_SCOPE,
   INVALID_DOMAIN,
   INVALID_PROJECT,
+  INVALID_APPLICATION,
   TOKEN_EXPIRED,
   NOT_ALLOWED_SIGNIN,
   ACCOUNT_DISABLED,
