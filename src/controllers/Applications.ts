@@ -5,9 +5,15 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Applications.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-03-30T02:46:12-05:00
+ * @Last modified time: 2020-04-03T01:36:05-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
+
+import { Arrays, Token } from '@ikoabo/core_srv';
+import { MApplication, DApplication, IApplication } from '../models/schemas/applications/application';
+import { MProject, DProject } from '../models/schemas/projects/project';
+import { APPLICATION_STATUS } from '../models/types/state';
+import { ERRORS } from '../models/types/errors';
 
 export class Applications {
   private static _instance: Applications;
@@ -26,5 +32,157 @@ export class Applications {
       Applications._instance = new Applications();
     }
     return Applications._instance;
+  }
+
+  /**
+   * Update a application status
+   *
+   * @param application  ObjectId of the application to update
+   * @param status  The new application status
+   */
+  private _updateStatus(application: string, status: APPLICATION_STATUS): Promise<DApplication> {
+    return new Promise<DApplication>((resolve, reject) => {
+      MApplication.findOneAndUpdate({ _id: application }, { $set: { status: status } }, { new: true })
+        .then((value: DApplication) => {
+          if (!value) {
+            reject({ error: ERRORS.INVALID_APPLICATION });
+            return;
+          }
+          resolve(value);
+        }).catch(reject);
+    });
+  }
+
+  /**
+   * Create new application
+   *
+   * @param project  Project owning the application
+   * @param data   Data of the new application
+   */
+  public create(project: string, data: IApplication): Promise<DApplication> {
+    return new Promise<DApplication>((resolve, reject) => {
+      /* Find for the parent project */
+      MProject.findById(project)
+        .then((value: DProject) => {
+          if (!value) {
+            reject({ error: ERRORS.INVALID_PROJECT });
+            return;
+          }
+
+          /* Set the project owning */
+          data.project = value.id;
+
+          /* Intersect scopes with project scopes */
+          data.scopes = Arrays.intersect(data.scopes, <string[]>value.scopes);
+
+          /* Generate application secret */
+          data.secret = Token.longToken;
+
+          /* Create the new application */
+          MApplication.create(data).then(resolve).catch(reject);
+        }).catch(reject);
+    });
+  }
+
+  /**
+   * Update the application information
+   *
+   * @param application  ObjectId of the application to update
+   * @param data   Data to be updated
+   */
+  public update(application: string, data: IApplication): Promise<DApplication> {
+    return new Promise<DApplication>((resolve, reject) => {
+      MApplication.findOneAndUpdate({ _id: application }, { $set: data }, { new: true })
+        .then((value: DApplication) => {
+          if (!value) {
+            reject({ error: ERRORS.INVALID_APPLICATION });
+            return;
+          }
+          resolve(value);
+        }).catch(reject);
+    });
+  }
+
+  /**
+   * Retrieve the application information
+   *
+   * @param application  ObjectId of the application
+   */
+  public get(application: string): Promise<DApplication> {
+    return new Promise<DApplication>((resolve, reject) => {
+      MApplication.findOne({ _id: application })
+        .then((value: DApplication) => {
+          if (!value) {
+            reject({ error: ERRORS.INVALID_APPLICATION });
+            return;
+          }
+          resolve(value);
+        }).catch(reject);
+    });
+  }
+
+  /**
+   * Delete an application
+   *
+   * @param application  ObjectId of the application
+   */
+  public delete(application: string): Promise<DApplication> {
+    return this._updateStatus(application, APPLICATION_STATUS.AS_DELETED);
+  }
+
+  /**
+   * Enable an application
+   *
+   * @param application  ObjectId of the application
+   */
+  public enable(application: string): Promise<DApplication> {
+    return this._updateStatus(application, APPLICATION_STATUS.AS_ENABLED);
+  }
+
+  /**
+   * Disable an application
+   *
+   * @param application  ObjectId of the application
+   */
+  public disable(application: string): Promise<DApplication> {
+    return this._updateStatus(application, APPLICATION_STATUS.AS_DISABLED);
+  }
+
+  /**
+   * Add new scope to the application
+   *
+   * @param application  ObjectId of the application
+   * @param scope  The new scope to be added
+   */
+  public addScope(application: string, scope: string): Promise<DApplication> {
+    return new Promise<DApplication>((resolve, reject) => {
+      MApplication.findOneAndUpdate({ _id: application }, { $addToSet: { scopes: scope } }, { new: true })
+        .then((value: DApplication) => {
+          if (!value) {
+            reject({ error: ERRORS.INVALID_APPLICATION });
+            return;
+          }
+          resolve(value);
+        }).catch(reject);
+    });
+  }
+
+  /**
+   * Delete a scope from the application
+   *
+   * @param application  ObjectId of the application
+   * @param scope  Scope to be deleted
+   */
+  public deleteScope(application: string, scope: string): Promise<DApplication> {
+    return new Promise<DApplication>((resolve, reject) => {
+      MApplication.findOneAndUpdate({ _id: application }, { $pull: { scopes: scope } }, { new: true })
+        .then((value: DApplication) => {
+          if (!value) {
+            reject({ error: ERRORS.INVALID_APPLICATION });
+            return;
+          }
+          resolve(value);
+        }).catch(reject);
+    });
   }
 }
