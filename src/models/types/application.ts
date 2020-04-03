@@ -5,17 +5,18 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: application.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T07:12:01-05:00
+ * @Last modified time: 2020-04-03T00:44:13-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 export enum APPLICATION_TYPES {
   APP_UNKNOWN = 0,
-  APP_SERVICE = 1,
-  APP_ANDROID = 2,
-  APP_IOS = 3,
-  APP_WEB_SERVER_SIDE = 4,
-  APP_WEB_CLIENT_SIDE = 5,
+  APP_SERVICE,
+  APP_ANDROID,
+  APP_IOS,
+  APP_WEB_SERVER_SIDE,
+  APP_WEB_CLIENT_SIDE,
+  APP_MAX,
 }
 
 export enum APPLICATION_RECOVER_TYPE {
