@@ -5,52 +5,37 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: project.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-02T23:59:30-05:00
+ * @Last modified time: 2020-04-03T01:20:44-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
-const Joi = require('@hapi/joi')
-Joi.objectId = require('joi-objectid')(Joi);
+import Joi from '@hapi/joi';
 
 export const ProjectCreate = Joi.object().keys({
   name: Joi.string().required(),
-  description: Joi.string().optional().empty(),
+  description: Joi.string().allow('').optional(),
   links: Joi.object().optional().keys({
-    app: Joi.string().optional().empty(),
-    web: Joi.string().optional().empty(),
-    facebook: Joi.string().optional().empty(),
-    twitter: Joi.string().optional().empty(),
-    instagram: Joi.string().optional().empty(),
-    privacy: Joi.string().optional().empty(),
-    terms: Joi.string().optional().empty(),
+    app: Joi.string().allow('').optional(),
+    web: Joi.string().allow('').optional(),
+    facebook: Joi.string().allow('').optional(),
+    twitter: Joi.string().allow('').optional(),
+    instagram: Joi.string().allow('').optional(),
+    privacy: Joi.string().allow('').optional(),
+    terms: Joi.string().allow('').optional(),
   }),
-  scopes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).optional().empty(),
+  scopes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string().allow('')).optional(),
 });
 
 export const ProjectUpdate = Joi.object().keys({
   name: Joi.string().required(),
-  description: Joi.string().optional().empty(),
+  description: Joi.string().allow('').optional(),
   links: Joi.object().optional().keys({
-    app: Joi.string().optional().empty(),
-    web: Joi.string().optional().empty(),
-    facebook: Joi.string().optional().empty(),
-    twitter: Joi.string().optional().empty(),
-    instagram: Joi.string().optional().empty(),
-    privacy: Joi.string().optional().empty(),
-    terms: Joi.string().optional().empty(),
+    app: Joi.string().allow('').optional(),
+    web: Joi.string().allow('').optional(),
+    facebook: Joi.string().allow('').optional(),
+    twitter: Joi.string().allow('').optional(),
+    instagram: Joi.string().allow('').optional(),
+    privacy: Joi.string().allow('').optional(),
+    terms: Joi.string().allow('').optional(),
   }),
-});
-
-export const ProjectId = Joi.object().keys({
-  id: Joi.objectId(),
-});
-
-export const ProjectStatus = Joi.object().keys({
-  id: Joi.objectId(),
-  action: Joi.string(),
-});
-
-export const ProjectScopes = Joi.object().keys({
-  id: Joi.objectId(),
-  scope: Joi.string().required(),
 });

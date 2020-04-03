@@ -5,14 +5,15 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: domains.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T18:56:13-05:00
+ * @Last modified time: 2020-04-03T00:54:51-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators, Arrays } from '@ikoabo/core_srv';
 import { Domains } from '../../controllers/Domains';
-import { DomainCreate, DomainUpdate, DomainId, DomainScopes } from '../../models/joi/domain';
+import { DomainCreate, DomainUpdate } from '../../models/joi/domain';
+import { CheckId, CheckStatus, CheckScopes } from '../../models/joi/base';
 import { IDomain, DDomain } from '../../models/schemas/domain';
 
 const router = Router();
@@ -45,7 +46,7 @@ router.post('/',
 );
 
 router.put('/:id',
-  Validators.joi(DomainId, 'params'),
+  Validators.joi(CheckId, 'params'),
   Validators.joi(DomainUpdate),
   (req: Request, res: Response, next: NextFunction) => {
     const domain: IDomain = {
@@ -63,7 +64,7 @@ router.put('/:id',
 );
 
 router.get('/:id',
-  Validators.joi(DomainId, 'params'),
+  Validators.joi(CheckId, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.get(req.params.id)
       .then((value: DDomain) => {
@@ -83,7 +84,7 @@ router.get('/:id',
 );
 
 router.delete('/:id',
-  Validators.joi(DomainId, 'params'),
+  Validators.joi(CheckId, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.delete(req.params.id)
       .then((value: DDomain) => {
@@ -96,6 +97,7 @@ router.delete('/:id',
 );
 
 router.put('/:id/:action',
+  Validators.joi(CheckStatus, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     const handler = (req.params.action === 'enable') ? DomainCtrl.enable(req.params.id) : DomainCtrl.disable(req.params.id);
     handler.then((value: DDomain) => {
@@ -108,7 +110,7 @@ router.put('/:id/:action',
 );
 
 router.post('/:id/scopes/:scope',
-  Validators.joi(DomainScopes, 'params'),
+  Validators.joi(CheckScopes, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.addScope(req.params.id, req.params.scope)
       .then((value: DDomain) => {
@@ -121,7 +123,7 @@ router.post('/:id/scopes/:scope',
 );
 
 router.delete('/:id/scopes/:scope',
-  Validators.joi(DomainScopes, 'params'),
+  Validators.joi(CheckScopes, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.deleteScope(req.params.id, req.params.scope)
       .then((value: DDomain) => {

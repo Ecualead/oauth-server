@@ -5,21 +5,22 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: projects.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T00:01:44-05:00
+ * @Last modified time: 2020-04-03T01:12:52-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators, Arrays } from '@ikoabo/core_srv';
 import { Projects } from '../../controllers/Projects';
-import { ProjectCreate, ProjectUpdate, ProjectId, ProjectStatus, ProjectScopes } from '../../models/joi/project';
+import { ProjectCreate, ProjectUpdate } from '../../models/joi/project';
+import { CheckId, CheckStatus, CheckScopes } from '../../models/joi/base';
 import { IProject, DProject } from '../../models/schemas/projects/project';
 
 const router = Router();
 const ProjectCtrl = Projects.shared;
 
 router.post('/:id',
-  Validators.joi(ProjectId, 'params'),
+  Validators.joi(CheckId, 'params'),
   Validators.joi(ProjectCreate),
   (req: Request, res: Response, next: NextFunction) => {
     // TODO XXX Get rigth user
@@ -44,12 +45,15 @@ router.post('/:id',
         next();
       }).catch(next);
   },
+  (err: any, req: Request, res: Response, next: NextFunction) => {
+    console.log(err);
+  },
   ResponseHandler.success,
   ResponseHandler.error
 );
 
 router.put('/:id',
-  Validators.joi(ProjectId, 'params'),
+  Validators.joi(CheckId, 'params'),
   Validators.joi(ProjectUpdate),
   (req: Request, res: Response, next: NextFunction) => {
     let project: IProject = {
@@ -68,7 +72,7 @@ router.put('/:id',
 );
 
 router.get('/:id',
-  Validators.joi(ProjectId, 'params'),
+  Validators.joi(CheckId, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.get(req.params.id)
       .then((value: DProject) => {
@@ -89,7 +93,7 @@ router.get('/:id',
 );
 
 router.delete('/:id',
-  Validators.joi(ProjectId, 'params'),
+  Validators.joi(CheckId, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.delete(req.params.id)
       .then((value: DProject) => {
@@ -102,7 +106,7 @@ router.delete('/:id',
 );
 
 router.put('/:id/:action',
-  Validators.joi(ProjectStatus, 'params'),
+  Validators.joi(CheckStatus, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     const handler = (req.params.action === 'enable') ? ProjectCtrl.enable(req.params.id) : ProjectCtrl.disable(req.params.id);
     handler.then((value: DProject) => {
@@ -115,7 +119,7 @@ router.put('/:id/:action',
 );
 
 router.post('/:id/scopes/:scope',
-  Validators.joi(ProjectScopes, 'params'),
+  Validators.joi(CheckScopes, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.addScope(req.params.id, req.params.scope)
       .then((value: DProject) => {
@@ -128,7 +132,7 @@ router.post('/:id/scopes/:scope',
 );
 
 router.delete('/:id/scopes/:scope',
-  Validators.joi(ProjectScopes, 'params'),
+  Validators.joi(CheckScopes, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.deleteScope(req.params.id, req.params.scope)
       .then((value: DProject) => {
