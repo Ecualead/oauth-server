@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: application.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T06:36:36-05:00
+ * @Last modified time: 2020-04-03T00:36:07-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -14,30 +14,33 @@ import { Arrays, Token } from '@ikoabo/core_srv';
 import { Client } from 'oauth2-server';
 import { IApplicationRestrictIp, SApplicationRestrictIp, DApplicationRestrictIp } from './restrict_ip';
 import { DProject } from '../projects/project';
-import { LIFETIME_TYPES } from '../../types/state';
+import { LIFETIME_TYPES, APPLICATION_STATUS } from '../../types/state';
 import { APPLICATION_TYPES, APPLICATION_RECOVER_TYPE } from '../../types/application';
 
 /**
  * Application interface
  */
 export interface IApplication {
-  id: string;
+  id?: string;
   name: string;
   description?: string;
   type: number;
-  project: string | DProject;
-  secret: string;
-  domain: string;
-  authTypes: string[];
-  settings: {
-    lifetime: {
-      accessToken: number;
-      refreshToken: number;
+  project?: string | DProject;
+  secret?: string;
+  domain?: string;
+  owner?: string;
+  authTypes?: string[];
+  settings?: {
+    lifetime?: {
+      accessToken?: number;
+      refreshToken?: number;
     };
-    recover: number;
-    restrictIps: IApplicationRestrictIp[] | DApplicationRestrictIp;
+    recover?: number;
+    restrictIps?: IApplicationRestrictIp[] | DApplicationRestrictIp;
   };
-  scope: string[];
+  scopes?: string[];
+  status?: number;
+  createdAt?: Date;
 }
 
 /**
@@ -58,6 +61,7 @@ const SApplication = new mongoose.Schema({
   project: { type: mongoose.Schema.Types.ObjectId, ref: 'project', required: true },
   secret: { type: String, required: true },
   domain: { type: String, required: true, default: 'default' },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'accounts.user' },
   authTypes: [String],
   settings: {
     lifetime: {
@@ -67,7 +71,8 @@ const SApplication = new mongoose.Schema({
     recover: { type: Number, required: true, default: APPLICATION_RECOVER_TYPE.APP_RT_DISABLED },
     restrictIps: [SApplicationRestrictIp],
   },
-  scope: [String],
+  scopes: [String],
+  status: { type: Number, required: true, default: APPLICATION_STATUS.AS_ENABLED },
 }, { timestamps: true });
 SApplication.index({ project: 1 });
 
@@ -79,7 +84,7 @@ SApplication.pre('save', function save(next) {
   if (app.isNew) {
     app.secret = Token.longToken
   }
-  app.scope = Arrays.force(app.scope);
+  app.scopes = Arrays.force(app.scopes);
   next();
 });
 
@@ -88,7 +93,7 @@ SApplication.pre('save', function save(next) {
  */
 SApplication.pre('findOneAndUpdate', function save(next) {
   const value: any = <any>this;
-  value.scope = Arrays.force(value.scope);
+  value.scopes = Arrays.force(value.scopes);
   next();
 });
 
