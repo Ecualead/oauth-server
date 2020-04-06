@@ -5,23 +5,24 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: accounts.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-05T23:38:51-05:00
+ * @Last modified time: 2020-04-06T03:11:45-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { ResponseHandler } from '@ikoabo/core_srv';
+import { ResponseHandler, Validators } from '@ikoabo/core_srv';
 import { Accounts } from '../../controllers/Accounts';
 import { OAuth2 } from '../../controllers/OAuth2';
 import { IAccount, DAccount } from '../../models/schemas/accounts/account';
-import { DAccountProject } from 'src/models/schemas/accounts/project';
-
+import { DAccountProject } from '../../models/schemas/accounts/project';
+import { RegisterValidation, AccountValidation, RecoverValidation, EmailValidation } from '../../models/joi/account';
 const router = Router();
 const AccountCtrl = Accounts.shared;
 const OAuth2Ctrl = OAuth2.shared;
 
 
 router.post('/register',
+  Validators.joi(RegisterValidation),
   OAuth2Ctrl.authenticate(),
   (req: Request, res: Response, next: NextFunction) => {
     // TODO XXX Add password policy
@@ -46,6 +47,66 @@ router.post('/register',
             };
             next();
           }).catch(next);
+      }).catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.post('/confirm',
+  Validators.joi(AccountValidation),
+  OAuth2Ctrl.authenticate(),
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Confirm the user account */
+    AccountCtrl.confirmAccount(req.body['email'], req.body['token'])
+      .then(() => {
+        res.locals['response'] = { email: req.body['email'] };
+        next();
+      }).catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.post('/recover/request',
+  Validators.joi(EmailValidation),
+  OAuth2Ctrl.authenticate(),
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Request a recover email */
+    AccountCtrl.requestRecover(req.body['email'], res.locals['token'].client)
+      .then(() => {
+        res.locals['response'] = { email: req.body['email'] };
+        next();
+      }).catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.post('/recover/validate',
+  Validators.joi(AccountValidation),
+  OAuth2Ctrl.authenticate(),
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Validate the recover token */
+    AccountCtrl.checkRecover(req.body['email'], req.body['token'])
+      .then(() => {
+        res.locals['response'] = { email: req.body['email'] };
+        next();
+      }).catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.post('/recover/store',
+  Validators.joi(RecoverValidation),
+  OAuth2Ctrl.authenticate(),
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Recover the user account */
+    AccountCtrl.doRecover(req.body['email'], req.body['token'], req.body['password'])
+      .then(() => {
+        res.locals['response'] = { email: req.body['email'] };
+        next();
       }).catch(next);
   },
   ResponseHandler.success,
