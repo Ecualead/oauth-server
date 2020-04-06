@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: oauth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T07:13:24-05:00
+ * @Last modified time: 2020-04-06T00:08:22-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -22,6 +22,9 @@ import { MToken, DToken } from './schemas/oauth/token';
 import { MAccount, DAccount } from './schemas/accounts/account';
 import { MApplication, DApplication } from './schemas/applications/application';
 import { DProject } from './schemas/projects/project';
+import { Accounts } from '../controllers/Accounts';
+
+const AccountCtrl = Accounts.shared;
 
 export class OAuth2 implements PasswordModel, ClientCredentialsModel, AuthorizationCodeModel, RefreshTokenModel {
   private _logger: Logger;
@@ -31,35 +34,27 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
   }
 
   /**
-   * Match the valid scopes from an user into a client and a list of scopes
+   * Match the valid scope from an user into a client and a list of scope
    *
    * @param {OAuth2Server.Client} client
    * @param {OAuth2Server.User} user
    * @param {string | string[]} scope
    * @returns {string[]}
    */
-  private static matchScopes(client: Client, user: User, scope: string | string[]): string[] {
-    /* Check to use default client scopes */
-    if (user && user.id !== client.id && !scope) {
-      scope = client.scope;
-    } else if (!scope) {
-      scope = client.app.scope;
-    }
-
-    /* Force scope to be an array */
-    scope = Arrays.force(scope);
-
-    /* Match the valid scopes for the target client */
-    let validScopes: string[] = scope.filter(scope => client.scope.indexOf(scope) >= 0);
-
-    /* Match the valid scopes for the target user if the user is valid */
-    if (user && user.findApplication) {
-      /* Look for all user scopes into the client application */
-      let idx = user.findApplication(client.app.id);
-      const userScopes = idx >= 0 ? user.apps[idx].scope : DEFAULT_SCOPES;
-      validScopes = validScopes.filter(scope => userScopes.indexOf(scope) >= 0);
-    }
-    return validScopes;
+  private static matchScope(application: Client, user: User, scope: string[]): Promise<string[]> {
+    return new Promise<string[]>((resolve, reject) => {
+      if (user && user.id !== application.id) {
+        /* Search for user project profile scope */
+        AccountCtrl.getProfile(user.id, application.project)
+          .then((value) => {
+            resolve(Arrays.intersect(application.scope, scope, value.scope || []));
+          }).catch(reject);
+        return;
+      } else {
+        resolve(Arrays.intersect(application.scope, scope));
+        return;
+      }
+    });
   }
 
   /**
@@ -137,21 +132,22 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
     return new Promise<AuthorizationCode>((resolve, reject) => {
       this._logger.debug(`Storing authorization code ${code.authorizationCode}`);
 
-      /* Get all valid scopes from the match */
-      let validScopes: string[] = OAuth2.matchScopes(application, user, code.scope);
-
-      /* Save the authorization code into database */
-      MCode.create({
-        code: code.authorizationCode,
-        expiresAt: code.expiresAt,
-        redirectUri: code.redirectUri,
-        scope: validScopes,
-        application: application.id,
-        user: ('id' in user && user.id !== application.id) ? user.id : null
-      })
-        .then((value: DCode) => {
-          value.application = application;
-          resolve(value.toAuthCode());
+      /* Get all valid scope from the match */
+      OAuth2.matchScope(application, user, Arrays.force(code.scope))
+        .then((validScope: string[]) => {
+          /* Save the authorization code into database */
+          MCode.create({
+            code: code.authorizationCode,
+            expiresAt: code.expiresAt,
+            redirectUri: code.redirectUri,
+            scope: validScope,
+            application: application.id,
+            user: ('id' in user && user.id !== application.id) ? user.id : null
+          })
+            .then((value: DCode) => {
+              value.application = application;
+              resolve(value.toAuthCode());
+            }).catch(reject);
         }).catch(reject);
     });
   }
@@ -165,7 +161,7 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
    */
   getUserFromClient(application: Client): Promise<User | Falsey> {
     return new Promise<User | Falsey>(resolve => {
-      this._logger.debug(`Getting associated user to client ${application.clientId}`);
+      this._logger.debug(`Getting associated user to client ${application.id}`);
       const userObj = {
         id: application.id,
         clientId: application.clientId,
@@ -184,12 +180,12 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
    *
    * @param {OAuth2Server.Client} client  Target client
    * @param {OAuth2Server.User} user  Target user
-   * @param {string | string[]} scope  Scopes allowed to the token
+   * @param {string | string[]} scope  scope allowed to the token
    * @returns {Promise<string>}  Return the access token
    */
   generateAccessToken(application: Client, user: User, scope: string | string[]): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      // TODO XXX Check for scopes scope
+      // TODO XXX Check for scope scope
       /* Check if the user is registered into the application */
       if (application.id !== user.id) {
         /* Check user signin policy */
@@ -251,26 +247,26 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
   }
 
   /**
-   * Validate scopes for a given user and client
-   * Scopes are validated against the match between scopes allowed to the user into the client application and
-   * the scopes of the client.
+   * Validate scope for a given user and client
+   * scope are validated against the match between scope allowed to the user into the client application and
+   * the scope of the client.
    *
    * @param {OAuth2Server.User} user
    * @param {OAuth2Server.Client} client
    * @param {string | string[]} scope
    * @returns {Promise<string | string[] | OAuth2Server.Falsey>}
    */
-  validateScope(user: User, client: Client, scope: string | string[]): Promise<string | string[] | Falsey> {
-    return new Promise<string | string[] | Falsey>((resolve) => {
-      /* Get all valid scopes from the match */
-      let validScopes = OAuth2.matchScopes(client, user, scope);
-
-      /* Ensure virtual scopes are present */
-      validScopes.push(client.id === user.id ? 'application' : 'user');
-      validScopes.push('default');
-      const strScopes = validScopes.join(' ');
-
-      resolve(strScopes);
+  validateScope(user: User, application: Client, scope: string | string[]): Promise<string | string[] | Falsey> {
+    return new Promise<string | string[] | Falsey>((resolve, reject) => {
+      /* Get all valid scope from the match */
+      OAuth2.matchScope(application, user, Arrays.force(scope))
+        .then((validScope: string[]) => {
+          /* Ensure virtual scope are present */
+          validScope.push(application.id === user.id ? 'application' : 'user');
+          validScope.push('default');
+          const strScope = validScope.join(' ');
+          resolve(strScope);
+        }).catch(reject);
     });
   }
 
@@ -308,12 +304,12 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
    * @param {OAuth2Server.User} user  Target user for which token was generated
    * @returns {Promise<OAuth2Server.Token>}  Return the generated token
    */
-  saveToken(token: Token, client: Client, user: User): Promise<Token> {
+  saveToken(token: Token, application: Client, user: User): Promise<Token> {
     return new Promise<Token>((resolve, reject) => {
-      this._logger.debug(`Storing access token for client ${client.id} and user ${user.id}`);
+      this._logger.debug(`Storing access token for client ${application.id} and user ${user.id}`);
 
       /* Check if client token don't expire and there is no user involved */
-      if (client.accessTokenLifetime === -1 && user.id !== client.id) {
+      if (application.accessTokenLifetime === -1 && user.id !== application.id) {
         reject({
           code: HTTP_STATUS.HTTP_FORBIDDEN,
           error: ERRORS.NOT_ALLOWED_SIGNIN,
@@ -321,30 +317,30 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
         return;
       }
 
-      /* Get all valid scopes from the match */
-      let validScopes: string[] = OAuth2.matchScopes(client, user, token.scope);
+      /* Get all valid scope from the match */
+      OAuth2.matchScope(application, user, Arrays.force(token.scope))
+        .then((validScope: string[]) => {
+          /* Save the authorization code into database */
+          MToken.create({
+            accessToken: token.accessToken,
+            accessTokenExpiresAt: token.accessTokenExpiresAt,
+            refreshToken: token.refreshToken,
+            refreshTokenExpiresAt: token.refreshTokenExpiresAt,
+            scope: validScope,
+            application: application.id,
+            keep: application.accessTokenLifetime === -1,
+            user: ('id' in user && user.id !== application.id) ? user.id : null
+          }).then((accessToken: DToken) => {
+            accessToken.application = application;
+            accessToken.user = user;
 
-      /* Save the authorization code into database */
-      MToken.create({
-        accessToken: token.accessToken,
-        accessTokenExpiresAt: token.accessTokenExpiresAt,
-        refreshToken: token.refreshToken,
-        refreshTokenExpiresAt: token.refreshTokenExpiresAt,
-        scope: validScopes,
-        client: client.id,
-        keep: client.accessTokenLifetime === -1,
-        user: ('id' in user && user.id !== client.id) ? user.id : null
-      }).then((accessToken: DToken) => {
-        accessToken.application = client;
-        accessToken.user = user;
-
-        /* Check if client token never expires */
-        if (client.accessTokenLifetime === -1) {
-          accessToken.accessTokenExpiresAt = new Date(Date.now() + 100000000);
-        }
-
-        resolve(accessToken.toToken());
-      }).catch(reject);
+            /* Check if client token never expires */
+            if (application.accessTokenLifetime === -1) {
+              accessToken.accessTokenExpiresAt = new Date(Date.now() + 100000000);
+            }
+            resolve(accessToken.toToken());
+          }).catch(reject);
+        }).catch(reject);
     });
   }
 
@@ -357,7 +353,6 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
   getAccessToken(accessToken: string): Promise<Token> {
     return new Promise<Token>((resolve, reject) => {
       this._logger.debug(`Looking for token ${accessToken}`);
-
       MToken.findOne({
         accessToken: accessToken
       })
@@ -415,7 +410,7 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
    * Validate the user token scope
    *
    * @param {OAuth2Server.Token} token  Target access token
-   * @param {string | string[]} scope  Scopes to validate
+   * @param {string | string[]} scope  scope to validate
    * @returns {Promise<boolean>}  Return if the token meets the scope request
    */
   verifyScope(token: Token, scope: string | string[]): Promise<boolean> {
@@ -440,7 +435,7 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
    */
   generateRefreshToken(client: Client, user: User, scope: string | string[]): Promise<string> {
     return new Promise<string>((resolve) => {
-      // TODO XXX Check scopes
+      // TODO XXX Check scope
       /* Generate refresh token */
       this._logger.debug(`Generating refresh token for client ${client.id} and user ${user.id}`);
       let refreshToken = TokenUtility.longToken;
