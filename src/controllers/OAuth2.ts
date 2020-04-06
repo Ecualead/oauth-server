@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: OAuth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-02T23:58:55-05:00
+ * @Last modified time: 2020-04-05T23:28:51-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -43,29 +43,30 @@ export class OAuth2 {
   }
 
   public authenticate(scope?: string | string[]) {
-    return function(req: Request, res: Response, next: NextFunction) {
+    return (req: Request, res: Response, next: NextFunction) => {
       let request = new ORequest(req);
       let response = new OResponse(res);
       this._server.authenticate(request, response).then((token: Token) => {
         /* Check if necessary validate any scope */
         if (scope) {
-          let tokenScopes = token.scope;
-          if (typeof tokenScopes === 'string') {
-            tokenScopes = tokenScopes.split(' ');
+          let tokenscope = token.scope;
+          if (typeof tokenscope === 'string') {
+            tokenscope = tokenscope.split(' ');
           }
 
-                    /* TODO XXX Check if the client IP address is valid */
-                    /*if (!Validators.validClientIp(req, next, token.client)) {
-                        return;
-                    } else*/ if (typeof scope === 'string') {
+          /* TODO XXX Check if the client IP address is valid */
+          /*if (!Validators.validClientIp(req, next, token.client)) {
+              return;
+          } else*/
+          if (typeof scope === 'string') {
             /* Scope is an string, assume one scope */
-            if (tokenScopes.indexOf(scope) < 0) {
+            if (tokenscope.indexOf(scope) < 0) {
               next({ code: HTTP_STATUS.HTTP_FORBIDDEN, error: ERRORS.INVALID_SCOPE });
               return;
             }
           } else if (Array.isArray(scope)) {
-            /* Scope is an array with multiple scopes */
-            if (scope.filter(value => tokenScopes.indexOf(value) >= 0).length !== scope.length) {
+            /* Scope is an array with multiple scope */
+            if (scope.filter(value => tokenscope.indexOf(value) >= 0).length !== scope.length) {
               next({ code: HTTP_STATUS.HTTP_FORBIDDEN, error: ERRORS.INVALID_SCOPE });
               return;
             }
@@ -74,7 +75,6 @@ export class OAuth2 {
             return;
           }
         }
-
         res.locals['token'] = token;
         next();
       }).catch(next);

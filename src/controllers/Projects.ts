@@ -72,8 +72,8 @@ export class Projects {
           /* Set the domain owning */
           data.domain = value.id;
 
-          /* Intersect scopes with domain scopes */
-          data.scopes = Arrays.intersect(data.scopes, <string[]>value.scopes);
+          /* Intersect scope with domain scope */
+          data.scope = Arrays.intersect(data.scope, <string[]>value.scope);
 
           /* Create the new project */
           MProject.create(data).then(resolve).catch(reject);
@@ -153,7 +153,7 @@ export class Projects {
    */
   public addScope(project: string, scope: string): Promise<DProject> {
     return new Promise<DProject>((resolve, reject) => {
-      MProject.findOneAndUpdate({ _id: project }, { $addToSet: { scopes: scope } }, { new: true })
+      MProject.findOneAndUpdate({ _id: project }, { $addToSet: { scope: scope } }, { new: true })
         .then((value: DProject) => {
           if (!value) {
             reject({ error: ERRORS.INVALID_PROJECT });
@@ -172,7 +172,7 @@ export class Projects {
    */
   public deleteScope(project: string, scope: string): Promise<DProject> {
     return new Promise<DProject>((resolve, reject) => {
-      MProject.findOneAndUpdate({ _id: project }, { $pull: { scopes: scope } }, { new: true })
+      MProject.findOneAndUpdate({ _id: project }, { $pull: { scope: scope } }, { new: true })
         .then((value: DProject) => {
           if (!value) {
             reject({ error: ERRORS.INVALID_PROJECT });

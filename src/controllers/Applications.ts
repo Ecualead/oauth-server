@@ -72,8 +72,8 @@ export class Applications {
           /* Set the project owning */
           data.project = value.id;
 
-          /* Intersect scopes with project scopes */
-          data.scopes = Arrays.intersect(data.scopes, <string[]>value.scopes);
+          /* Intersect scope with project scope */
+          data.scope = Arrays.intersect(data.scope, <string[]>value.scope);
 
           /* Generate application secret */
           data.secret = Token.longToken;
@@ -156,7 +156,7 @@ export class Applications {
    */
   public addScope(application: string, scope: string): Promise<DApplication> {
     return new Promise<DApplication>((resolve, reject) => {
-      MApplication.findOneAndUpdate({ _id: application }, { $addToSet: { scopes: scope } }, { new: true })
+      MApplication.findOneAndUpdate({ _id: application }, { $addToSet: { scope: scope } }, { new: true })
         .then((value: DApplication) => {
           if (!value) {
             reject({ error: ERRORS.INVALID_APPLICATION });
@@ -175,7 +175,7 @@ export class Applications {
    */
   public deleteScope(application: string, scope: string): Promise<DApplication> {
     return new Promise<DApplication>((resolve, reject) => {
-      MApplication.findOneAndUpdate({ _id: application }, { $pull: { scopes: scope } }, { new: true })
+      MApplication.findOneAndUpdate({ _id: application }, { $pull: { scope: scope } }, { new: true })
         .then((value: DApplication) => {
           if (!value) {
             reject({ error: ERRORS.INVALID_APPLICATION });

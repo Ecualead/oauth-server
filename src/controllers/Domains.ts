@@ -137,7 +137,7 @@ export class Domains {
    */
   public addScope(domain: string, scope: string): Promise<DDomain> {
     return new Promise<DDomain>((resolve, reject) => {
-      MDomain.findOneAndUpdate({ _id: domain }, { $addToSet: { scopes: scope } }, { new: true })
+      MDomain.findOneAndUpdate({ _id: domain }, { $addToSet: { scope: scope } }, { new: true })
         .then((value: DDomain) => {
           if (!value) {
             reject({ error: ERRORS.INVALID_DOMAIN });
@@ -156,7 +156,7 @@ export class Domains {
    */
   public deleteScope(domain: string, scope: string): Promise<DDomain> {
     return new Promise<DDomain>((resolve, reject) => {
-      MDomain.findOneAndUpdate({ _id: domain }, { $pull: { scopes: scope } }, { new: true })
+      MDomain.findOneAndUpdate({ _id: domain }, { $pull: { scope: scope } }, { new: true })
         .then((value: DDomain) => {
           if (!value) {
             reject({ error: ERRORS.INVALID_DOMAIN });
