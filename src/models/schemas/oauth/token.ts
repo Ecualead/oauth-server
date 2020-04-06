@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: token.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T00:00:19-05:00
+ * @Last modified time: 2020-04-04T01:12:48-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -48,7 +48,7 @@ const SToken = new mongoose.Schema({
   refreshTokenExpiresAt: Date,
   scope: [String],
   application: { type: mongoose.Schema.Types.ObjectId, ref: 'application', required: true },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'account', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'accounts.user'},
   keep: { type: Boolean, required: true, default: false },
 }, { timestamps: true });
 SToken.index({ accessToken: 1 });

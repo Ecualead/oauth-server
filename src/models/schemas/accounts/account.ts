@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: account.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-02T23:59:43-05:00
+ * @Last modified time: 2020-04-03T03:40:46-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -18,14 +18,15 @@ import { ACCOUNT_STATUS } from '../../types/account';
  * User account interface
  */
 export interface IAccount {
+  id?: string;
   name?: string;
-  email?: string;
+  email: string;
   phone?: string;
-  password?: string;
+  password: string;
   passwordExpires?: number;
   passwordUpdated?: number;
   confirmationExpires?: number;
-  status: number;
+  status?: number;
   resetToken?: {
     token?: string;
     attempts?: number;

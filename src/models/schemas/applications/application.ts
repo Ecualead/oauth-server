@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: application.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T00:36:07-05:00
+ * @Last modified time: 2020-04-04T00:01:56-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -38,7 +38,7 @@ export interface IApplication {
     recover?: number;
     restrictIps?: IApplicationRestrictIp[] | DApplicationRestrictIp;
   };
-  scopes?: string[];
+  scope?: string[];
   status?: number;
   createdAt?: Date;
 }
@@ -71,7 +71,7 @@ const SApplication = new mongoose.Schema({
     recover: { type: Number, required: true, default: APPLICATION_RECOVER_TYPE.APP_RT_DISABLED },
     restrictIps: [SApplicationRestrictIp],
   },
-  scopes: [String],
+  scope: [String],
   status: { type: Number, required: true, default: APPLICATION_STATUS.AS_ENABLED },
 }, { timestamps: true });
 SApplication.index({ project: 1 });
@@ -84,7 +84,7 @@ SApplication.pre('save', function save(next) {
   if (app.isNew) {
     app.secret = Token.longToken
   }
-  app.scopes = Arrays.force(app.scopes);
+  app.scope = Arrays.force(app.scope);
   next();
 });
 
@@ -93,7 +93,7 @@ SApplication.pre('save', function save(next) {
  */
 SApplication.pre('findOneAndUpdate', function save(next) {
   const value: any = <any>this;
-  value.scopes = Arrays.force(value.scopes);
+  value.scope = Arrays.force(value.scope);
   next();
 });
 
@@ -111,9 +111,11 @@ SApplication.methods.toClient = function(): Client {
   let client = {
     id: this.id,
     redirectUris: this.redirectUri,
-    grants: this.grants,
+    grants: this.authTypes,
     accessTokenLifetime: this.settings.lifetime.accessToken,
-    refreshTokenLifetime: this.settings.lifetime.refreshToken
+    refreshTokenLifetime: this.settings.lifetime.refreshToken,
+    scope: this.scope,
+    project: this.project,
   };
   return client;
 };

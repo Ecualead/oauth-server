@@ -36,7 +36,7 @@ export interface IProject {
     terms?: string;
   };
   social?: IProjectSocial[] | DProjectSocial[];
-  scopes?: string[];
+  scope?: string[];
   status?: number;
   settings?: {
     lifetime?: {
@@ -89,7 +89,7 @@ export const SProject = new mongoose.Schema({
     terms: String,
   },
   social: [SProjectSocial],
-  scopes: [String],
+  scope: [String],
   status: { type: Number, required: true, default: PROJECT_STATUS.PS_ENABLED },
   settings: {
     lifetime: {

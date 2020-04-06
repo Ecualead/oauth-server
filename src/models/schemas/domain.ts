@@ -22,7 +22,7 @@ export interface IDomain {
   name: string;
   description?: string;
   owner?: string;
-  scopes?: string | string[];
+  scope?: string | string[];
   status?: number;
   createdAt?: Date;
 }
@@ -39,7 +39,7 @@ const SDomain = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'accounts.user' },
-  scopes: [String],
+  scope: [String],
   status: { type: Number, required: true, default: DOMAIN_STATUS.DS_ENABLED }
 }, { timestamps: true });
 SDomain.index({ name: 1 });
@@ -50,12 +50,12 @@ SDomain.index({ owner: 1 });
  */
 SDomain.pre('save', function save(next) {
   const value: any = <any>this;
-  value.scopes = Arrays.force(value.scopes, SCP_DOMAIN_DEFAULT, SCP_PREVENT);
+  value.scope = Arrays.force(value.scope, SCP_DOMAIN_DEFAULT, SCP_PREVENT);
   next();
 });
 SDomain.pre('findOneAndUpdate', function save(next) {
   const value: any = <any>this;
-  value.scopes = Arrays.force(value.scopes, SCP_DOMAIN_DEFAULT, SCP_PREVENT);
+  value.scope = Arrays.force(value.scope, SCP_DOMAIN_DEFAULT, SCP_PREVENT);
   next();
 });
 

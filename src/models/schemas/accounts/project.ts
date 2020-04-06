@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: application.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T05:32:35-05:00
+ * @Last modified time: 2020-04-03T03:49:28-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -19,12 +19,14 @@ import { ACCOUNT_STATUS } from '../../types/account';
  */
 export interface IAccountProject {
   id?: string;
+  account: string;
   project: string;
-  profile?: string;
   scope?: string[];
   social?: ISocialCredential[] | DSocialCredential[];
   status?: number;
-  [key: string]: any;
+  profile?: {
+    [key: string]: any;
+  }
 }
 
 /**
@@ -36,15 +38,14 @@ export type DAccountProject = mongoose.Document & IAccountProject;
  * User account project schema
  */
 export const SAccountProject = new mongoose.Schema({
-  project: { type: mongoose.Schema.Types.ObjectId, ref: 'project', required: true },
-  uid: { type: mongoose.Schema.Types.ObjectId, ref: 'accounts.user' },
-  profile: { type: mongoose.Schema.Types.ObjectId, ref: 'accounts.profile' },
+  account: { type: mongoose.Schema.Types.ObjectId, ref: 'accounts.user' },
   scope: [String],
   social: [SSocialCredential],
-  status: { type: Number, default: ACCOUNT_STATUS.AS_UNKNOWN },
-}, { timestamps: true });
-SAccountProject.index({ app: 1, uid: 1 }, { unique: true });
-SAccountProject.index({ profile: 1 });
+  profile: {},
+  status: { type: Number, required: true, default: ACCOUNT_STATUS.AS_UNKNOWN },
+}, { timestamps: true, discriminatorKey: 'project' });
+SAccountProject.index({ project: 1, account: 1 }, { unique: true });
+SAccountProject.index({ status: 1 });
 
 /**
  * Ensure that `scope` is always an array
