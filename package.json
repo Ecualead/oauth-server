@@ -30,7 +30,7 @@
   "homepage": "https://gitlab.com/ikoabo/services/auth#readme",
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "@ikoabo/core_srv": "^1.0.4",
+    "@ikoabo/core_srv": "^1.0.6",
     "async": "^3.2.0",
     "bcrypt": "^4.0.1",
     "bcrypt-nodejs": "0.0.3",
@@ -80,7 +80,7 @@
     "@types/passport-facebook-token": "^0.4.34",
     "@types/passport-google-oauth": "^1.0.41",
     "@types/passport-http": "^0.3.8",
-    "@types/passport-http-bearer": "^1.0.34",
+    "@types/passport-http-bearer": "^1.0.35",
     "@types/passport-linkedin-oauth2": "^1.5.1",
     "@types/passport-local": "^1.0.33",
     "@types/passport-twitter": "^1.0.34",
@@ -97,7 +97,7 @@
     "gulp-uglify": "^3.0.2",
     "mocha": "^7.1.1",
     "nodemon": "^2.0.2",
-    "ts-node": "^8.8.1",
+    "ts-node": "^8.8.2",
     "tsc-watch": "^4.2.3",
     "typescript": "^3.8.3"
   }
