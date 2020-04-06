@@ -13,7 +13,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators, Arrays } from '@ikoabo/core_srv';
 import { Projects } from '../../controllers/Projects';
 import { ProjectCreate, ProjectUpdate } from '../../models/joi/project';
-import { CheckId, CheckStatus, CheckScopes } from '../../models/joi/base';
+import { CheckId, CheckStatus, Checkscope } from '../../models/joi/base';
 import { IProject, DProject } from '../../models/schemas/projects/project';
 
 const router = Router();
@@ -29,7 +29,7 @@ router.post('/:id',
       description: req.body['description'],
       links: req.body['links'],
       owner: '5e7d8203cef9b37116a6aeef',
-      scopes: Arrays.force(req.body['scopes']),
+      scope: Arrays.force(req.body['scope']),
     };
     ProjectCtrl.create(req.params.id, project)
       .then((value: DProject) => {
@@ -38,15 +38,12 @@ router.post('/:id',
           name: value.name,
           description: value.description,
           links: value.links,
-          scopes: value.scopes,
+          scope: value.scope,
           status: value.status,
           createdAt: value.createdAt,
         };
         next();
       }).catch(next);
-  },
-  (err: any, req: Request, res: Response, next: NextFunction) => {
-    console.log(err);
   },
   ResponseHandler.success,
   ResponseHandler.error
@@ -81,7 +78,7 @@ router.get('/:id',
           name: value.name,
           description: value.description,
           links: value.links,
-          scopes: value.scopes,
+          scope: value.scope,
           status: value.status,
           createdAt: value.createdAt,
         };
@@ -118,8 +115,8 @@ router.put('/:id/:action',
   ResponseHandler.error
 );
 
-router.post('/:id/scopes/:scope',
-  Validators.joi(CheckScopes, 'params'),
+router.post('/:id/scope/:scope',
+  Validators.joi(Checkscope, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.addScope(req.params.id, req.params.scope)
       .then((value: DProject) => {
@@ -131,8 +128,8 @@ router.post('/:id/scopes/:scope',
   ResponseHandler.error
 );
 
-router.delete('/:id/scopes/:scope',
-  Validators.joi(CheckScopes, 'params'),
+router.delete('/:id/scope/:scope',
+  Validators.joi(Checkscope, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.deleteScope(req.params.id, req.params.scope)
       .then((value: DProject) => {

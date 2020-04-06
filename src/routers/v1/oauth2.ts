@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: oauth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T00:02:01-05:00
+ * @Last modified time: 2020-04-05T23:44:07-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -59,12 +59,8 @@ router.post('/token',
       /*if (!Validators.validClientIp(req, next, token.client)) {
           return;
       }*/
-
       res.locals['token'] = token;
       res.locals['response'] = {
-        clientId: token.client.id,
-        userId: token.user.id,
-        appId: token.client.app.id,
         tokenType: 'Bearer',
         accessToken: token.accessToken,
         refreshToken: token.refreshToken,
@@ -114,6 +110,10 @@ router.post('/token',
   next();
 }).catch(next);
 },*/
+(err: any,req: Request, res: Response, next: NextFunction) => {
+  console.log(err);
+  next(err);
+},
   ResponseHandler.success,
   ResponseHandler.error
 );

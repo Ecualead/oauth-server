@@ -13,7 +13,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators, Arrays } from '@ikoabo/core_srv';
 import { Domains } from '../../controllers/Domains';
 import { DomainCreate, DomainUpdate } from '../../models/joi/domain';
-import { CheckId, CheckStatus, CheckScopes } from '../../models/joi/base';
+import { CheckId, CheckStatus, Checkscope } from '../../models/joi/base';
 import { IDomain, DDomain } from '../../models/schemas/domain';
 
 const router = Router();
@@ -26,7 +26,7 @@ router.post('/',
       name: req.body['name'],
       description: req.body['description'],
       owner: '5e7d8203cef9b37116a6aeef',
-      scopes: Arrays.force(req.body['scopes']),
+      scope: Arrays.force(req.body['scope']),
     };
     DomainCtrl.create(domain)
       .then((value: DDomain) => {
@@ -34,7 +34,7 @@ router.post('/',
           id: value.id,
           name: value.name,
           description: value.description,
-          scopes: value.scopes,
+          scope: value.scope,
           status: value.status,
           createdAt: value.createdAt,
         };
@@ -72,7 +72,7 @@ router.get('/:id',
           id: value.id,
           name: value.name,
           description: value.description,
-          scopes: value.scopes,
+          scope: value.scope,
           status: value.status,
           createdAt: value.createdAt,
         };
@@ -109,8 +109,8 @@ router.put('/:id/:action',
   ResponseHandler.error
 );
 
-router.post('/:id/scopes/:scope',
-  Validators.joi(CheckScopes, 'params'),
+router.post('/:id/scope/:scope',
+  Validators.joi(Checkscope, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.addScope(req.params.id, req.params.scope)
       .then((value: DDomain) => {
@@ -122,8 +122,8 @@ router.post('/:id/scopes/:scope',
   ResponseHandler.error
 );
 
-router.delete('/:id/scopes/:scope',
-  Validators.joi(CheckScopes, 'params'),
+router.delete('/:id/scope/:scope',
+  Validators.joi(Checkscope, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.deleteScope(req.params.id, req.params.scope)
       .then((value: DDomain) => {
