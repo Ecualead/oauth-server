@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: oauth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-06T00:08:22-05:00
+ * @Last modified time: 2020-04-06T00:34:17-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -492,7 +492,7 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
       MToken.findOne({
         refreshToken: refreshToken
       })
-        .populate('client')
+        .populate({ path: 'application', populate: { path: 'project' } })
         .populate('user')
         .then((token: DToken) => {
           if (!token) {
