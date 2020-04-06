@@ -16,7 +16,7 @@ export const ApplicationCreate = Joi.object().keys({
   name: Joi.string().required(),
   description: Joi.string().allow('').optional(),
   type: Joi.number().integer().min(APPLICATION_TYPES.APP_UNKNOWN).max(APPLICATION_TYPES.APP_MAX).required(),
-  scopes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string().allow('')).optional(),
+  scope: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string().allow('')).optional(),
 });
 
 export const ApplicationUpdate = Joi.object().keys({

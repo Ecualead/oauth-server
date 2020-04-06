@@ -21,7 +21,7 @@ export const CheckStatus = Joi.object().keys({
   action: Joi.string().valid('enable', 'disable').required(),
 });
 
-export const CheckScopes = Joi.object().keys({
+export const Checkscope = Joi.object().keys({
   id: Joi.objectId().required(),
   scope: Joi.string().required(),
 });

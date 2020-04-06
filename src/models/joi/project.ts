@@ -23,7 +23,7 @@ export const ProjectCreate = Joi.object().keys({
     privacy: Joi.string().allow('').optional(),
     terms: Joi.string().allow('').optional(),
   }),
-  scopes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string().allow('')).optional(),
+  scope: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string().allow('')).optional(),
 });
 
 export const ProjectUpdate = Joi.object().keys({
