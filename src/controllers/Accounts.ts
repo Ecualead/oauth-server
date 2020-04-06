@@ -5,11 +5,11 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Accounts.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-06T00:04:45-05:00
+ * @Last modified time: 2020-04-06T03:11:42-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
-import { Logger, Token, Objects, Arrays } from '@ikoabo/core_srv'
+import { Logger, Token, Objects, Arrays, HTTP_STATUS } from '@ikoabo/core_srv'
 import { MAccount, DAccount, IAccount } from '../models/schemas/accounts/account';
 import { AccountsProject } from './AccountsProject';
 import { DAccountProject } from '../models/schemas/accounts/project';
@@ -76,7 +76,7 @@ export class Accounts {
           }
 
           /* Set the confirmation token information if its necessary */
-          const recoverType = application.settings.recover;
+          const recoverType = Objects.get(application, 'settings.recover', APPLICATION_RECOVER_TYPE.APP_RT_LINK);
           if (status !== ACCOUNT_STATUS.AS_REGISTERED && recoverType !== APPLICATION_RECOVER_TYPE.APP_RT_DISABLED) {
             data.resetToken = {
               token: recoverType !== APPLICATION_RECOVER_TYPE.APP_RT_LINK ? Token.shortToken : Token.longToken,
@@ -85,6 +85,8 @@ export class Accounts {
               expires: Date.now() + 86400000 // 24 hours
             };
           }
+
+          this._logger.debug('Registering new user account', data);
 
           /* Register the new user */
           MAccount.create(data).then(resolve).catch(reject);
@@ -137,6 +139,278 @@ export class Accounts {
             return;
           }
           resolve(value);
+        }).catch(reject);
+    });
+  }
+
+  public changePassword(account: DAccount, oldPassword: string, newPassword: string): Promise<DAccount> {
+    return new Promise<DAccount>((resolve, reject) => {
+      /* Validate the old password */
+      account.validPassword(oldPassword, (err, isMatch) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        if (!isMatch) {
+          reject({ error: ERRORS.INVALID_CREDENTIALS });
+          return;
+        }
+
+        /* Set the new password */
+        MAccount.findOneAndUpdate({ _id: account.id }, {
+          $set: {
+            password: newPassword
+          }
+        }, { new: true })
+          .then((value: DAccount) => {
+            if (!value) {
+              reject({ error: ERRORS.ACCOUNT_NOT_REGISTERED });
+              return;
+            }
+            this._logger.debug('User password updated', { email: value.email });
+            resolve(value);
+          }).catch(reject);
+      });
+    });
+  }
+
+  public confirmAccount(email: string, token: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      MAccount.findOneAndUpdate({ email: email }, { $inc: { 'resetToken.attempts': 1 } }, { new: true })
+        .then((value: DAccount) => {
+          if (!value) {
+            reject({
+              code: HTTP_STATUS.HTTP_FORBIDDEN,
+              error: ERRORS.ACCOUNT_NOT_REGISTERED,
+            });
+            return;
+          }
+
+          /* Validate the user status */
+          switch (value.status) {
+            case ACCOUNT_STATUS.AS_CANCELLED:
+              reject({
+                code: HTTP_STATUS.HTTP_FORBIDDEN,
+                error: ERRORS.ACCOUNT_CANCELLED,
+              });
+              return;
+            case ACCOUNT_STATUS.AS_DISABLED_BY_ADMIN:
+              reject({
+                code: HTTP_STATUS.HTTP_FORBIDDEN,
+                error: ERRORS.ACCOUNT_DISABLED,
+              });
+              return;
+            case ACCOUNT_STATUS.AS_TEMPORALLY_BLOCKED:
+              reject({
+                code: HTTP_STATUS.HTTP_FORBIDDEN,
+                error: ERRORS.ACCOUNT_BLOCKED,
+              });
+              return;
+            case ACCOUNT_STATUS.AS_CONFIRMED:
+              reject({
+                code: HTTP_STATUS.HTTP_FORBIDDEN,
+                error: ERRORS.ACCOUNT_ALREADY_CONFIRMED,
+              });
+              return;
+          }
+
+          /* Validate max attempts */
+          if (value.resetToken.attempts > 3) {
+            reject({
+              code: HTTP_STATUS.HTTP_FORBIDDEN,
+              error: ERRORS.MAX_ATTEMPTS,
+            });
+            return;
+          }
+
+          /* Validate expiration time */
+          if (value.resetToken.expires < Date.now()) {
+            reject({
+              code: HTTP_STATUS.HTTP_FORBIDDEN,
+              error: ERRORS.TOKEN_EXPIRED,
+            });
+            return;
+          }
+
+          MAccount.findOneAndUpdate({
+            _id: value.id,
+            'resetToken.token': token,
+            'resetToken.status': RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
+          }, {
+              $set: {
+                status: ACCOUNT_STATUS.AS_CONFIRMED,
+                'resetToken.expires': 0,
+                'resetToken.status': RECOVER_TOKEN_STATUS.RTS_DISABLED,
+              },
+
+            }, { new: true })
+            .then((value: DAccount) => {
+              if (!value) {
+                reject({
+                  code: HTTP_STATUS.HTTP_FORBIDDEN,
+                  error: ERRORS.INVALID_TOKEN,
+                });
+                return;
+              }
+              this._logger.debug('User account confirmed', { email: email });
+              resolve();
+            }).catch(reject);
+        }).catch(reject);
+    });
+  }
+
+  public requestRecover(email: string, application: DApplication): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      /* Check if the recover is enabled */
+      const recoverType = Objects.get(application, 'settings.recover', APPLICATION_RECOVER_TYPE.APP_RT_LINK);
+      if (recoverType === APPLICATION_RECOVER_TYPE.APP_RT_DISABLED) {
+        reject({ error: ERRORS.RECOVER_NOT_ALLOWED });
+        return;
+      }
+
+      /* Look for the user by email */
+      MAccount.findOne({
+        email: email,
+        status: { $gt: ACCOUNT_STATUS.AS_UNKNOWN },
+      })
+        .then((value: DAccount) => {
+          if (!value) {
+            reject({
+              code: HTTP_STATUS.HTTP_FORBIDDEN,
+              error: ERRORS.ACCOUNT_NOT_REGISTERED,
+            });
+            return;
+          }
+
+          /* Prepare the reset token */
+          const reset = {
+            'resetToken.token': recoverType === APPLICATION_RECOVER_TYPE.APP_RT_CODE ? Token.shortToken : Token.longToken,
+            'resetToken.status': RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
+            'resetToken.attempts': 0,
+            'resetToken.expires': Date.now() + 86400000 // 24 hours
+          };
+
+          /* Register the reset token */
+          MAccount.findOneAndUpdate({ _id: value.id }, {
+            $set: reset, $inc: { 'auth.resetToken.attempts': 1 }
+          }, { new: true })
+            .then((value: DAccount) => {
+              /* Show the verification token */
+              this._logger.debug('Recovery account requested', { id: value.id, email: value.email, token: value.resetToken.token });
+              resolve();
+            }).catch(reject);
+        }).catch(reject);
+    });
+  }
+
+  public checkRecover(email: string, token: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      MAccount.findOneAndUpdate({
+        email: email,
+        'resetToken.token': token,
+        'resetToken.status': RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
+        'resetToken.expires': { $gt: (Date.now() + 3600000) },
+        'resetToken.attempts': { $lt: 3 },
+      }, { $set: { 'resetToken.status': RECOVER_TOKEN_STATUS.RTS_CONFIRMED } }, { new: true })
+        .then((value: DAccount) => {
+          if (!value) {
+            reject({
+              code: HTTP_STATUS.HTTP_FORBIDDEN,
+              error: ERRORS.INVALID_CREDENTIALS,
+            });
+            return;
+          }
+          this._logger.debug('Recover token confirmed', { email: email, token: token });
+          resolve();
+        }).catch(reject);
+    });
+  }
+
+  public doRecover(email: string, token: string, password: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      MAccount.findOneAndUpdate({ email: email }, { $inc: { 'resetToken.attempts': 1 } }, { new: true })
+        .then((value: DAccount) => {
+          if (!value) {
+            reject({
+              code: HTTP_STATUS.HTTP_FORBIDDEN,
+              error: ERRORS.ACCOUNT_NOT_REGISTERED,
+            });
+            return;
+          }
+
+          /* Validate the user status */
+          switch (value.status) {
+            case ACCOUNT_STATUS.AS_CANCELLED:
+              reject({
+                code: HTTP_STATUS.HTTP_FORBIDDEN,
+                error: ERRORS.ACCOUNT_CANCELLED,
+              });
+              return;
+            case ACCOUNT_STATUS.AS_DISABLED_BY_ADMIN:
+              reject({
+                code: HTTP_STATUS.HTTP_FORBIDDEN,
+                error: ERRORS.ACCOUNT_DISABLED,
+              });
+              return;
+            case ACCOUNT_STATUS.AS_TEMPORALLY_BLOCKED:
+              reject({
+                code: HTTP_STATUS.HTTP_FORBIDDEN,
+                error: ERRORS.ACCOUNT_BLOCKED,
+              });
+              return;
+          }
+
+          /* Validate max attempts */
+          if (value.resetToken.attempts > 3) {
+            reject({
+              code: HTTP_STATUS.HTTP_FORBIDDEN,
+              error: ERRORS.MAX_ATTEMPTS,
+            });
+            return;
+          }
+
+          /* Validate expiration time */
+          if (value.resetToken.expires < Date.now()) {
+            reject({
+              code: HTTP_STATUS.HTTP_FORBIDDEN,
+              error: ERRORS.TOKEN_EXPIRED,
+            });
+            return;
+          }
+
+          MAccount.findOneAndUpdate({
+            _id: value.id,
+            'resetToken.token': token,
+            'resetToken.status': RECOVER_TOKEN_STATUS.RTS_CONFIRMED,
+          }, {
+              $set: {
+                'resetToken.expires': 0,
+                'resetToken.status': RECOVER_TOKEN_STATUS.RTS_DISABLED,
+                'password': password
+              }
+            }, { new: true })
+            .then((value: DAccount) => {
+              if (!value) {
+                reject({
+                  code: HTTP_STATUS.HTTP_FORBIDDEN,
+                  error: ERRORS.INVALID_TOKEN,
+                });
+                return;
+              }
+
+              /* Check if the user is not confirmed */
+              if (value.status !== ACCOUNT_STATUS.AS_CONFIRMED) {
+                /* Mark the user as email confirmed */
+                MAccount.findOneAndUpdate({ _id: value.id }, { $set: { status: ACCOUNT_STATUS.AS_CONFIRMED } }, { new: false })
+                  .then((value: DAccount) => {
+                    this._logger.debug('User account confirmed', { id: value.id, email: value.email });
+                    resolve();
+                  }).catch(reject);
+                return;
+              }
+              resolve();
+            }).catch(reject);
         }).catch(reject);
     });
   }
