@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: AccountsProject.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-05T23:07:33-05:00
+ * @Last modified time: 2020-04-06T01:01:30-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -135,7 +135,7 @@ export class AccountsProject {
     this._deleteModel(project);
   }
 
-  public reload(project: DProject, cb?: () => void) {
+  public reload(project: DProject) {
     this.revoke(project);
     this._loadProfileFields(project);
   }
