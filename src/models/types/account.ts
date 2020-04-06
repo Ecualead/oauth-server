@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: account.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T05:16:08-05:00
+ * @Last modified time: 2020-04-04T02:44:22-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -19,3 +19,21 @@ export enum ACCOUNT_STATUS {
   AS_TEMPORALLY_BLOCKED = -3,
   AS_DISABLED_BY_ADMIN = -4,
 }
+
+export enum RECOVER_TOKEN_STATUS {
+  RTS_DISABLED = 0,
+  RTS_TO_CONFIRM,
+  RTS_TO_RECOVER,
+  RTS_CONFIRMED,
+}
+
+export const PROTECTED_PROJECT_FIELDS: string[] = [
+    '_id',
+    '__v',
+    'updatedAt',
+    'createdAt',
+    'account',
+    'scope',
+    'social',
+    'status',
+];

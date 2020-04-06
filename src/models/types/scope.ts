@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: scope.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T00:01:03-05:00
+ * @Last modified time: 2020-04-06T00:12:22-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -14,7 +14,7 @@ export const DEFAULT_SCOPES: string[] = [
 ];
 
 /**
- * Default scopes handled by all domains
+ * Default scope handled by all domains
  */
 export const SCP_DOMAIN_DEFAULT: string[] = [
   'dmn_admin',
@@ -29,7 +29,7 @@ export const SCP_DOMAIN_DEFAULT: string[] = [
 ];
 
 /**
- * Default scopes handled by all projects
+ * Default scope handled by all projects
  */
 export const SCP_PRJ_DEFAULT: string[] = [
   'prj_admin',
@@ -39,9 +39,33 @@ export const SCP_PRJ_DEFAULT: string[] = [
   'usr_register',
 ];
 
+
 /**
- * Not allowed scopes to be assigned to domains/projects/applications
- * This are predefined scopes assigned internally
+ * Default scope handled by all applications
+ */
+export const SCP_APP_DEFAULT: string[] = [
+  'prj_admin',
+  'app_create',
+  'app_remove',
+  'app_update',
+  'usr_register',
+];
+
+/**
+ * Default scope handled by all account
+ */
+export const SCP_ACCOUNT_DEFAULT: string[] = [
+  'prj_admin',
+  'app_create',
+  'app_remove',
+  'app_update',
+  'usr_register',
+];
+
+
+/**
+ * Not allowed scope to be assigned to domains/projects/applications
+ * This are predefined scope assigned internally
  */
 export const SCP_PREVENT: string[] = [
   'application',
@@ -50,7 +74,7 @@ export const SCP_PREVENT: string[] = [
 ];
 
 /**
- * Default non inheritable scopes that user can't inherit from application scopes
+ * Default non inheritable scope that user can't inherit from application scope
  */
 export const SCP_NON_INHERITABLE: string[] = [
   'prj_admin',
