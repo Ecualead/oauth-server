@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Settings.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-12T23:37:59-05:00
+ * @Last modified time: 2020-04-13T03:26:46-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -39,5 +39,9 @@ export const Settings: ISettings = {
     SERVER: process.env.AUTH_SERVER || 'https://auth.ikoabo.com',
     ID: process.env.AUTH_ID,
     SECRET: process.env.AUTH_SECRET,
+  },
+
+  NOTIFICATIONS: {
+    SERVER: process.env.NOTIFICATIONS_SERVER || 'https://comm.ikoabo.com',
   }
 }
