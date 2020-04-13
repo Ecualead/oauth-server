@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Accounts.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-12T23:14:28-05:00
+ * @Last modified time: 2020-04-13T03:39:49-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -260,8 +260,8 @@ export class Accounts {
     });
   }
 
-  public requestRecover(email: string, application: DApplication): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+  public requestRecover(email: string, application: DApplication): Promise<DAccount> {
+    return new Promise<DAccount>((resolve, reject) => {
       /* Check if the recover is enabled */
       const recoverType = Objects.get(application, 'settings.recover', APPLICATION_RECOVER_TYPE.APP_RT_LINK);
       if (recoverType === APPLICATION_RECOVER_TYPE.APP_RT_DISABLED) {
@@ -298,7 +298,7 @@ export class Accounts {
             .then((value: DAccount) => {
               /* Show the verification token */
               this._logger.debug('Recovery account requested', { id: value.id, email: value.email, token: value.resetToken.token });
-              resolve();
+              resolve(value);
             }).catch(reject);
         }).catch(reject);
     });
