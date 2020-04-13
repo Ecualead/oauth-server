@@ -5,13 +5,13 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Domain.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-02T23:58:57-05:00
+ * @Last modified time: 2020-04-12T23:20:59-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
+ import { ERRORS } from '@ikoabo/auth_srv';
 import { MDomain, DDomain, IDomain } from '../models/schemas/domain';
 import { DOMAIN_STATUS } from '../models/types/state';
-import { ERRORS } from '../models/types/errors';
 
 /**
  * Class to handle Auth domains
@@ -46,7 +46,7 @@ export class Domains {
       MDomain.findOneAndUpdate({ _id: domain }, { $set: { status: status } }, { new: true })
         .then((value: DDomain) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_DOMAIN });
+            reject({ boError: ERRORS.INVALID_DOMAIN });
             return;
           }
           resolve(value);
@@ -76,7 +76,7 @@ export class Domains {
       MDomain.findOneAndUpdate({ _id: domain }, { $set: data }, { new: true })
         .then((value: DDomain) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_DOMAIN });
+            reject({ boError: ERRORS.INVALID_DOMAIN });
             return;
           }
           resolve(value);
@@ -94,7 +94,7 @@ export class Domains {
       MDomain.findOne({ _id: domain })
         .then((value: DDomain) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_DOMAIN });
+            reject({ boError: ERRORS.INVALID_DOMAIN });
             return;
           }
           resolve(value);
@@ -140,7 +140,7 @@ export class Domains {
       MDomain.findOneAndUpdate({ _id: domain }, { $addToSet: { scope: scope } }, { new: true })
         .then((value: DDomain) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_DOMAIN });
+            reject({ boError: ERRORS.INVALID_DOMAIN });
             return;
           }
           resolve(value);
@@ -159,7 +159,7 @@ export class Domains {
       MDomain.findOneAndUpdate({ _id: domain }, { $pull: { scope: scope } }, { new: true })
         .then((value: DDomain) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_DOMAIN });
+            reject({ boError: ERRORS.INVALID_DOMAIN });
             return;
           }
           resolve(value);

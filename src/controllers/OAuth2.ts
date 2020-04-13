@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: OAuth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-05T23:28:51-05:00
+ * @Last modified time: 2020-04-12T23:21:19-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -13,7 +13,7 @@ import { Request, Response, NextFunction } from 'express';
 import OAuth2Server from 'oauth2-server';
 import { Token, Request as ORequest, Response as OResponse } from 'oauth2-server';
 import { HTTP_STATUS } from '@ikoabo/core_srv';
-import { ERRORS } from '../models/types/errors';
+import { ERRORS } from '@ikoabo/auth_srv';
 import { OAuth2 as OAuth2Model } from '../models/oauth2';
 
 export class OAuth2 {
@@ -61,17 +61,17 @@ export class OAuth2 {
           if (typeof scope === 'string') {
             /* Scope is an string, assume one scope */
             if (tokenscope.indexOf(scope) < 0) {
-              next({ code: HTTP_STATUS.HTTP_FORBIDDEN, error: ERRORS.INVALID_SCOPE });
+              next({ boStatus: HTTP_STATUS.HTTP_FORBIDDEN, boError: ERRORS.INVALID_SCOPE });
               return;
             }
           } else if (Array.isArray(scope)) {
             /* Scope is an array with multiple scope */
             if (scope.filter(value => tokenscope.indexOf(value) >= 0).length !== scope.length) {
-              next({ code: HTTP_STATUS.HTTP_FORBIDDEN, error: ERRORS.INVALID_SCOPE });
+              next({ boStatus: HTTP_STATUS.HTTP_FORBIDDEN, boError: ERRORS.INVALID_SCOPE });
               return;
             }
           } else {
-            next({ code: HTTP_STATUS.HTTP_FORBIDDEN, error: ERRORS.INVALID_SCOPE });
+            next({ boStatus: HTTP_STATUS.HTTP_FORBIDDEN, boError: ERRORS.INVALID_SCOPE });
             return;
           }
         }

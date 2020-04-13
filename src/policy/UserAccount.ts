@@ -5,17 +5,17 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: UserAccount.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T05:37:48-05:00
+ * @Last modified time: 2020-04-12T23:20:18-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Objects, HTTP_STATUS } from '@ikoabo/core_srv';
+import { ERRORS } from '@ikoabo/auth_srv';
 import { DAccount } from '../models/schemas/accounts/account';
 import { MAccountProject, DAccountProject } from '../models/schemas/accounts/project';
 import { DProject } from '../models/schemas/projects/project';
 import { ACCOUNT_STATUS } from '../models/types/account';
 import { EMAIL_CONFIRMATION } from '../models/types/state';
-import { ERRORS } from '../models/types/errors';
 
 export class UserAccount {
   public static canSignin(user: DAccount, project: DProject, checkLocal?: boolean): Promise<boolean> {
@@ -28,40 +28,40 @@ export class UserAccount {
             (confirmationPolicy === EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME && confirmationExpires < Date.now())
           ) {
             return reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.EMAIL_NOT_CONFIRMED,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.EMAIL_NOT_CONFIRMED,
             });
           }
           break;
         case ACCOUNT_STATUS.AS_TEMPORALLY_BLOCKED:
           return reject({
-            code: HTTP_STATUS.HTTP_FORBIDDEN,
-            error: ERRORS.ACCOUNT_BLOCKED,
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: ERRORS.ACCOUNT_BLOCKED,
           });
 
         case ACCOUNT_STATUS.AS_CANCELLED:
           return reject({
-            code: HTTP_STATUS.HTTP_FORBIDDEN,
-            error: ERRORS.ACCOUNT_CANCELLED,
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: ERRORS.ACCOUNT_CANCELLED,
           });
 
         case ACCOUNT_STATUS.AS_DISABLED_BY_ADMIN:
           return reject({
-            code: HTTP_STATUS.HTTP_FORBIDDEN,
-            error: ERRORS.ACCOUNT_DISABLED,
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: ERRORS.ACCOUNT_DISABLED,
           });
 
         case ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH:
           return reject({
-            code: HTTP_STATUS.HTTP_FORBIDDEN,
-            error: ERRORS.EMAIL_NOT_CONFIRMED,
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: ERRORS.EMAIL_NOT_CONFIRMED,
           });
 
         case ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_AUTH:
           if (confirmationExpires < Date.now()) {
             return reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.EMAIL_NOT_CONFIRMED,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.EMAIL_NOT_CONFIRMED,
             });
           }
       }
@@ -75,35 +75,35 @@ export class UserAccount {
         .then((value: DAccountProject) => {
           if (!value) {
             return reject({
-              code: HTTP_STATUS.HTTP_UNAUTHORIZED,
-              error: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
+              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
             });
           }
 
           switch (value.status) {
             case ACCOUNT_STATUS.AS_TEMPORALLY_BLOCKED:
               return reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_BLOCKED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_BLOCKED,
               });
 
             case ACCOUNT_STATUS.AS_CANCELLED:
               return reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_CANCELLED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_CANCELLED,
               });
 
             case ACCOUNT_STATUS.AS_DISABLED_BY_ADMIN:
               return reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_DISABLED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_DISABLED,
               });
           }
           resolve(true);
         }).catch(() => {
           reject({
-            code: HTTP_STATUS.HTTP_UNAUTHORIZED,
-            error: ERRORS.ACCOUNT_NOT_REGISTERED,
+            boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
+            boError: ERRORS.ACCOUNT_NOT_REGISTERED,
           });
         });
     });

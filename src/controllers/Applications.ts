@@ -5,15 +5,15 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Applications.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T01:36:05-05:00
+ * @Last modified time: 2020-04-12T23:20:43-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Arrays, Token } from '@ikoabo/core_srv';
+import { ERRORS } from '@ikoabo/auth_srv';
 import { MApplication, DApplication, IApplication } from '../models/schemas/applications/application';
 import { MProject, DProject } from '../models/schemas/projects/project';
 import { APPLICATION_STATUS } from '../models/types/state';
-import { ERRORS } from '../models/types/errors';
 
 export class Applications {
   private static _instance: Applications;
@@ -45,7 +45,7 @@ export class Applications {
       MApplication.findOneAndUpdate({ _id: application }, { $set: { status: status } }, { new: true })
         .then((value: DApplication) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_APPLICATION });
+            reject({ boError: ERRORS.INVALID_APPLICATION });
             return;
           }
           resolve(value);
@@ -65,7 +65,7 @@ export class Applications {
       MProject.findById(project)
         .then((value: DProject) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_PROJECT });
+            reject({ boError: ERRORS.INVALID_PROJECT });
             return;
           }
 
@@ -95,7 +95,7 @@ export class Applications {
       MApplication.findOneAndUpdate({ _id: application }, { $set: data }, { new: true })
         .then((value: DApplication) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_APPLICATION });
+            reject({ boError: ERRORS.INVALID_APPLICATION });
             return;
           }
           resolve(value);
@@ -113,7 +113,7 @@ export class Applications {
       MApplication.findOne({ _id: application })
         .then((value: DApplication) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_APPLICATION });
+            reject({ boError: ERRORS.INVALID_APPLICATION });
             return;
           }
           resolve(value);
@@ -159,7 +159,7 @@ export class Applications {
       MApplication.findOneAndUpdate({ _id: application }, { $addToSet: { scope: scope } }, { new: true })
         .then((value: DApplication) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_APPLICATION });
+            reject({ boError: ERRORS.INVALID_APPLICATION });
             return;
           }
           resolve(value);
@@ -178,7 +178,7 @@ export class Applications {
       MApplication.findOneAndUpdate({ _id: application }, { $pull: { scope: scope } }, { new: true })
         .then((value: DApplication) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_APPLICATION });
+            reject({ boError: ERRORS.INVALID_APPLICATION });
             return;
           }
           resolve(value);

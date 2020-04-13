@@ -5,11 +5,12 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Accounts.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-06T03:11:42-05:00
+ * @Last modified time: 2020-04-12T23:14:28-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Logger, Token, Objects, Arrays, HTTP_STATUS } from '@ikoabo/core_srv'
+import { ERRORS } from '@ikoabo/auth_srv';
 import { MAccount, DAccount, IAccount } from '../models/schemas/accounts/account';
 import { AccountsProject } from './AccountsProject';
 import { DAccountProject } from '../models/schemas/accounts/project';
@@ -19,7 +20,6 @@ import { ACCOUNT_STATUS, RECOVER_TOKEN_STATUS } from '../models/types/account';
 import { EMAIL_CONFIRMATION } from '../models/types/state';
 import { APPLICATION_RECOVER_TYPE } from '../models/types/application';
 import { SCP_ACCOUNT_DEFAULT, SCP_NON_INHERITABLE, SCP_PREVENT } from '../models/types/scope';
-import { ERRORS } from '../models/types/errors';
 
 const AccountProjectCtrl = AccountsProject.shared;
 
@@ -51,7 +51,7 @@ export class Accounts {
         .then((user: DAccount) => {
           /* Check if user is already registered */
           if (user) {
-            reject({ error: ERRORS.EMAIL_IN_USE });
+            reject({ boError: ERRORS.EMAIL_IN_USE });
             return;
           }
 
@@ -101,7 +101,7 @@ export class Accounts {
       projectModel.findOne({ account: account.id })
         .then((value: DAccountProject) => {
           if (value) {
-            reject({ error: ERRORS.USER_DUPLICATED });
+            reject({ boError: ERRORS.USER_DUPLICATED });
             return;
           }
 
@@ -135,7 +135,7 @@ export class Accounts {
       projectModel.findOne({ account: account })
         .then((value: DAccountProject) => {
           if (!value) {
-            reject({ error: ERRORS.PROFILE_NOT_FOUND });
+            reject({ boError: ERRORS.PROFILE_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -153,7 +153,7 @@ export class Accounts {
         }
 
         if (!isMatch) {
-          reject({ error: ERRORS.INVALID_CREDENTIALS });
+          reject({ boError: ERRORS.INVALID_CREDENTIALS });
           return;
         }
 
@@ -165,7 +165,7 @@ export class Accounts {
         }, { new: true })
           .then((value: DAccount) => {
             if (!value) {
-              reject({ error: ERRORS.ACCOUNT_NOT_REGISTERED });
+              reject({ boError: ERRORS.ACCOUNT_NOT_REGISTERED });
               return;
             }
             this._logger.debug('User password updated', { email: value.email });
@@ -181,8 +181,8 @@ export class Accounts {
         .then((value: DAccount) => {
           if (!value) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
             });
             return;
           }
@@ -191,26 +191,26 @@ export class Accounts {
           switch (value.status) {
             case ACCOUNT_STATUS.AS_CANCELLED:
               reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_CANCELLED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_CANCELLED,
               });
               return;
             case ACCOUNT_STATUS.AS_DISABLED_BY_ADMIN:
               reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_DISABLED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_DISABLED,
               });
               return;
             case ACCOUNT_STATUS.AS_TEMPORALLY_BLOCKED:
               reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_BLOCKED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_BLOCKED,
               });
               return;
             case ACCOUNT_STATUS.AS_CONFIRMED:
               reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_ALREADY_CONFIRMED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_ALREADY_CONFIRMED,
               });
               return;
           }
@@ -218,8 +218,8 @@ export class Accounts {
           /* Validate max attempts */
           if (value.resetToken.attempts > 3) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.MAX_ATTEMPTS,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.MAX_ATTEMPTS,
             });
             return;
           }
@@ -227,8 +227,8 @@ export class Accounts {
           /* Validate expiration time */
           if (value.resetToken.expires < Date.now()) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.TOKEN_EXPIRED,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.TOKEN_EXPIRED,
             });
             return;
           }
@@ -248,8 +248,8 @@ export class Accounts {
             .then((value: DAccount) => {
               if (!value) {
                 reject({
-                  code: HTTP_STATUS.HTTP_FORBIDDEN,
-                  error: ERRORS.INVALID_TOKEN,
+                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                  boError: ERRORS.INVALID_TOKEN,
                 });
                 return;
               }
@@ -265,7 +265,7 @@ export class Accounts {
       /* Check if the recover is enabled */
       const recoverType = Objects.get(application, 'settings.recover', APPLICATION_RECOVER_TYPE.APP_RT_LINK);
       if (recoverType === APPLICATION_RECOVER_TYPE.APP_RT_DISABLED) {
-        reject({ error: ERRORS.RECOVER_NOT_ALLOWED });
+        reject({ boError: ERRORS.RECOVER_NOT_ALLOWED });
         return;
       }
 
@@ -277,8 +277,8 @@ export class Accounts {
         .then((value: DAccount) => {
           if (!value) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
             });
             return;
           }
@@ -316,8 +316,8 @@ export class Accounts {
         .then((value: DAccount) => {
           if (!value) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.INVALID_CREDENTIALS,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.INVALID_CREDENTIALS,
             });
             return;
           }
@@ -333,8 +333,8 @@ export class Accounts {
         .then((value: DAccount) => {
           if (!value) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
             });
             return;
           }
@@ -343,20 +343,20 @@ export class Accounts {
           switch (value.status) {
             case ACCOUNT_STATUS.AS_CANCELLED:
               reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_CANCELLED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_CANCELLED,
               });
               return;
             case ACCOUNT_STATUS.AS_DISABLED_BY_ADMIN:
               reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_DISABLED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_DISABLED,
               });
               return;
             case ACCOUNT_STATUS.AS_TEMPORALLY_BLOCKED:
               reject({
-                code: HTTP_STATUS.HTTP_FORBIDDEN,
-                error: ERRORS.ACCOUNT_BLOCKED,
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.ACCOUNT_BLOCKED,
               });
               return;
           }
@@ -364,8 +364,8 @@ export class Accounts {
           /* Validate max attempts */
           if (value.resetToken.attempts > 3) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.MAX_ATTEMPTS,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.MAX_ATTEMPTS,
             });
             return;
           }
@@ -373,8 +373,8 @@ export class Accounts {
           /* Validate expiration time */
           if (value.resetToken.expires < Date.now()) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.TOKEN_EXPIRED,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.TOKEN_EXPIRED,
             });
             return;
           }
@@ -393,8 +393,8 @@ export class Accounts {
             .then((value: DAccount) => {
               if (!value) {
                 reject({
-                  code: HTTP_STATUS.HTTP_FORBIDDEN,
-                  error: ERRORS.INVALID_TOKEN,
+                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                  boError: ERRORS.INVALID_TOKEN,
                 });
                 return;
               }

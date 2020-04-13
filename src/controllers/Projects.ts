@@ -5,15 +5,15 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Projects.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-02T23:48:33-05:00
+ * @Last modified time: 2020-04-12T23:21:35-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Arrays } from '@ikoabo/core_srv';
+import { ERRORS } from '@ikoabo/auth_srv';
 import { MProject, DProject, IProject } from '../models/schemas/projects/project';
 import { MDomain, DDomain } from '../models/schemas/domain';
 import { PROJECT_STATUS } from '../models/types/state';
-import { ERRORS } from '../models/types/errors';
 
 export class Projects {
   private static _instance: Projects;
@@ -45,7 +45,7 @@ export class Projects {
       MProject.findOneAndUpdate({ _id: project }, { $set: { status: status } }, { new: true })
         .then((value: DProject) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_PROJECT });
+            reject({ boError: ERRORS.INVALID_PROJECT });
             return;
           }
           resolve(value);
@@ -65,7 +65,7 @@ export class Projects {
       MDomain.findById(domain)
         .then((value: DDomain) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_DOMAIN });
+            reject({ boError: ERRORS.INVALID_DOMAIN });
             return;
           }
 
@@ -92,7 +92,7 @@ export class Projects {
       MProject.findOneAndUpdate({ _id: project }, { $set: data }, { new: true })
         .then((value: DProject) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_PROJECT });
+            reject({ boError: ERRORS.INVALID_PROJECT });
             return;
           }
           resolve(value);
@@ -110,7 +110,7 @@ export class Projects {
       MProject.findOne({ _id: project })
         .then((value: DProject) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_PROJECT });
+            reject({ boError: ERRORS.INVALID_PROJECT });
             return;
           }
           resolve(value);
@@ -156,7 +156,7 @@ export class Projects {
       MProject.findOneAndUpdate({ _id: project }, { $addToSet: { scope: scope } }, { new: true })
         .then((value: DProject) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_PROJECT });
+            reject({ boError: ERRORS.INVALID_PROJECT });
             return;
           }
           resolve(value);
@@ -175,7 +175,7 @@ export class Projects {
       MProject.findOneAndUpdate({ _id: project }, { $pull: { scope: scope } }, { new: true })
         .then((value: DProject) => {
           if (!value) {
-            reject({ error: ERRORS.INVALID_PROJECT });
+            reject({ boError: ERRORS.INVALID_PROJECT });
             return;
           }
           resolve(value);

@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: oauth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-06T00:34:17-05:00
+ * @Last modified time: 2020-04-12T23:22:02-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -14,8 +14,8 @@ import {
   RefreshToken, RefreshTokenModel, Token, User
 } from 'oauth2-server';
 import { Logger, Objects, Arrays, Token as TokenUtility, HTTP_STATUS } from '@ikoabo/core_srv';
+import { ERRORS } from '@ikoabo/auth_srv';
 import { DEFAULT_SCOPES } from './types/scope';
-import { ERRORS } from './types/errors';
 import { UserAccount } from '../policy/UserAccount';
 import { MCode, DCode } from './schemas/oauth/code';
 import { MToken, DToken } from './schemas/oauth/token';
@@ -73,8 +73,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
         .then((value: DCode) => {
           if (!value || !value.application) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.INVALID_AUTHORIZATION_CODE,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.INVALID_AUTHORIZATION_CODE,
             });
             return;
           }
@@ -220,8 +220,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
         .then((user: DAccount) => {
           if (!user) {
             reject({
-              code: HTTP_STATUS.HTTP_NOT_FOUND,
-              error: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
+              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
             });
             return;
           }
@@ -235,8 +235,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
 
             if (!match) {
               reject({
-                code: HTTP_STATUS.HTTP_UNAUTHORIZED,
-                error: ERRORS.INVALID_CREDENTIALS,
+                boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
+                boError: ERRORS.INVALID_CREDENTIALS,
               });
               return;
             }
@@ -311,8 +311,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
       /* Check if client token don't expire and there is no user involved */
       if (application.accessTokenLifetime === -1 && user.id !== application.id) {
         reject({
-          code: HTTP_STATUS.HTTP_FORBIDDEN,
-          error: ERRORS.NOT_ALLOWED_SIGNIN,
+          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+          boError: ERRORS.NOT_ALLOWED_SIGNIN,
         });
         return;
       }
@@ -361,8 +361,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
         .then((token: DToken) => {
           if (!token) {
             reject({
-              code: HTTP_STATUS.HTTP_UNAUTHORIZED,
-              error: ERRORS.INVALID_TOKEN,
+              boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
+              boError: ERRORS.INVALID_TOKEN,
             });
             return;
           }
@@ -371,8 +371,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
           const accesTokenLifetime: number = Objects.get(token.application, 'settings.lifetime.accessToken', 0);
           if (accesTokenLifetime === -1 && token.user && (<DAccount>token.user).id !== (<DApplication>token.application).id) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.NOT_ALLOWED_SIGNIN,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.NOT_ALLOWED_SIGNIN,
             });
             return;
           }
@@ -385,8 +385,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
           /* Check if the token is expired */
           if (token.accessTokenExpiresAt.getTime() < Date.now()) {
             reject({
-              code: HTTP_STATUS.HTTP_UNAUTHORIZED,
-              error: ERRORS.TOKEN_EXPIRED
+              boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
+              boError: ERRORS.TOKEN_EXPIRED
             });
             return;
           }
@@ -497,8 +497,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
         .then((token: DToken) => {
           if (!token) {
             reject({
-              code: HTTP_STATUS.HTTP_FORBIDDEN,
-              error: ERRORS.INVALID_TOKEN,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.INVALID_TOKEN,
             });
             return;
           }
@@ -506,8 +506,8 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
           /* Check if the token is expired */
           if (token.accessTokenExpiresAt.getTime() < Date.now()) {
             reject({
-              code: HTTP_STATUS.HTTP_UNAUTHORIZED,
-              error: ERRORS.TOKEN_EXPIRED,
+              boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
+              boError: ERRORS.TOKEN_EXPIRED,
             });
             return;
           }
