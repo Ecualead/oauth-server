@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: oauth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-12T23:22:02-05:00
+ * @Last modified time: 2020-04-13T03:49:33-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -47,10 +47,16 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
         /* Search for user project profile scope */
         AccountCtrl.getProfile(user.id, application.project)
           .then((value) => {
+            if(!scope || scope.length === 0){
+              scope = value.scope;
+            }
             resolve(Arrays.intersect(application.scope, scope, value.scope || []));
           }).catch(reject);
         return;
       } else {
+        if(!scope || scope.length === 0){
+          scope = application.scope;
+        }
         resolve(Arrays.intersect(application.scope, scope));
         return;
       }
