@@ -5,12 +5,13 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: accounts.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-06T03:11:45-05:00
+ * @Last modified time: 2020-04-13T03:40:50-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators } from '@ikoabo/core_srv';
+import { Mail } from '@ikoabo/comm_srv';
 import { Accounts } from '../../controllers/Accounts';
 import { OAuth2 } from '../../controllers/OAuth2';
 import { IAccount, DAccount } from '../../models/schemas/accounts/account';
@@ -19,6 +20,7 @@ import { RegisterValidation, AccountValidation, RecoverValidation, EmailValidati
 const router = Router();
 const AccountCtrl = Accounts.shared;
 const OAuth2Ctrl = OAuth2.shared;
+const MailCtrl = Mail.shared;
 
 
 router.post('/register',
@@ -40,12 +42,20 @@ router.post('/register',
         /* Register the user account into the given project */
         AccountCtrl.registerProject(value, req.body['profile'], res.locals['token'].client)
           .then((profile: DAccountProject) => {
-            res.locals['response'] = {
-              uid: profile.account,
-              scope: profile.scope,
-              profile: profile.profile,
-            };
-            next();
+            /* Send mail notification about the account creation */
+            MailCtrl.send(res.locals['token'].client.project.id, 'account-register', 'Cuenta de usuario registrada', 'es', value.email, [], [], {
+              name: value.name,
+              email: value.email,
+              phone: value.phone,
+              token: value.resetToken.token
+            }).finally(() => {
+              res.locals['response'] = {
+                uid: profile.account,
+                scope: profile.scope,
+                profile: profile.profile,
+              };
+              next();
+            });
           }).catch(next);
       }).catch(next);
   },
@@ -74,8 +84,17 @@ router.post('/recover/request',
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
     AccountCtrl.requestRecover(req.body['email'], res.locals['token'].client)
-      .then(() => {
-        res.locals['response'] = { email: req.body['email'] };
+      .then((value: DAccount) => {
+        /* Send mail notification about the account creation */
+        MailCtrl.send(res.locals['token'].client.project.id, 'account-recover', 'Recuperación de cuenta de usuario', 'es', value.email, [], [], {
+          name: value.name,
+          email: value.email,
+          phone: value.phone,
+          token: value.resetToken.token
+        }).finally(() => {
+          res.locals['response'] = { email: req.body['email'] };
+          next();
+        });
         next();
       }).catch(next);
   },
