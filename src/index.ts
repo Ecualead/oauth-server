@@ -5,13 +5,14 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: index.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-12T23:57:42-05:00
+ * @Last modified time: 2020-04-13T03:28:42-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Settings } from './controllers/Settings';
 import { ClusterServer, Logger } from '@ikoabo/core_srv';
 import { Authenticator } from '@ikoabo/auth_srv';
+import { Mail } from '@ikoabo/comm_srv';
 import { AccountsProject } from './controllers/AccountsProject';
 import DomainRouter from './routers/v1/domains';
 import ProjectRouter from './routers/v1/projects';
@@ -24,6 +25,9 @@ Authenticator.shared.authService(Settings.AUTH.ID, Settings.AUTH.SECRET)
   .then(() => { })
   .catch(() => { })
   .finally(() => {
+    /* Initialize mail component */
+    Mail.shared.setup(Settings.NOTIFICATIONS.SERVER, Authenticator.shared.token);
+
     /* Initialize cluster server */
     const clusterServer = ClusterServer.setup(Settings, { postMongo: initializeProjects });
 
