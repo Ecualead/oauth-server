@@ -31,7 +31,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@ikoabo/auth_srv": "^1.0.1",
-    "@ikoabo/core_srv": "^1.0.8",
+    "@ikoabo/core_srv": "^1.0.9",
     "async": "^3.2.0",
     "bcrypt": "^4.0.1",
     "bcrypt-nodejs": "0.0.3",
