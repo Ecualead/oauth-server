@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Settings.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T07:16:45-05:00
+ * @Last modified time: 2020-04-12T23:37:59-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -33,4 +33,11 @@ export const Settings: ISettings = {
   MONGODB: {
     URI: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ikoabo_auth',
   },
+
+  /* Authentication server */
+  AUTH: {
+    SERVER: process.env.AUTH_SERVER || 'https://auth.ikoabo.com',
+    ID: process.env.AUTH_ID,
+    SECRET: process.env.AUTH_SECRET,
+  }
 }
