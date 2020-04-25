@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: index.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-25T05:58:01-05:00
+ * @Last modified time: 2020-04-25T06:26:28-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -55,7 +55,7 @@ function requestCredentials(): Promise<void> {
 }
 
 /* Initialize cluster server */
-const clusterServer = ClusterServer.setup(Settings, { postExpress: requestCredentials, postMongo: initializeProjects });
+const clusterServer = ClusterServer.setup(Settings, { running: requestCredentials, postMongo: initializeProjects });
 
 /* Run cluster with base routes */
 clusterServer.run({

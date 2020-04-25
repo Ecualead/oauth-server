@@ -30,9 +30,9 @@
   "homepage": "https://gitlab.com/ikoabo/services/auth#readme",
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "@ikoabo/auth_srv": "^1.0.4",
+    "@ikoabo/auth_srv": "^1.0.5",
     "@ikoabo/comm_srv": "^1.0.0",
-    "@ikoabo/core_srv": "^1.0.9",
+    "@ikoabo/core_srv": "^1.0.10",
     "async": "^3.2.0",
     "bcrypt": "^4.0.1",
     "bcrypt-nodejs": "0.0.3",
