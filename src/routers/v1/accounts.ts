@@ -59,6 +59,7 @@ router.post('/register',
           }).catch(next);
       }).catch(next);
   },
+  OAuth2Ctrl.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -74,6 +75,7 @@ router.post('/confirm',
         next();
       }).catch(next);
   },
+  OAuth2Ctrl.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -98,6 +100,7 @@ router.post('/recover/request',
         next();
       }).catch(next);
   },
+  OAuth2Ctrl.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -113,6 +116,7 @@ router.post('/recover/validate',
         next();
       }).catch(next);
   },
+  OAuth2Ctrl.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -128,6 +132,7 @@ router.post('/recover/store',
         next();
       }).catch(next);
   },
+  OAuth2Ctrl.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );

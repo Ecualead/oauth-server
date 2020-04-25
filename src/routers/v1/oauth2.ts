@@ -5,12 +5,12 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: oauth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-06T00:41:22-05:00
+ * @Last modified time: 2020-04-25T03:26:25-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { AuthorizationCode, Token, Request as ORequest, Response as OResponse } from 'oauth2-server';
+import { AuthorizationCode, Token, Request as ORequest, Response as OResponse, OAuthError } from 'oauth2-server';
 import { ResponseHandler } from '@ikoabo/core_srv';
 import { OAuth2 } from '../../controllers/OAuth2';
 
@@ -46,6 +46,7 @@ router.post('/authorize',
       next();
     }).catch(next);
   },
+  OAuth2Server.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -110,10 +111,7 @@ router.post('/token',
   next();
 }).catch(next);
 },*/
-  (err: any, req: Request, res: Response, next: NextFunction) => {
-    console.log(err);
-    next(err);
-  },
+  OAuth2Server.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -138,6 +136,7 @@ router.post('/authenticate',
       next();
     }).catch(next);
   },
+  OAuth2Server.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -153,6 +152,7 @@ router.post('/logout',
         next();
       }).catch(next);
   },
+  OAuth2Server.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
