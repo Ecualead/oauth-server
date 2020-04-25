@@ -30,7 +30,7 @@
   "homepage": "https://gitlab.com/ikoabo/services/auth#readme",
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "@ikoabo/auth_srv": "^1.0.5",
+    "@ikoabo/auth_srv": "^1.0.6",
     "@ikoabo/comm_srv": "^1.0.0",
     "@ikoabo/core_srv": "^1.0.10",
     "async": "^3.2.0",
