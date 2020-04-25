@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: oauth2.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-13T03:49:33-05:00
+ * @Last modified time: 2020-04-25T03:19:49-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -297,6 +297,10 @@ export class OAuth2 implements PasswordModel, ClientCredentialsModel, Authorizat
       MApplication.findOne(clientQuery)
         .populate('project')
         .then((value: DApplication) => {
+          if(!value){
+            reject({boError: ERRORS.INVALID_APPLICATION});
+            return;
+          }
           resolve(value.toClient());
         }).catch(reject);
     });
