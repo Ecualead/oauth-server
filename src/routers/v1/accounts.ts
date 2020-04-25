@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: accounts.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-13T03:40:50-05:00
+ * @Last modified time: 2020-04-25T10:47:15-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -45,9 +45,8 @@ router.post('/register',
             /* Send mail notification about the account creation */
             MailCtrl.send(res.locals['token'].client.project.id, 'account-register', 'Cuenta de usuario registrada', 'es', value.email, [], [], {
               name: value.name,
-              email: value.email,
               phone: value.phone,
-              token: value.resetToken.token
+              link: `https://rc19.ikoabo.com/confirm?email=${value.email}&token=${value.resetToken.token}`,
             }).finally(() => {
               res.locals['response'] = {
                 uid: profile.account,

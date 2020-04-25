@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: notification_settings.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T00:00:24-05:00
+ * @Last modified time: 2020-04-25T10:40:48-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -23,6 +23,10 @@ export interface INotificationSettings {
   chDrv: boolean;
   chPwd: boolean;
   recover: boolean;
+  urls?: {
+    confirm?: string;
+    recover?: string;
+  };
 }
 
 /**
@@ -41,4 +45,8 @@ export const SNotificationSettings = new mongoose.Schema({
   chDrv: { type: Boolean, required: true, default: false },
   chPwd: { type: Boolean, required: true, default: false },
   recover: { type: Boolean, required: true, default: false },
+  urls: {
+    confirm: String,
+    recover: String,
+  },
 }, { timestamps: true });
