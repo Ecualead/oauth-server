@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: domain.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-01T17:39:08-05:00
+ * @Last modified time: 2020-04-25T05:33:33-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -22,7 +22,7 @@ export interface IDomain {
   name: string;
   description?: string;
   owner?: string;
-  scope?: string | string[];
+  scope?: string[];
   status?: number;
   createdAt?: Date;
 }
