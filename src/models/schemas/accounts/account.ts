@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: account.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T03:40:46-05:00
+ * @Last modified time: 2020-04-25T11:42:59-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -38,6 +38,7 @@ export interface IAccount {
     google?: DGoogle,
     twitter?: DTwitter
   };
+  createdAt: Date;
 }
 
 /**
