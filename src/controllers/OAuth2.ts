@@ -11,7 +11,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import OAuth2Server from 'oauth2-server';
-import { Token, Request as ORequest, Response as OResponse } from 'oauth2-server';
+import { Token, Request as ORequest, Response as OResponse, OAuthError } from 'oauth2-server';
 import { HTTP_STATUS } from '@ikoabo/core_srv';
 import { ERRORS } from '@ikoabo/auth_srv';
 import { OAuth2 as OAuth2Model } from '../models/oauth2';
@@ -79,5 +79,13 @@ export class OAuth2 {
         next();
       }).catch(next);
     };
+  }
+
+  public handleError(err: any, re: Request, res: Response, next: NextFunction) {
+    if (err instanceof OAuthError) {
+      next(err.message);
+      return;
+    }
+    next(err);
   }
 }
