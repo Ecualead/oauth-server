@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: state.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-03T00:09:21-05:00
+ * @Last modified time: 2020-04-29T16:03:52-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -30,9 +30,9 @@ export enum APPLICATION_STATUS {
 export enum LIFETIME_TYPES {
   LT_INHERIT = 0,
   LT_INFINITE = -1,
-  LT_ONE_WEEK = 604800,
-  LT_ONE_MONTH = 2592000,
-  LT_ONE_YEAR = 31536000,
+  LT_ONE_WEEK = 604800000,
+  LT_ONE_MONTH = 2592000000,
+  LT_ONE_YEAR = 31536000000,
 }
 
 export enum EMAIL_CONFIRMATION {
