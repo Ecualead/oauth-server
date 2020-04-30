@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: application.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-04T00:01:56-05:00
+ * @Last modified time: 2020-04-30T01:39:17-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -65,8 +65,8 @@ const SApplication = new mongoose.Schema({
   authTypes: [String],
   settings: {
     lifetime: {
-      accessToken: { type: Number, required: true, default: LIFETIME_TYPES.LT_INHERIT },
-      refreshToken: { type: Number, required: true, default: LIFETIME_TYPES.LT_INHERIT },
+      accessToken: { type: Number, required: true, default: LIFETIME_TYPES.LT_ONE_MONTH },
+      refreshToken: { type: Number, required: true, default: LIFETIME_TYPES.LT_ONE_YEAR },
     },
     recover: { type: Number, required: true, default: APPLICATION_RECOVER_TYPE.APP_RT_DISABLED },
     restrictIps: [SApplicationRestrictIp],
