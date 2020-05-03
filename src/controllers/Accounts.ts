@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: Accounts.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-13T03:39:49-05:00
+ * @Last modified time: 2020-05-03T18:10:34-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -20,8 +20,10 @@ import { ACCOUNT_STATUS, RECOVER_TOKEN_STATUS } from '../models/types/account';
 import { EMAIL_CONFIRMATION } from '../models/types/state';
 import { APPLICATION_RECOVER_TYPE } from '../models/types/application';
 import { SCP_ACCOUNT_DEFAULT, SCP_NON_INHERITABLE, SCP_PREVENT } from '../models/types/scope';
+import { Code } from './Code';
 
 const AccountProjectCtrl = AccountsProject.shared;
+const CodeCtrl = Code.shared;
 
 export class Accounts {
   private static _instance: Accounts;
@@ -55,41 +57,47 @@ export class Accounts {
             return;
           }
 
-          /* Get initial user status by email confirmation policy */
-          const confirmationPolicy = Objects.get(application.project, 'settings.emailConfirmation.type', EMAIL_CONFIRMATION.EC_CONFIRMATION_NOT_REQUIRED);
-          let status = ACCOUNT_STATUS.AS_REGISTERED;
-          switch (confirmationPolicy) {
-            case EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME:
-              status = ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_AUTH;
-              break;
-            case EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED:
-              status = ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH;
-              break;
-          }
+          /* Request user code creation */
+          CodeCtrl.code.then((code: string) => {
+            /* Set the user code */
+            data.code = code;
 
-          /* Set the new user status */
-          data.status = status;
+            /* Get initial user status by email confirmation policy */
+            const confirmationPolicy = Objects.get(application.project, 'settings.emailConfirmation.type', EMAIL_CONFIRMATION.EC_CONFIRMATION_NOT_REQUIRED);
+            let status = ACCOUNT_STATUS.AS_REGISTERED;
+            switch (confirmationPolicy) {
+              case EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME:
+                status = ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_AUTH;
+                break;
+              case EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED:
+                status = ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH;
+                break;
+            }
 
-          /* Set the confirmation expiration */
-          if (status === ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_AUTH) {
-            data.confirmationExpires = Date.now() + Objects.get(application.project, 'settings.emailConfirmation.time', 0) * 3600000;
-          }
+            /* Set the new user status */
+            data.status = status;
 
-          /* Set the confirmation token information if its necessary */
-          const recoverType = Objects.get(application, 'settings.recover', APPLICATION_RECOVER_TYPE.APP_RT_LINK);
-          if (status !== ACCOUNT_STATUS.AS_REGISTERED && recoverType !== APPLICATION_RECOVER_TYPE.APP_RT_DISABLED) {
-            data.resetToken = {
-              token: recoverType !== APPLICATION_RECOVER_TYPE.APP_RT_LINK ? Token.shortToken : Token.longToken,
-              attempts: 0,
-              status: RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
-              expires: Date.now() + 86400000 // 24 hours
-            };
-          }
+            /* Set the confirmation expiration */
+            if (status === ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_AUTH) {
+              data.confirmationExpires = Date.now() + Objects.get(application.project, 'settings.emailConfirmation.time', 0) * 3600000;
+            }
 
-          this._logger.debug('Registering new user account', data);
+            /* Set the confirmation token information if its necessary */
+            const recoverType = Objects.get(application, 'settings.recover', APPLICATION_RECOVER_TYPE.APP_RT_LINK);
+            if (status !== ACCOUNT_STATUS.AS_REGISTERED && recoverType !== APPLICATION_RECOVER_TYPE.APP_RT_DISABLED) {
+              data.resetToken = {
+                token: recoverType !== APPLICATION_RECOVER_TYPE.APP_RT_LINK ? Token.shortToken : Token.longToken,
+                attempts: 0,
+                status: RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
+                expires: Date.now() + 86400000 // 24 hours
+              };
+            }
 
-          /* Register the new user */
-          MAccount.create(data).then(resolve).catch(reject);
+            this._logger.debug('Registering new user account', data);
+
+            /* Register the new user */
+            MAccount.create(data).then(resolve).catch(reject);
+          }).catch(reject);
         }).catch(reject);
     });
   }

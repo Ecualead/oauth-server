@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: account.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-04-25T11:44:56-05:00
+ * @Last modified time: 2020-05-03T16:47:45-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -20,6 +20,7 @@ import { ACCOUNT_STATUS } from '../../types/account';
 export interface IAccount {
   id?: string;
   name?: string;
+  code?: string;
   email: string;
   phone?: string;
   password: string;
@@ -53,6 +54,7 @@ export type DAccount = mongoose.Document & IAccount & {
  */
 export const SAccount = new mongoose.Schema({
   name: String,
+  code: String,
   email: String,
   phone: String,
   password: String,
