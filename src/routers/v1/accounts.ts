@@ -5,7 +5,7 @@
  * @Project: IKOABO Auth Microservice API
  * @Filename: accounts.ts
  * @Last modified by:   millo
- * @Last modified time: 2020-05-03T18:28:22-05:00
+ * @Last modified time: 2020-05-20T04:32:42-05:00
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
@@ -48,7 +48,7 @@ router.post('/register',
               code: value.code,
               phone: value.phone,
               date: value.createdAt,
-              link: `https://rc19.ikoabo.com/confirm?email=${value.email}&token=${value.resetToken.token}`,
+              link: `https://www.mapa-c19.com/confirm?email=${value.email}&token=${value.resetToken.token}`,
             }).finally(() => {
               res.locals['response'] = {
                 uid: profile.account,
