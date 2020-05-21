@@ -10,7 +10,7 @@
  */
 
 import * as mongoose from 'mongoose';
-import { NOTIFICATION_TYPES } from '../../types/notification';
+import { NOTIFICATION_TYPES } from '@/models/types/notification';
 /**
  * Notification settings interface
  */

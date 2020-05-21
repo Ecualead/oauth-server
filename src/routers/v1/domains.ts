@@ -11,10 +11,10 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators, Arrays } from '@ikoabo/core_srv';
-import { Domains } from '../../controllers/Domains';
-import { DomainCreate, DomainUpdate } from '../../models/joi/domain';
-import { CheckId, CheckStatus, Checkscope } from '../../models/joi/base';
-import { IDomain, DDomain } from '../../models/schemas/domain';
+import { Domains } from '@/controllers/Domains';
+import { DomainCreate, DomainUpdate } from '@/models/joi/domain';
+import { CheckId, CheckStatus, Checkscope } from '@/models/joi/base';
+import { IDomain, DDomain } from '@/models/schemas/domain';
 
 const router = Router();
 const DomainCtrl = Domains.shared;

@@ -9,18 +9,19 @@
  * @Copyright: Copyright 2020 IKOA Business Opportunity
  */
 
-import { Settings } from './controllers/Settings';
+import "module-alias/register";
+import { Settings } from '@/config/Settings';
 import { ClusterServer } from '@ikoabo/core_srv';
 import { Authenticator } from '@ikoabo/auth_srv';
 import { Mail } from '@ikoabo/comm_srv';
-import { AccountsProject } from './controllers/AccountsProject';
-import DomainRouter from './routers/v1/domains';
-import ProjectRouter from './routers/v1/projects';
-import ApplicationRouter from './routers/v1/applications';
-import AccountRouter from './routers/v1/accounts';
-import OAuth2Router from './routers/v1/oauth2';
+import { AccountsProject } from '@/controllers/AccountsProject';
+import DomainRouter from '@/routers/v1/domains';
+import ProjectRouter from '@/routers/v1/projects';
+import ApplicationRouter from '@/routers/v1/applications';
+import AccountRouter from '@/routers/v1/accounts';
+import OAuth2Router from '@/routers/v1/oauth2';
 import AsyncLock from 'async-lock';
-import { Code } from './controllers/Code';
+import { Code } from '@/controllers/Code';
 
 const lock = new AsyncLock();
 const CodeCtrl: Code = Code.shared;

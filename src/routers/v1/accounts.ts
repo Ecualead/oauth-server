@@ -12,11 +12,11 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators } from '@ikoabo/core_srv';
 import { Mail } from '@ikoabo/comm_srv';
-import { Accounts } from '../../controllers/Accounts';
-import { OAuth2 } from '../../controllers/OAuth2';
-import { IAccount, DAccount } from '../../models/schemas/accounts/account';
-import { DAccountProject } from '../../models/schemas/accounts/project';
-import { RegisterValidation, AccountValidation, RecoverValidation, EmailValidation } from '../../models/joi/account';
+import { Accounts } from '@/controllers/Accounts';
+import { OAuth2 } from '@/controllers/OAuth2';
+import { IAccount, DAccount } from '@/models/schemas/accounts/account';
+import { DAccountProject } from '@/models/schemas/accounts/project';
+import { RegisterValidation, AccountValidation, RecoverValidation, EmailValidation } from '@/models/joi/account';
 const router = Router();
 const AccountCtrl = Accounts.shared;
 const OAuth2Ctrl = OAuth2.shared;

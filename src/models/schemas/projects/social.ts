@@ -10,7 +10,7 @@
  */
 
 import * as mongoose from 'mongoose';
-import { SOCIAL_NETWORK_TYPES } from '../../types/social_network';
+import { SOCIAL_NETWORK_TYPES } from '@/models/types/social_network';
 
 /**
  * Project social mapping fields to profile

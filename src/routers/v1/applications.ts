@@ -11,10 +11,10 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators, Arrays } from '@ikoabo/core_srv';
-import { Applications } from '../../controllers/Applications';
-import { ApplicationCreate, ApplicationUpdate } from '../../models/joi/application';
-import { CheckId, CheckStatus, Checkscope } from '../../models/joi/base';
-import { IApplication, DApplication } from '../../models/schemas/applications/application';
+import { Applications } from '@/controllers/Applications';
+import { ApplicationCreate, ApplicationUpdate } from '@/models/joi/application';
+import { CheckId, CheckStatus, Checkscope } from '@/models/joi/base';
+import { IApplication, DApplication } from '@/models/schemas/applications/application';
 
 const router = Router();
 const ApplicationCtrl = Applications.shared;

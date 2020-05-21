@@ -12,8 +12,8 @@
 import * as mongoose from 'mongoose';
 import { Arrays } from '@ikoabo/core_srv';
 import { Client, User, Token, RefreshToken } from 'oauth2-server';
-import { DAccount } from '../accounts/account';
-import { DApplication } from '../applications/application';
+import { DAccount } from '@/models/schemas/accounts/account';
+import { DApplication } from '@/models/schemas/applications/application';
 
 /**
  * Token interface

@@ -10,7 +10,7 @@
  */
 
 import * as mongoose from 'mongoose';
-import { APPLICATION_IP_RESTRICTION } from '../../types/application';
+import { APPLICATION_IP_RESTRICTION } from '@/models/types/application';
 
 /**
  * Application restrict ip interface

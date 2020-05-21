@@ -10,7 +10,7 @@
  */
 
 import * as mongoose from 'mongoose';
-import { PROFILE_FIELD_TYPES } from '../../types/profile';
+import { PROFILE_FIELD_TYPES } from '@/models/types/profile';
 
 /**
  * Project profile field interface

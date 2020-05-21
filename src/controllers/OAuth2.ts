@@ -14,7 +14,7 @@ import OAuth2Server from 'oauth2-server';
 import { Token, Request as ORequest, Response as OResponse, OAuthError } from 'oauth2-server';
 import { HTTP_STATUS } from '@ikoabo/core_srv';
 import { ERRORS } from '@ikoabo/auth_srv';
-import { OAuth2 as OAuth2Model } from '../models/oauth2';
+import { OAuth2 as OAuth2Model } from '@/models/oauth2';
 
 export class OAuth2 {
   private static _instance: OAuth2;

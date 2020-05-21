@@ -11,10 +11,10 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { ResponseHandler, Validators, Arrays } from '@ikoabo/core_srv';
-import { Projects } from '../../controllers/Projects';
-import { ProjectCreate, ProjectUpdate } from '../../models/joi/project';
-import { CheckId, CheckStatus, Checkscope } from '../../models/joi/base';
-import { IProject, DProject } from '../../models/schemas/projects/project';
+import { Projects } from '@/controllers/Projects';
+import { ProjectCreate, ProjectUpdate } from '@/models/joi/project';
+import { CheckId, CheckStatus, Checkscope } from '@/models/joi/base';
+import { IProject, DProject } from '@/models/schemas/projects/project';
 
 const router = Router();
 const ProjectCtrl = Projects.shared;

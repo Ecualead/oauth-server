@@ -11,9 +11,9 @@
 
 import { Arrays } from '@ikoabo/core_srv';
 import { ERRORS } from '@ikoabo/auth_srv';
-import { MProject, DProject, IProject } from '../models/schemas/projects/project';
-import { MDomain, DDomain } from '../models/schemas/domain';
-import { PROJECT_STATUS } from '../models/types/state';
+import { MProject, DProject, IProject } from '@/models/schemas/projects/project';
+import { MDomain, DDomain } from '@/models/schemas/domain';
+import { PROJECT_STATUS } from '@/models/types/state';
 
 export class Projects {
   private static _instance: Projects;

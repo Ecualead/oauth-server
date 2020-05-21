@@ -11,8 +11,8 @@
 
 import * as mongoose from 'mongoose';
 import { Arrays } from '@ikoabo/core_srv';
-import { ISocialCredential, DSocialCredential, SSocialCredential } from './social';
-import { ACCOUNT_STATUS } from '../../types/account';
+import { ISocialCredential, DSocialCredential, SSocialCredential } from '@/models/schemas/accounts/social';
+import { ACCOUNT_STATUS } from '@/models/types/account';
 
 /**
  * User account project interface

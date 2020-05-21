@@ -11,9 +11,9 @@
 
 import { Arrays, Token } from '@ikoabo/core_srv';
 import { ERRORS } from '@ikoabo/auth_srv';
-import { MApplication, DApplication, IApplication } from '../models/schemas/applications/application';
-import { MProject, DProject } from '../models/schemas/projects/project';
-import { APPLICATION_STATUS } from '../models/types/state';
+import { MApplication, DApplication, IApplication } from '@/models/schemas/applications/application';
+import { MProject, DProject } from '@/models/schemas/projects/project';
+import { APPLICATION_STATUS } from '@/models/types/state';
 
 export class Applications {
   private static _instance: Applications;

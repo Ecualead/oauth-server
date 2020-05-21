@@ -10,8 +10,8 @@
  */
 
  import { ERRORS } from '@ikoabo/auth_srv';
-import { MDomain, DDomain, IDomain } from '../models/schemas/domain';
-import { DOMAIN_STATUS } from '../models/types/state';
+import { MDomain, DDomain, IDomain } from '@/models/schemas/domain';
+import { DOMAIN_STATUS } from '@/models/types/state';
 
 /**
  * Class to handle Auth domains

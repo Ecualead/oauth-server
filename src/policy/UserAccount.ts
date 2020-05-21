@@ -11,11 +11,11 @@
 
 import { Objects, HTTP_STATUS } from '@ikoabo/core_srv';
 import { ERRORS } from '@ikoabo/auth_srv';
-import { DAccount } from '../models/schemas/accounts/account';
-import { MAccountProject, DAccountProject } from '../models/schemas/accounts/project';
-import { DProject } from '../models/schemas/projects/project';
-import { ACCOUNT_STATUS } from '../models/types/account';
-import { EMAIL_CONFIRMATION } from '../models/types/state';
+import { DAccount } from '@/models/schemas/accounts/account';
+import { MAccountProject, DAccountProject } from '@/models/schemas/accounts/project';
+import { DProject } from '@/models/schemas/projects/project';
+import { ACCOUNT_STATUS } from '@/models/types/account';
+import { EMAIL_CONFIRMATION } from '@/models/types/state';
 
 export class UserAccount {
   public static canSignin(user: DAccount, project: DProject, checkLocal?: boolean): Promise<boolean> {

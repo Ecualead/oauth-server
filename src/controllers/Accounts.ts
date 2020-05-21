@@ -11,16 +11,16 @@
 
 import { Logger, Token, Objects, Arrays, HTTP_STATUS } from '@ikoabo/core_srv'
 import { ERRORS } from '@ikoabo/auth_srv';
-import { MAccount, DAccount, IAccount } from '../models/schemas/accounts/account';
-import { AccountsProject } from './AccountsProject';
-import { DAccountProject } from '../models/schemas/accounts/project';
-import { DProject } from '../models/schemas/projects/project';
-import { DApplication } from '../models/schemas/applications/application';
-import { ACCOUNT_STATUS, RECOVER_TOKEN_STATUS } from '../models/types/account';
-import { EMAIL_CONFIRMATION } from '../models/types/state';
-import { APPLICATION_RECOVER_TYPE } from '../models/types/application';
-import { SCP_ACCOUNT_DEFAULT, SCP_NON_INHERITABLE, SCP_PREVENT } from '../models/types/scope';
-import { Code } from './Code';
+import { MAccount, DAccount, IAccount } from '@/models/schemas/accounts/account';
+import { AccountsProject } from '@/controllers/AccountsProject';
+import { DAccountProject } from '@/models/schemas/accounts/project';
+import { DProject } from '@/models/schemas/projects/project';
+import { DApplication } from '@/models/schemas/applications/application';
+import { ACCOUNT_STATUS, RECOVER_TOKEN_STATUS } from '@/models/types/account';
+import { EMAIL_CONFIRMATION } from '@/models/types/state';
+import { APPLICATION_RECOVER_TYPE } from '@/models/types/application';
+import { SCP_ACCOUNT_DEFAULT, SCP_NON_INHERITABLE, SCP_PREVENT } from '@/models/types/scope';
+import { Code } from '@/controllers/Code';
 
 const AccountProjectCtrl = AccountsProject.shared;
 const CodeCtrl = Code.shared;

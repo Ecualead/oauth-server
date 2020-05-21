@@ -15,14 +15,14 @@ import {
 } from 'oauth2-server';
 import { Logger, Objects, Arrays, Token as TokenUtility, HTTP_STATUS } from '@ikoabo/core_srv';
 import { ERRORS } from '@ikoabo/auth_srv';
-import { DEFAULT_SCOPES } from './types/scope';
-import { UserAccount } from '../policy/UserAccount';
-import { MCode, DCode } from './schemas/oauth/code';
-import { MToken, DToken } from './schemas/oauth/token';
-import { MAccount, DAccount } from './schemas/accounts/account';
-import { MApplication, DApplication } from './schemas/applications/application';
-import { DProject } from './schemas/projects/project';
-import { Accounts } from '../controllers/Accounts';
+import { DEFAULT_SCOPES } from '@/models/types/scope';
+import { UserAccount } from '@/policy/UserAccount';
+import { MCode, DCode } from '@/models/schemas/oauth/code';
+import { MToken, DToken } from '@/models/schemas/oauth/token';
+import { MAccount, DAccount } from '@/models/schemas/accounts/account';
+import { MApplication, DApplication } from '@/models/schemas/applications/application';
+import { DProject } from '@/models/schemas/projects/project';
+import { Accounts } from '@/controllers/Accounts';
 
 const AccountCtrl = Accounts.shared;
 

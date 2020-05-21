@@ -11,8 +11,8 @@
 
 import mongoose from 'mongoose';
 import { Arrays } from '@ikoabo/core_srv';
-import { DOMAIN_STATUS } from '../types/state';
-import { SCP_DOMAIN_DEFAULT, SCP_PREVENT } from '../types/scope';
+import { DOMAIN_STATUS } from '@/models/types/state';
+import { SCP_DOMAIN_DEFAULT, SCP_PREVENT } from '@/models/types/scope';
 
 /**
  * Domain interface

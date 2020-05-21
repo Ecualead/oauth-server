@@ -12,10 +12,10 @@
 import * as mongoose from 'mongoose';
 import { Arrays, Token } from '@ikoabo/core_srv';
 import { Client } from 'oauth2-server';
-import { IApplicationRestrictIp, SApplicationRestrictIp, DApplicationRestrictIp } from './restrict_ip';
-import { DProject } from '../projects/project';
-import { LIFETIME_TYPES, APPLICATION_STATUS } from '../../types/state';
-import { APPLICATION_TYPES, APPLICATION_RECOVER_TYPE } from '../../types/application';
+import { IApplicationRestrictIp, SApplicationRestrictIp, DApplicationRestrictIp } from '@/models/schemas/applications/restrict_ip';
+import { DProject } from '@/models/schemas/projects/project';
+import { LIFETIME_TYPES, APPLICATION_STATUS } from '@/models/types/state';
+import { APPLICATION_TYPES, APPLICATION_RECOVER_TYPE } from '@/models/types/application';
 
 /**
  * Application interface

@@ -12,7 +12,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { AuthorizationCode, Token, Request as ORequest, Response as OResponse, OAuthError } from 'oauth2-server';
 import { ResponseHandler } from '@ikoabo/core_srv';
-import { OAuth2 } from '../../controllers/OAuth2';
+import { OAuth2 } from '@/controllers/OAuth2';
 
 const router = Router();
 const OAuth2Server = OAuth2.shared;

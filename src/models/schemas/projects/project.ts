@@ -10,12 +10,12 @@
  */
 
 import * as mongoose from 'mongoose';
-import { IProjectSocial, DProjectSocial, SProjectSocial } from './social';
-import { IApplicationRestrictIp, SApplicationRestrictIp, DApplicationRestrictIp } from '../applications/restrict_ip';
-import { INotificationSettings, DNotificationSettings, SNotificationSettings } from './notification_settings';
-import { IProjectProfileField, DProjectProfileField, SProjectProfileField, IProjectProfileFieldIndex, DProjectProfileFieldIndex, SProjectProfileFieldIndex } from './profile';
-import { APPLICATION_RECOVER_TYPE } from '../../types/application';
-import { LIFETIME_TYPES, EMAIL_CONFIRMATION, PROJECT_STATUS } from '../../types/state';
+import { IProjectSocial, DProjectSocial, SProjectSocial } from '@/models/schemas/projects/social';
+import { IApplicationRestrictIp, SApplicationRestrictIp, DApplicationRestrictIp } from '@/models/schemas/applications/restrict_ip';
+import { INotificationSettings, DNotificationSettings, SNotificationSettings } from '@/models/schemas/projects/notification_settings';
+import { IProjectProfileField, DProjectProfileField, SProjectProfileField, IProjectProfileFieldIndex, DProjectProfileFieldIndex, SProjectProfileFieldIndex } from '@/models/schemas/projects/profile';
+import { APPLICATION_RECOVER_TYPE } from '@/models/types/application';
+import { LIFETIME_TYPES, EMAIL_CONFIRMATION, PROJECT_STATUS } from '@/models/types/state';
 
 /**
  * Project interface

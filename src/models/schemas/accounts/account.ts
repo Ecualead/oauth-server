@@ -12,7 +12,7 @@
 import * as mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import { DFacebook, SFacebook, DGoogle, SGoogle, DTwitter, STwitter } from './social';
-import { ACCOUNT_STATUS } from '../../types/account';
+import { ACCOUNT_STATUS } from '@/models/types/account';
 
 /**
  * User account interface

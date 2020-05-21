@@ -12,12 +12,12 @@
 import mongoose from 'mongoose';
 import async from 'async';
 import { Logger, Objects } from '@ikoabo/core_srv'
-import { MProject, DProject } from '../models/schemas/projects/project';
-import { MAccountProject } from '../models/schemas/accounts/project';
-import { DProjectProfileField, DProjectProfileFieldIndex } from '../models/schemas/projects/profile';
-import { PROTECTED_PROJECT_FIELDS } from '../models/types/account';
-import { PROJECT_STATUS } from '../models/types/state';
-import { PROFILE_FIELD_TYPES } from '../models/types/profile';
+import { MProject, DProject } from '@/models/schemas/projects/project';
+import { MAccountProject } from '@/models/schemas/accounts/project';
+import { DProjectProfileField, DProjectProfileFieldIndex } from '@/models/schemas/projects/profile';
+import { PROTECTED_PROJECT_FIELDS } from '@/models/types/account';
+import { PROJECT_STATUS } from '@/models/types/state';
+import { PROFILE_FIELD_TYPES } from '@/models/types/profile';
 
 interface ICustomProject {
   [key: string]: mongoose.Model<any>;

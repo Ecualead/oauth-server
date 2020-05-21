@@ -10,7 +10,7 @@
  */
 
 import Joi from '@hapi/joi';
-import { APPLICATION_TYPES } from '../types/application';
+import { APPLICATION_TYPES } from '@/models/types/application';
 
 export const ApplicationCreate = Joi.object().keys({
   name: Joi.string().required(),
