@@ -1,0 +1,8 @@
+.*
+.idea
+.vscode
+.gitmodules
+build
+dist
+package-lock.json
+node_modules
