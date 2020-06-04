@@ -123,7 +123,7 @@ export class Accounts {
           profile['status'] = ACCOUNT_STATUS.AS_REGISTERED;
 
           /* Set the new user scope using default values and application scope */
-          profile['scope'] = Arrays.force(SCP_ACCOUNT_DEFAULT, application.scope, SCP_NON_INHERITABLE);
+          profile['scope'] = Arrays.force(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE);
           profile['scope'] = profile['scope'].filter((scope: string) => SCP_PREVENT.indexOf(scope) < 0);
 
           /* Register the user into the current project */
