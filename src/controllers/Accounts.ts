@@ -312,6 +312,59 @@ export class Accounts {
     });
   }
 
+  public requestConfirmation(email: string, application: DApplication): Promise<DAccount> {
+    return new Promise<DAccount>((resolve, reject) => {
+      /* Check if the recover is enabled */
+      const recoverType = Objects.get(application, 'settings.recover', APPLICATION_RECOVER_TYPE.APP_RT_LINK);
+      if (recoverType === APPLICATION_RECOVER_TYPE.APP_RT_DISABLED) {
+        reject({ boError: ERRORS.RECOVER_NOT_ALLOWED });
+        return;
+      }
+
+      /* Look for the user by email */
+      MAccount.findOne({
+        email: email,
+        status: { $gt: ACCOUNT_STATUS.AS_UNKNOWN },
+      })
+        .then((value: DAccount) => {
+          if (!value) {
+            reject({
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
+            });
+            return;
+          }
+
+          if (value.status !== ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH) {
+            reject({
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_ALREADY_CONFIRMED,
+            });
+            return;
+          }
+
+          /* Prepare the reset token */
+          const reset = {
+            'resetToken.token': recoverType === APPLICATION_RECOVER_TYPE.APP_RT_CODE ? Token.shortToken : Token.longToken,
+            'resetToken.status': RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
+            'resetToken.attempts': 0,
+            'resetToken.expires': Date.now() + 86400000 // 24 hours
+          };
+
+          /* Register the reset token */
+          MAccount.findOneAndUpdate({ _id: value.id }, {
+            $set: reset,
+          }, { new: true })
+            .then((value: DAccount) => {
+              /* Show the verification token */
+              this._logger.debug('Account confirmation requested', { id: value.id, email: value.email, token: value.resetToken.token });
+              resolve(value);
+            }).catch(reject);
+        }).catch(reject);
+    });
+  }
+
+
   public checkRecover(email: string, token: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       MAccount.findOneAndUpdate({

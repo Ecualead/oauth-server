@@ -10,18 +10,23 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { ResponseHandler, Validators } from '@ikoabo/core_srv';
+import { AuthorizationCode, Token, Request as ORequest, Response as OResponse, OAuthError } from 'oauth2-server';
+import { ResponseHandler, Validators, ERRORS } from '@ikoabo/core_srv';
+import { ERRORS as AUTH_ERRORS } from '@ikoabo/auth_srv';
 import { Mail } from '@ikoabo/comm_srv';
 import { Accounts } from '../../controllers/Accounts';
 import { OAuth2 } from '../../controllers/OAuth2';
 import { IAccount, DAccount } from '../../models/schemas/accounts/account';
 import { DAccountProject } from '../../models/schemas/accounts/project';
 import { RegisterValidation, AccountValidation, RecoverValidation, EmailValidation } from '../../models/joi/account';
+import { Applications } from '../../controllers/Applications';
+import { DApplication } from '../../models/schemas/applications/application';
+
 const router = Router();
 const AccountCtrl = Accounts.shared;
 const OAuth2Ctrl = OAuth2.shared;
+const ApplicationCtrl = Applications.shared;
 const MailCtrl = Mail.shared;
-
 
 router.post('/register',
   Validators.joi(RegisterValidation),
@@ -64,6 +69,56 @@ router.post('/register',
   ResponseHandler.success,
   ResponseHandler.error
 );
+
+router.post('/resend',
+  (req: Request, res: Response, next: NextFunction) => {
+    let request = new ORequest(req);
+    let response = new OResponse(res);
+    OAuth2Ctrl.server.token(request, response).then((token: Token) => {
+      next();
+    }).catch(next);
+  },
+  (_req: Request, res: Response, next: NextFunction) => {
+    /* If there is no error then user account is confirmated and don't need resend the email */
+    next({ boError: ERRORS.INVALID_OPERATION });
+  },
+  OAuth2Ctrl.handleError,
+  (err: any, req: Request, _res: Response, next: NextFunction) => {
+    /* Check for email not confirmed error */
+    if (err.boError === AUTH_ERRORS.EMAIL_NOT_CONFIRMED) {
+      /* Extract credentials from authorization header */
+      const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
+      const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':')
+
+      if (!login) {
+        return next(err);
+      }
+
+      /* Fetch the requesting application */
+      ApplicationCtrl.get(login).then((value: DApplication) => {
+
+        /* Call to resend confirmation */
+        AccountCtrl.requestConfirmation(req.body[''], value).then((user: DAccount) => {
+          /* Send mail confirmation */
+          MailCtrl.send(value.project.toString(), 'account-register', 'Cuenta de usuario registrada', 'es', user.email, [], [], {
+            name: user.name,
+            code: user.code,
+            phone: user.phone,
+            date: user.createdAt,
+            link: `https://www.mapa-c19.com/confirm?email=${user.email}&token=${user.resetToken.token}`,
+          }).finally(() => {
+            next();
+          });
+        }).catch(next);
+      }).catch(next);
+      return;
+    }
+    next(err);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
 
 router.post('/confirm',
   Validators.joi(AccountValidation),
