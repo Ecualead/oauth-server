@@ -98,7 +98,7 @@ router.post('/resend',
       ApplicationCtrl.get(login).then((value: DApplication) => {
 
         /* Call to resend confirmation */
-        AccountCtrl.requestConfirmation(req.body[''], value).then((user: DAccount) => {
+        AccountCtrl.requestConfirmation(req.body['username'], value).then((user: DAccount) => {
           /* Send mail confirmation */
           MailCtrl.send(value.project.toString(), 'account-register', 'Cuenta de usuario registrada', 'es', user.email, [], [], {
             name: user.name,
