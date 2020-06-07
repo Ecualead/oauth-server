@@ -147,9 +147,9 @@ router.post('/recover/request',
         MailCtrl.send(res.locals['token'].client.project.id, 'account-recover', 'Recuperación de cuenta de usuario', 'es', value.email, [], [], {
           name: value.name,
           code: value.code,
-          email: value.email,
           phone: value.phone,
-          token: value.resetToken.token
+          date: new Date(),
+          link: `https://www.mapa-c19.com/confirm?email=${value.email}&token=${value.resetToken.token}`,
         }).finally(() => {
           res.locals['response'] = { email: req.body['email'] };
           next();
