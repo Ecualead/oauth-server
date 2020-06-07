@@ -149,7 +149,7 @@ router.post('/recover/request',
           code: value.code,
           phone: value.phone,
           date: new Date(),
-          link: `https://www.mapa-c19.com/confirm?email=${value.email}&token=${value.resetToken.token}`,
+          link: `https://www.mapa-c19.com/recover?email=${value.email}&token=${value.resetToken.token}`,
         }).finally(() => {
           res.locals['response'] = { email: req.body['email'] };
           next();
