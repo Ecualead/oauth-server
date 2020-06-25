@@ -7,3 +7,8 @@ export const ModuleValidation = Joi.object().keys({
   url: Joi.string().allow('').optional(),
   terms: Joi.string().allow('').optional(),
 });
+
+export const SubModuleValidation = Joi.object().keys({
+  id: Joi.objectId().required(),
+  module: Joi.objectId().required(),
+});
