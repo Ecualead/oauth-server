@@ -1,41 +1,35 @@
-/**
- * @Author: Reinier Millo Sánchez <millo>
- * @Date:   2020-04-01T07:10:00-05:00
- * @Email:  reinier.millo88@gmail.com
- * @Project: IKOABO Auth Microservice API
- * @Filename: index.ts
- * @Last modified by:   millo
- * @Last modified time: 2020-05-03T18:00:56-05:00
- * @Copyright: Copyright 2020 IKOA Business Opportunity
- */
-
 import "module-alias/register";
-import { Settings } from '@/config/Settings';
-import { ClusterServer } from '@ikoabo/core_srv';
-import { Authenticator } from '@ikoabo/auth_srv';
-import { Mail } from '@ikoabo/comm_srv';
-import { AccountsProject } from '@/controllers/AccountsProject';
-import DomainRouter from '@/routers/v1/domains';
-import ProjectRouter from '@/routers/v1/projects';
-import ApplicationRouter from '@/routers/v1/applications';
-import AccountRouter from '@/routers/v1/accounts';
-import OAuth2Router from '@/routers/v1/oauth2';
-import AsyncLock from 'async-lock';
-import { Code } from '@/controllers/Code';
+import { Settings } from "@/config/Settings";
+import { ClusterServer } from "@ikoabo/core_srv";
+import { Authenticator } from "@ikoabo/auth_srv";
+import { Mail } from "@ikoabo/comm_srv";
+import AsyncLock from "async-lock";
+import { AccountCode } from "./packages/Accounts/controllers/accounts.code.controller";
+import { AccountsProjects } from "./packages/Accounts/controllers/accounts.projects.controller";
+
+/* Base components routes */
+import ModulesRouter from "@/Modules/routers/v1/modules.routes";
+import DomainRouter from "@/Domains/routers/v1/domains.routes";
+import ProjectRouter from "@/Projects/routers/v1/projects.routes";
+import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
+import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
+import OAuth2Router from "@/OAuth2/routers/v1/oauth2.routes";
 
 const lock = new AsyncLock();
-const CodeCtrl: Code = Code.shared;
+const CodeCtrl: AccountCode = AccountCode.shared;
 
 /**
  * Initialize projects custom profiles
  */
 function initializeProjects(): Promise<void> {
   return new Promise<void>((resolve) => {
-    AccountsProject.shared.initialize()
-      .then(() => {
-      }).catch((err: any) => {
+    AccountsProjects.shared
+      .initialize()
+      .then(() => {})
+      .catch((err: any) => {
         console.error(err);
-      }).finally(() => {
+      })
+      .finally(() => {
         resolve();
       });
   });
@@ -47,14 +41,18 @@ function initializeProjects(): Promise<void> {
 function requestCredentials(): Promise<void> {
   return new Promise<void>((resolve) => {
     Authenticator.shared.setup(Settings.AUTH.SERVER);
-    Authenticator.shared.authService(Settings.AUTH.ID, Settings.AUTH.SECRET)
-      .then(() => { })
+    Authenticator.shared
+      .authService(Settings.AUTH.ID, Settings.AUTH.SECRET)
+      .then(() => {})
       .catch((err) => {
         console.error(err);
       })
       .finally(() => {
         /* Initialize mail component */
-        Mail.shared.setup(Settings.NOTIFICATIONS.SERVER, Authenticator.shared.token);
+        Mail.shared.setup(
+          Settings.NOTIFICATIONS.SERVER,
+          Authenticator.shared.token
+        );
         resolve();
       });
   });
@@ -71,13 +69,15 @@ function runWorker(worker: any): Promise<void> {
         case "get/code":
           lock.acquire(
             "request-code",
-            done => {
+            (done) => {
               /* Generate the new vCode */
               CodeCtrl.code
                 .then((value: string) => {
                   done(null, value);
-                }).catch(done);
-            }, (err, value: string) => {
+                })
+                .catch(done);
+            },
+            (err, value: string) => {
               /* Send response to slave service */
               worker.send({ action: "get/code", err: err, code: value });
               resolve();
@@ -90,12 +90,17 @@ function runWorker(worker: any): Promise<void> {
 }
 
 /* Initialize cluster server */
-const clusterServer = ClusterServer.setup(Settings, { running: requestCredentials, postMongo: initializeProjects }, { worker: runWorker });
+const clusterServer = ClusterServer.setup(
+  Settings,
+  { running: requestCredentials, postMongo: initializeProjects },
+  { worker: runWorker }
+);
 
 /* Run cluster with base routes */
 clusterServer.run({
-  '/v1/domain': DomainRouter,
-  '/v1/project': ProjectRouter,
-  '/v1/application': ApplicationRouter,
-  '/v1/oauth': [AccountRouter, OAuth2Router],
+  "/v1/module": ModulesRouter,
+  "/v1/domain": DomainRouter,
+  "/v1/project": ProjectRouter,
+  "/v1/application": ApplicationRouter,
+  "/v1/oauth": [AccountRouter, OAuth2Router],
 });
