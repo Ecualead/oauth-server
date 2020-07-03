@@ -1,45 +1,34 @@
-/**
- * @Author: Reinier Millo Sánchez <millo>
- * @Date:   2020-05-03T16:51:31-05:00
- * @Email:  reinier.millo88@gmail.com
- * @Project: IKOABO Auth Microservice API
- * @Filename: Code.ts
- * @Last modified by:   millo
- * @Last modified time: 2020-05-03T18:07:45-05:00
- * @Copyright: Copyright 2020 IKOA Business Opportunity
- */
+import fs from "fs";
+import path from "path";
+import { Logger } from "@ikoabo/core_srv";
+import AsyncLock from "async-lock";
+import RoaringBitmap32 from "roaring/RoaringBitmap32";
+import { ERRORS } from "@ikoabo/auth_srv";
 
-import fs from 'fs';
-import path from 'path';
-import { Logger } from '@ikoabo/core_srv';
-import AsyncLock from 'async-lock';
-import RoaringBitmap32 from 'roaring/RoaringBitmap32';
-import { ERRORS } from '@ikoabo/auth_srv';
-
-const USER_CODE_FILE = path.join(__dirname, '..', '..', 'codes', 'map.');
+const USER_CODE_FILE = path.join(__dirname, "..", "..", "codes", "map.");
 const USER_CODE_SIZE = 8;
 
 const lock = new AsyncLock();
 
-export class Code {
-  private static _instance: Code;
+export class AccountCode {
+  private static _instance: AccountCode;
   private _logger: Logger;
 
   /**
    * Allow singleton class instance
    */
   private constructor() {
-    this._logger = new Logger('UserCode');
+    this._logger = new Logger("UserCode");
   }
 
   /**
    * Return singleton instance for the class
    */
-  static get shared(): Code {
-    if (!Code._instance) {
-      Code._instance = new Code();
+  static get shared(): AccountCode {
+    if (!AccountCode._instance) {
+      AccountCode._instance = new AccountCode();
     }
-    return Code._instance;
+    return AccountCode._instance;
   }
 
   /**
@@ -52,23 +41,23 @@ export class Code {
       let leftValue: number;
       let rightValue: number;
 
-      const topLeft = Code._genValue();
-      leftValue = topLeft
+      const topLeft = AccountCode._genValue();
+      leftValue = topLeft;
       do {
         /* Get the code left map component */
         filename = `${USER_CODE_FILE}${leftValue}.map`;
-        bitmap = Code._readMap(filename);
+        bitmap = AccountCode._readMap(filename);
 
         /* Look for the right value */
-        rightValue = Code._fetchEmpty(bitmap);
+        rightValue = AccountCode._fetchEmpty(bitmap);
 
         /* If the right component is full search for the next left component */
         if (rightValue < 0) {
-          leftValue = Code._inc(leftValue);
+          leftValue = AccountCode._inc(leftValue);
 
           /* Data is full. This never must happend (2251875390625) */
           if (topLeft === leftValue) {
-            this._logger.error('User code data is full');
+            this._logger.error("User code data is full");
             reject({ boError: ERRORS.INVALID_CODE_FULL });
             return;
           }
@@ -79,12 +68,14 @@ export class Code {
         /* Save the code map */
         bitmap.runOptimize();
         bitmap.shrinkToFit();
-        Code._saveMap(filename, bitmap);
-        const code = `${Code._toString(leftValue)}${Code._toString(rightValue)}`;
-        this._logger.debug('Generated new user code', { code: code });
+        AccountCode._saveMap(filename, bitmap);
+        const code = `${AccountCode._toString(
+          leftValue
+        )}${AccountCode._toString(rightValue)}`;
+        this._logger.debug("Generated new user code", { code: code });
         resolve(code);
       } catch (err) {
-        this._logger.error('Error generating code', err);
+        this._logger.error("Error generating code", err);
         reject({ boError: ERRORS.INVALID_CODE_ERROR });
         return;
       }
@@ -96,40 +87,47 @@ export class Code {
    */
   static get request(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      lock.acquire('request-code', (done) => {
-        /* Request vCode to master process */
-        process.send({ action: 'get/code' });
+      lock.acquire(
+        "request-code",
+        (done) => {
+          /* Request vCode to master process */
+          process.send({ action: "get/code" });
 
-        /* Listener to handle code */
-        const fetch = (msg: any) => {
-          if (msg.action === 'get/code') {
-            if (msg.err) {
-              done(msg.err);
-            } else {
-              done(null, msg.code);
+          /* Listener to handle code */
+          const fetch = (msg: any) => {
+            if (msg.action === "get/code") {
+              if (msg.err) {
+                done(msg.err);
+              } else {
+                done(null, msg.code);
+              }
+              process.removeListener("message", fetch);
+              return;
             }
-            process.removeListener('message', fetch);
+          };
+
+          /* Wait until receive the code response from master */
+          process.on("message", fetch);
+        },
+        (err, value: string) => {
+          if (err) {
+            reject(err);
             return;
           }
-        };
-
-        /* Wait until receive the code response from master */
-        process.on('message', fetch);
-      }, (err, value: string) => {
-        if (err) {
-          reject(err);
-          return;
+          resolve(value);
         }
-        resolve(value);
-      });
+      );
     });
-  };
+  }
 
   /**
    * Transform a number value to String to be used as code
    */
-  private static _toString(value: number, chars: number = USER_CODE_SIZE / 2): string {
-    let strValue: string = '';
+  private static _toString(
+    value: number,
+    chars: number = USER_CODE_SIZE / 2
+  ): string {
+    let strValue: string = "";
     let tmpValue: number;
 
     for (let itr = 0; itr < chars; ++itr) {
@@ -137,7 +135,7 @@ export class Code {
       value = Math.floor(value / 100);
 
       /* Check if the code is a digit or character */
-      let baseCode = (tmpValue < 10) ? 48 : 55;
+      let baseCode = tmpValue < 10 ? 48 : 55;
       strValue = `${String.fromCharCode(baseCode + tmpValue)}${strValue}`;
     }
     return strValue.toLowerCase();
@@ -147,10 +145,10 @@ export class Code {
    * Look for empty value into bitmap
    */
   private static _fetchEmpty(bitmap: any): number {
-    const topValue = Code._genValue();
+    const topValue = AccountCode._genValue();
     let value = topValue;
     while (bitmap.has(value)) {
-      value = Code._inc(value);
+      value = AccountCode._inc(value);
 
       if (value === topValue) {
         return -1;
@@ -164,7 +162,10 @@ export class Code {
   /**
    * Increment code value taking into account value restrictions
    */
-  private static _inc(value: number, lenght: number = USER_CODE_SIZE / 2): number {
+  private static _inc(
+    value: number,
+    lenght: number = USER_CODE_SIZE / 2
+  ): number {
     let tmpValue: number;
     let resultNumber: number = 0;
     let multiplier = 1;
@@ -181,7 +182,7 @@ export class Code {
         inc = 0;
       }
 
-      resultNumber += (tmpValue * multiplier);
+      resultNumber += tmpValue * multiplier;
       multiplier *= 100;
     }
     return resultNumber;
@@ -212,10 +213,10 @@ export class Code {
    * Generate random half vCode part
    */
   private static _genValue(length: number = USER_CODE_SIZE / 2) {
-    let strValue = '';
+    let strValue = "";
     for (let itr = 0; itr < length; ++itr) {
-      strValue += ('0' + (Math.floor(Math.random() * 100) % 36)).slice(-2)
+      strValue += ("0" + (Math.floor(Math.random() * 100) % 36)).slice(-2);
     }
     return parseInt(strValue);
   }
-};
+}
