@@ -1,31 +1,33 @@
 import {
   prop,
-  arrayProp,
-  modelOptions,
   getModelForClass,
   DocumentType,
+  pre,
 } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { BaseModel } from "@ikoabo/core_srv";
+import { BaseModel, Arrays } from "@ikoabo/core_srv";
 
-export enum MODULES_STATUS {
-  MS_UNKNOWN = 0,
-  MS_ENABLED = 1,
-  MS_DISABLED = 2,
-}
-
-@modelOptions({
-  schemaOptions: { collection: "modules", timestamps: true },
-  options: { automaticName: false },
+@pre<Module>("save", function (next) {
+  const obj: any = this;
+  obj.scope = Arrays.force(obj.scope);
+  next();
+})
+@pre<Module>("findOneAndUpdate", function (next) {
+  const obj: any = this;
+  obj.scope = Arrays.force(obj.scope);
+  next();
 })
 export class Module extends BaseModel {
   @prop({ required: true })
   name!: string;
 
   @prop()
+  image?: string;
+
+  @prop()
   description?: string;
 
-  @arrayProp({ items: String })
+  @prop({ type: String })
   scope?: string[];
 
   @prop()
@@ -41,7 +43,30 @@ export class Module extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(Module);
+    return getModelForClass(Module, {
+      schemaOptions: {
+        collection: "modules",
+        timestamps: true,
+        toJSON: {
+          virtuals: true,
+          versionKey: false,
+          transform: (_doc: any, ret: any) => {
+            return {
+              id: ret.id,
+              name: ret.name,
+              image: ret.image,
+              description: ret.description,
+              url: ret.url,
+              terms: ret.terms,
+              status: ret.status,
+              createdAt: ret.createdAt,
+              updatedAt: ret.updatedAt,
+            };
+          },
+        },
+      },
+      options: { automaticName: false },
+    });
   }
 }
 

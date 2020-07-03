@@ -6,37 +6,44 @@ import {
   Validators,
   Arrays,
   ValidateObjectId,
+  BASE_STATUS,
 } from "@ikoabo/core_srv";
 import {
   Module,
   ModuleDocument,
-  MODULES_STATUS,
-} from "@/packages/Modules/models/modules.model";
-import { Modules } from "@/Modules/controllers/Modules";
-import { ModuleValidation } from "@/packages/Modules/models/modules.joi";
-import { ScopeUpdate } from "@/models/JoiBase";
+} from "@/Modules/models/modules.model";
+import { Modules } from "@/Modules/controllers/modules.controller";
+import {
+  ModuleCreateValidation,
+  ModuleUpdateValidation,
+} from "@/Modules/models/modules.joi";
+import { ScopeValidation, StatusValidation } from "@/models/base.joi";
 
 const router = Router();
 const ModuleCtrl = Modules.shared;
 
 router.post(
   "/",
-  Validators.joi(ModuleValidation),
+  Validators.joi(ModuleCreateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     const module: Module = {
       name: req.body["name"],
       description: req.body["description"],
+      image: req.body["image"],
       owner: "5e7d8203cef9b37116a6aeef",
       scope: Arrays.force(req.body["scope"]),
       url: req.body["url"],
       terms: req.body["terms"],
       secret: Token.longToken,
-      status: MODULES_STATUS.MS_ENABLED,
+      status: BASE_STATUS.BS_ENABLED,
     };
+
+    /* Create the new module */
     ModuleCtrl.create(module)
       .then((value: ModuleDocument) => {
         res.locals["response"] = {
           id: value.id,
+          secret: value.secret,
         };
         next();
       })
@@ -49,12 +56,12 @@ router.post(
 router.put(
   "/:id",
   Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ModuleValidation),
+  Validators.joi(ModuleUpdateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     const module: Module = {
       name: req.body["name"],
       description: req.body["description"],
-      scope: Arrays.force(req.body["scope"]),
+      image: req.body["image"],
       url: req.body["url"],
       terms: req.body["terms"],
     };
@@ -70,23 +77,9 @@ router.put(
 );
 
 router.get(
-  "/:id",
-  Validators.joi(ValidateObjectId, "params"),
-  (req: Request, res: Response, next: NextFunction) => {
-    ModuleCtrl.fetch(req.params.id)
-      .then((value: ModuleDocument) => {
-        res.locals["response"] = {
-          id: value.id,
-          name: value.name,
-          description: value.description,
-          scope: value.scope,
-          url: value.url,
-          terms: value.terms,
-          status: value.status,
-        };
-        next();
-      })
-      .catch(next);
+  "/owns",
+  (_req: Request, res: Response, _next: NextFunction) => {
+    ModuleCtrl.fetchAll().pipe(JSONStream.stringify()).pipe(res.type("json"));
   },
   ResponseHandler.success,
   ResponseHandler.error
@@ -95,7 +88,35 @@ router.get(
 router.get(
   "/",
   (_req: Request, res: Response, _next: NextFunction) => {
-    ModuleCtrl.fetchAll().pipe(JSONStream.stringify()).pipe(res.type("json"));
+    ModuleCtrl.fetchAll({ status: BASE_STATUS.BS_ENABLED })
+      .pipe(JSONStream.stringify())
+      .pipe(res.type("json"));
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.get(
+  "/:id",
+  Validators.joi(ValidateObjectId, "params"),
+  (req: Request, res: Response, next: NextFunction) => {
+    ModuleCtrl.fetch(req.params.id)
+      .then((value: ModuleDocument) => {
+        res.locals["response"] = {
+          id: value.id,
+          name: value.name,
+          image: value.image,
+          description: value.description,
+          scope: value.scope,
+          url: value.url,
+          terms: value.terms,
+          status: value.status,
+          createdAt: value.createdAt,
+          updatedAt: value.updatedAt,
+        };
+        next();
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
@@ -117,8 +138,27 @@ router.delete(
 );
 
 router.put(
+  "/:id/:action",
+  Validators.joi(StatusValidation, "params"),
+  (req: Request, res: Response, next: NextFunction) => {
+    const handler =
+      req.params.action === "enable"
+        ? ModuleCtrl.enable(req.params.id)
+        : ModuleCtrl.disable(req.params.id);
+    handler
+      .then((value: ModuleDocument) => {
+        res.locals["response"] = { id: value.id };
+        next();
+      })
+      .catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.put(
   "/:id/scope/:scope",
-  Validators.joi(ScopeUpdate, "params"),
+  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ModuleCtrl.addScope(req.params.id, req.params.scope)
       .then((value: ModuleDocument) => {
@@ -133,7 +173,7 @@ router.put(
 
 router.delete(
   "/:id/scope/:scope",
-  Validators.joi(ScopeUpdate, "params"),
+  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ModuleCtrl.deleteScope(req.params.id, req.params.scope)
       .then((value: ModuleDocument) => {
