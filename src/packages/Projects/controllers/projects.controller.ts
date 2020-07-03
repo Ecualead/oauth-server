@@ -4,9 +4,9 @@ import {
   ProjectDocument,
   ProjectModel,
 } from "@/Projects/models/projects.model";
-import { Domains } from "@/Domains/controllers/Domains";
+import { Domains } from "@/packages/Domains/controllers/domains.controller";
 import { DomainDocument } from "@/Domains/models/domains.model";
-import { DataScoped } from "@/controllers/DataScoped";
+import { DataScoped } from "@/controllers/data.scoped.controller";
 
 export class Projects extends DataScoped<Project, ProjectDocument> {
   private static _instance: Projects;
@@ -38,13 +38,13 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       /* Find for the parent domain */
       Domains.shared
-        .fetch(data.domain)
+        .fetch(<string>data.domain)
         .then((value: DomainDocument) => {
           /* Intersect scope with domain scope */
           data.scope = Arrays.intersect(data.scope, <string[]>value.scope);
 
           /* Create the new project */
-          ProjectModel.create(data).then(resolve).catch(reject);
+          super.create(data).then(resolve).catch(reject);
         })
         .catch(reject);
     });

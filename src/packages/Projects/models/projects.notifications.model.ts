@@ -10,8 +10,8 @@ export class ProjectNotificationsUrl {
 }
 
 export class ProjectNotification {
-  @prop({ required: true, default: NOTIFICATION_TYPES.NT_UNKNOWN })
-  type?: number;
+  @prop({ enum: NOTIFICATION_TYPES, default: NOTIFICATION_TYPES.NT_UNKNOWN })
+  type?: NOTIFICATION_TYPES;
 
   @prop({ required: true, default: false })
   signup?: boolean;

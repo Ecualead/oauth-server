@@ -1,16 +1,16 @@
-import { prop, arrayProp, Index } from "@typegoose/typegoose";
+import { prop, index } from "@typegoose/typegoose";
 import { SOCIAL_NETWORK_TYPES } from "@/Projects/models/projects.enum";
 
 class ProjectSocialProfileMapping {
   @prop()
   key?: string;
 
-  @arrayProp({ type: String })
+  @prop()
   fields?: string[];
 }
 
-@Index({ clientId: 1 })
-@Index({ clientSecret: 1 })
+@index({ clientId: 1 })
+@index({ clientSecret: 1 })
 export class ProjectSocialNetworkSettings {
   @prop({ required: true, default: SOCIAL_NETWORK_TYPES.SN_UNKNOWN })
   name!: number;
@@ -24,10 +24,10 @@ export class ProjectSocialNetworkSettings {
   @prop()
   scope?: string;
 
-  @arrayProp({ type: String, required: true })
+  @prop()
   profile?: string[];
 
-  @arrayProp({ type: ProjectSocialProfileMapping })
+  @prop()
   profileMap?: ProjectSocialProfileMapping[];
 
   @prop()

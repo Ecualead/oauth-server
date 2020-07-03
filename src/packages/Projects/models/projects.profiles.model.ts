@@ -1,17 +1,21 @@
-import { prop, arrayProp, Index } from "@typegoose/typegoose";
+import { prop, Index } from "@typegoose/typegoose";
 import { PROFILE_FIELD_TYPES } from "./projects.enum";
 
 Index({ name: 1 });
 Index({ type: 1 });
-class ProjectProfileField {
+export class ProjectProfileField {
   @prop({ required: true })
   name: string;
 
   @prop()
   description?: string;
 
-  @prop({ required: true, default: PROFILE_FIELD_TYPES.PF_UNKNOWN })
-  type: number;
+  @prop({
+    enum: PROFILE_FIELD_TYPES,
+    required: true,
+    default: PROFILE_FIELD_TYPES.PF_UNKNOWN,
+  })
+  type: PROFILE_FIELD_TYPES;
 
   @prop()
   defaultValue?: string;
@@ -20,18 +24,18 @@ class ProjectProfileField {
   required?: boolean;
 }
 
-class ProjectProfileFieldIndex {
-  @arrayProp({ type: String })
+export class ProjectProfileFieldIndex {
+  @prop()
   names!: string[];
 }
 
 export class ProjectProfile {
-  @arrayProp({ type: ProjectProfileField })
+  @prop()
   fields?: ProjectProfileField[];
 
-  @arrayProp({ type: ProjectProfileFieldIndex })
+  @prop()
   indexes: ProjectProfileFieldIndex[];
 
-  @arrayProp({ type: ProjectProfileFieldIndex })
+  @prop()
   unique: ProjectProfileFieldIndex[];
 }

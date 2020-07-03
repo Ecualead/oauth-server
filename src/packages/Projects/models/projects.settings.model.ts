@@ -1,4 +1,4 @@
-import { arrayProp, prop } from "@typegoose/typegoose";
+import { prop } from "@typegoose/typegoose";
 import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
 import {
   PROJECT_RECOVER_TYPE,
@@ -26,35 +26,49 @@ class ProjectPasswordPolicy {
 }
 
 class ProjectTokenLifetime {
-  @prop({ required: true, default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH })
+  @prop({
+    required: true,
+    default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH,
+  })
   accessToken?: number;
 
-  @prop({ required: true, default: PROJECT_LIFETIME_TYPES.LT_ONE_YEAR })
+  @prop({
+    required: true,
+    default: PROJECT_LIFETIME_TYPES.LT_ONE_YEAR,
+  })
   refreshToken?: number;
 }
 
 class ProjectEmailConfirmation {
   @prop({
+    enum: PROJECT_EMAIL_CONFIRMATION,
     required: true,
     default: PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_NOT_REQUIRED,
   })
-  type: number;
+  type: PROJECT_EMAIL_CONFIRMATION;
 
-  @prop({ required: true, default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH })
+  @prop({
+    required: true,
+    default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH,
+  })
   time: number;
 }
 
 export class ProjectSetting {
-  @arrayProp({ type: ProjectSocialNetworkSettings })
+  @prop()
   socialNetworks?: ProjectSocialNetworkSettings[];
 
   @prop()
   tokenLifetime?: ProjectTokenLifetime;
 
-  @prop({ required: true, dafault: PROJECT_RECOVER_TYPE.RT_DISABLED })
-  recover?: number;
+  @prop({
+    enum: PROJECT_RECOVER_TYPE,
+    required: true,
+    dafault: PROJECT_RECOVER_TYPE.RT_DISABLED,
+  })
+  recover?: PROJECT_RECOVER_TYPE;
 
-  @arrayProp({ type: String })
+  @prop()
   restrictIps?: string[];
 
   @prop()
@@ -63,7 +77,7 @@ export class ProjectSetting {
   @prop()
   passwordPolicy?: ProjectPasswordPolicy;
 
-  @arrayProp({ type: ProjectNotification })
+  @prop()
   notifications: ProjectNotification[];
 
   @prop()

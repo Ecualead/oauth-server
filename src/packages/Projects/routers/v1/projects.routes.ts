@@ -1,19 +1,19 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { ResponseHandler, Validators, Arrays } from "@ikoabo/core_srv";
-import { Projects } from "@/Projects/controllers/Projects";
-import { CheckId, CheckStatus, Checkscope } from "@/models/joi/base";
+import { ResponseHandler, Validators, Arrays, ValidateObjectId } from "@ikoabo/core_srv";
+import { Projects } from "@/packages/Projects/controllers/projects.controller";
 import {
   ProjectCreateValidation,
   ProjectUpdateValidation,
 } from "@/Projects/models/projects.joi";
 import { ProjectDocument, Project } from "../../models/projects.model";
+import { ScopeValidation } from "@/models/base.joi";
 
 const router = Router();
 const ProjectCtrl = Projects.shared;
 
 router.post(
   "/",
-  Validators.joi(CheckId, "params"),
+  Validators.joi(ValidateObjectId, "params"),
   Validators.joi(ProjectCreateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     const project: Project = {
@@ -38,7 +38,7 @@ router.post(
 
 router.put(
   "/:id",
-  Validators.joi(CheckId, "params"),
+  Validators.joi(ValidateObjectId, "params"),
   Validators.joi(ProjectUpdateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     const project: Project = {
@@ -60,7 +60,7 @@ router.put(
 
 router.get(
   "/:id",
-  Validators.joi(CheckId, "params"),
+  Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.fetch(req.params.id)
       .then((value: ProjectDocument) => {
@@ -86,7 +86,7 @@ router.get(
 
 router.post(
   "/:id/scope/:scope",
-  Validators.joi(Checkscope, "params"),
+  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.addScope(req.params.id, req.params.scope)
       .then((value: ProjectDocument) => {
@@ -101,7 +101,7 @@ router.post(
 
 router.delete(
   "/:id/scope/:scope",
-  Validators.joi(Checkscope, "params"),
+  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.deleteScope(req.params.id, req.params.scope)
       .then((value: ProjectDocument) => {
