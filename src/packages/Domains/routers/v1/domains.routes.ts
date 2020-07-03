@@ -1,22 +1,33 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { ResponseHandler, Validators, Arrays, BASE_STATUS } from "@ikoabo/core_srv";
-import { CheckId, Checkscope } from "@/models/joi/base";
-import { Domains } from "@/Domains/controllers/Domains";
+import JSONStream from "jsonstream";
+import {
+  ResponseHandler,
+  Validators,
+  Arrays,
+  BASE_STATUS,
+  ValidateObjectId,
+} from "@ikoabo/core_srv";
+import { Domains } from "@/Domains/controllers/domains.controller";
 import { Domain, DomainDocument } from "@/Domains/models/domains.model";
-import { DomainValidation } from "@/Domains/models/domains.joi";
+import {
+  DomainCreateValidation,
+  DomainUpdateValidation,
+} from "@/Domains/models/domains.joi";
 import { SubModuleValidation } from "@/Modules/models/modules.joi";
-import { Modules } from "@/packages/Modules/controllers/Modules";
+import { Modules } from "@/Modules/controllers/modules.controller";
+import { ScopeValidation, StatusValidation } from "@/models/base.joi";
 
 const router = Router();
 const DomainCtrl = Domains.shared;
 
 router.post(
   "/",
-  Validators.joi(DomainValidation),
+  Validators.joi(DomainCreateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     // TODO XXX Get rigth user
     let domain: Domain = {
       name: req.body["name"],
+      image: req.body["image"],
       description: req.body["description"],
       scope: Arrays.force(req.body["scope"]),
       owner: "5e7d8203cef9b37116a6aeef",
@@ -36,11 +47,12 @@ router.post(
 
 router.put(
   "/:id",
-  Validators.joi(CheckId, "params"),
-  Validators.joi(DomainValidation),
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(DomainUpdateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     let domain: Domain = {
       name: req.body["name"],
+      image: req.body["image"],
       description: req.body["description"],
       modifiedBy: "5e7d8203cef9b37116a6aeef",
     };
@@ -56,19 +68,30 @@ router.put(
 );
 
 router.get(
+  "/",
+  (_req: Request, res: Response, _next: NextFunction) => {
+    DomainCtrl.fetchAll().pipe(JSONStream.stringify()).pipe(res.type("json"));
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.get(
   "/:id",
-  Validators.joi(CheckId, "params"),
+  Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.fetch(req.params.id)
       .then((value: DomainDocument) => {
         res.locals["response"] = {
           id: value.id,
           name: value.name,
+          image: value.image,
           description: value.description,
           scope: value.scope,
           modules: value.modules,
           status: value.status,
           createdAt: value.createdAt,
+          updatedAt: value.updatedAt,
         };
         next();
       })
@@ -80,7 +103,7 @@ router.get(
 
 router.delete(
   "/:id",
-  Validators.joi(CheckId, "params"),
+  Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.delete(req.params.id)
       .then((value: DomainDocument) => {
@@ -93,9 +116,28 @@ router.delete(
   ResponseHandler.error
 );
 
+router.put(
+  "/:id/:action",
+  Validators.joi(StatusValidation, "params"),
+  (req: Request, res: Response, next: NextFunction) => {
+    const handler =
+      req.params.action === "enable"
+        ? DomainCtrl.enable(req.params.id)
+        : DomainCtrl.disable(req.params.id);
+    handler
+      .then((value: DomainDocument) => {
+        res.locals["response"] = { id: value.id };
+        next();
+      })
+      .catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
 router.post(
   "/:id/scope/:scope",
-  Validators.joi(Checkscope, "params"),
+  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.addScope(req.params.id, req.params.scope)
       .then((value: DomainDocument) => {
@@ -110,7 +152,7 @@ router.post(
 
 router.delete(
   "/:id/scope/:scope",
-  Validators.joi(Checkscope, "params"),
+  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.deleteScope(req.params.id, req.params.scope)
       .then((value: DomainDocument) => {

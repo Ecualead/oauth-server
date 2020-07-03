@@ -1,26 +1,66 @@
-import { prop, arrayProp, modelOptions, getModelForClass, DocumentType } from '@typegoose/typegoose';
-import mongoose from 'mongoose';
-import { BaseModel } from '@ikoabo/core_srv';
+import {
+  Ref,
+  prop,
+  getModelForClass,
+  DocumentType,
+  pre,
+} from "@typegoose/typegoose";
+import mongoose from "mongoose";
+import { BaseModel, Arrays } from "@ikoabo/core_srv";
+import { Module } from "@/Modules/models/modules.model";
 
-@modelOptions({ schemaOptions: { collection: 'domains', timestamps: true }, options: { automaticName: false } })
+@pre<Domain>("save", function (next) {
+  const obj: any = this;
+  obj.scope = Arrays.force(obj.scope);
+  next();
+})
+@pre<Domain>("findOneAndUpdate", function (next) {
+  const obj: any = this;
+  obj.scope = Arrays.force(obj.scope);
+  next();
+})
 export class Domain extends BaseModel {
   @prop({ required: true })
   name!: string;
 
   @prop()
+  image?: string;
+
+  @prop()
   description?: string;
 
-  @arrayProp({ items: String })
+  @prop({ type: String })
   scope?: string[];
 
-  @arrayProp({ items: mongoose.Types.ObjectId, ref: 'modules' })
-  modules?: string[];
+  @prop({ ref: Module })
+  modules?: Ref<Module>[];
 
   /**
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(Domain);
+    return getModelForClass(Domain, {
+      schemaOptions: {
+        collection: "domains",
+        timestamps: true,
+        toJSON: {
+          virtuals: true,
+          versionKey: false,
+          transform: (_doc: any, ret: any) => {
+            return {
+              id: ret.id,
+              name: ret.name,
+              image: ret.image,
+              description: ret.description,
+              status: ret.status,
+              createdAt: ret.createdAt,
+              updatedAt: ret.updatedAt,
+            };
+          },
+        },
+      },
+      options: { automaticName: false },
+    });
   }
 }
 

@@ -1,5 +1,4 @@
-import { DataScoped } from "@/controllers/DataScoped";
-
+import { DataScoped } from "@/controllers/data.scoped.controller";
 import {
   Domain,
   DomainModel,
