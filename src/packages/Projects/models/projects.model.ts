@@ -7,7 +7,7 @@ import {
   pre,
   Ref,
 } from "@typegoose/typegoose";
-import { BaseModel, Arrays } from "@ikoabo/core_srv";
+import { BaseModel, Arrays, Objects } from "@ikoabo/core_srv";
 import { ProjectLink } from "./projects.links.model";
 import { ProjectSetting } from "./projects.settings.model";
 import { Domain } from "@/packages/Domains/models/domains.model";
@@ -73,7 +73,16 @@ export class Project extends BaseModel {
               image: ret.image,
               description: ret.description,
               cannonical: ret.cannonical,
-              links: ret.links,
+              links: {
+                app: Objects.get(ret, "links.app"),
+                web: Objects.get(ret, "links.web"),
+                facebook: Objects.get(ret, "links.facebook"),
+                twitter: Objects.get(ret, "links.twitter"),
+                instagram: Objects.get(ret, "links.instagram"),
+                youtube: Objects.get(ret, "links.youtube"),
+                privacy: Objects.get(ret, "links.privacy"),
+                terms: Objects.get(ret, "links.terms"),
+              },
               status: ret.status,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt,
