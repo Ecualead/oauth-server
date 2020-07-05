@@ -5,6 +5,7 @@ import {
   DomainDocument,
 } from "@/Domains/models/domains.model";
 import { BASE_STATUS, ERRORS } from "@ikoabo/core_srv";
+import { Projects } from "@/packages/Projects/controllers/projects.controller";
 
 export class Domains extends DataScoped<Domain, DomainDocument> {
   private static _instance: Domains;
@@ -60,7 +61,13 @@ export class Domains extends DataScoped<Domain, DomainDocument> {
             reject({ boError: ERRORS.OBJECT_NOT_FOUND });
             return;
           }
-          resolve(value);
+
+          Projects.shared
+            .clearModule(module)
+            .then(() => {
+              resolve(value);
+            })
+            .catch(reject);
         })
         .catch(reject);
     });
