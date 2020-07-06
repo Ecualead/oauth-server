@@ -55,7 +55,7 @@ class ProjectEmailConfirmation {
 }
 
 export class ProjectSetting {
-  @prop()
+  @prop({ type: ProjectSocialNetworkSettings })
   socialNetworks?: ProjectSocialNetworkSettings[];
 
   @prop()
@@ -68,7 +68,7 @@ export class ProjectSetting {
   })
   recover?: PROJECT_RECOVER_TYPE;
 
-  @prop()
+  @prop({ type: String })
   restrictIps?: string[];
 
   @prop()
@@ -77,7 +77,7 @@ export class ProjectSetting {
   @prop()
   passwordPolicy?: ProjectPasswordPolicy;
 
-  @prop()
+  @prop({ type: ProjectNotification })
   notifications: ProjectNotification[];
 
   @prop()

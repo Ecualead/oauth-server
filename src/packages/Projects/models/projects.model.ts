@@ -4,10 +4,9 @@ import {
   index,
   DocumentType,
   getModelForClass,
-  pre,
   Ref,
 } from "@typegoose/typegoose";
-import { BaseModel, Arrays, Objects } from "@ikoabo/core_srv";
+import { BaseModel, Objects } from "@ikoabo/core_srv";
 import { ProjectLink } from "./projects.links.model";
 import { ProjectSetting } from "./projects.settings.model";
 import { Domain } from "@/packages/Domains/models/domains.model";
@@ -16,16 +15,6 @@ import { Module } from "@/packages/Modules/models/modules.model";
 @index({ domain: 1 })
 @index({ cannonical: 1 }, { unique: true })
 @index({ name: 1 })
-@pre<Project>("save", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
-@pre<Project>("findOneAndUpdate", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
 export class Project extends BaseModel {
   @prop({ required: true, ref: Domain })
   domain?: Ref<Domain>;
@@ -45,13 +34,13 @@ export class Project extends BaseModel {
   @prop()
   links?: ProjectLink;
 
-  @prop()
+  @prop({ type: String })
   scope?: string[];
 
   @prop()
   settings?: ProjectSetting;
 
-  @prop({ ref: Module })
+  @prop({ type: mongoose.Types.ObjectId, ref: Module })
   modules?: Ref<Module>[];
 
   /**

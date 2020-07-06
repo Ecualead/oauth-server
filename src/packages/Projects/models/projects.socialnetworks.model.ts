@@ -5,7 +5,7 @@ class ProjectSocialProfileMapping {
   @prop({ requried: true })
   key!: string;
 
-  @prop({ requried: true })
+  @prop({ type: String, requried: true })
   fields!: string[];
 }
 
@@ -30,10 +30,10 @@ export class ProjectSocialNetworkSettings {
   @prop()
   scope?: string;
 
-  @prop()
+  @prop({ type: String })
   profile?: string[];
 
-  @prop()
+  @prop({ type: ProjectSocialProfileMapping })
   profileMap?: ProjectSocialProfileMapping[];
 
   @prop()

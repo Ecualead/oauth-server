@@ -25,17 +25,17 @@ export class ProjectProfileField {
 }
 
 export class ProjectProfileFieldIndex {
-  @prop()
+  @prop({ type: String })
   names!: string[];
 }
 
 export class ProjectProfile {
-  @prop()
+  @prop({ type: ProjectProfileField })
   fields?: ProjectProfileField[];
 
-  @prop()
+  @prop({ type: ProjectProfileFieldIndex })
   indexes: ProjectProfileFieldIndex[];
 
-  @prop()
+  @prop({ type: ProjectProfileFieldIndex })
   unique: ProjectProfileFieldIndex[];
 }

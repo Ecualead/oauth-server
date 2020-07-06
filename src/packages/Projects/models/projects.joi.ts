@@ -23,9 +23,7 @@ export const ProjectCreateValidation = Joi.object().keys({
   description: Joi.string().allow("").optional(),
   image: Joi.string().allow("").optional(),
   links: ProjectLinks,
-  scope: Joi.alternatives()
-    .try(Joi.array().items(Joi.string()), Joi.string().allow(""))
-    .optional(),
+  scope: Joi.array().items(Joi.string()).optional(),
 });
 
 export const ProjectUpdateValidation = Joi.object().keys({
