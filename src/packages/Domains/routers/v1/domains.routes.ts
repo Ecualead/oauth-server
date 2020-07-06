@@ -3,7 +3,6 @@ import JSONStream from "jsonstream";
 import {
   ResponseHandler,
   Validators,
-  Arrays,
   BASE_STATUS,
   ValidateObjectId,
 } from "@ikoabo/core_srv";
@@ -29,7 +28,7 @@ router.post(
       name: req.body["name"],
       image: req.body["image"],
       description: req.body["description"],
-      scope: Arrays.force(req.body["scope"]),
+      scope: req.body["scope"],
       owner: "5e7d8203cef9b37116a6aeef",
       status: BASE_STATUS.BS_ENABLED,
       modifiedBy: "5e7d8203cef9b37116a6aeef",

@@ -3,22 +3,11 @@ import {
   prop,
   getModelForClass,
   DocumentType,
-  pre,
 } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { BaseModel, Arrays } from "@ikoabo/core_srv";
 import { Module } from "@/Modules/models/modules.model";
 
-@pre<Domain>("save", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
-@pre<Domain>("findOneAndUpdate", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
 export class Domain extends BaseModel {
   @prop({ required: true })
   name!: string;
@@ -32,7 +21,7 @@ export class Domain extends BaseModel {
   @prop({ type: String })
   scope?: string[];
 
-  @prop({ ref: Module })
+  @prop({ type: mongoose.Types.ObjectId, ref: Module })
   modules?: Ref<Module>[];
 
   /**
