@@ -1,5 +1,5 @@
-import { prop } from "@typegoose/typegoose";
-import { NOTIFICATION_TYPES } from "./projects.enum";
+import { prop, index } from "@typegoose/typegoose";
+import { NOTIFICATION_TYPES } from "@/Projects/models/projects.enum";
 
 export class ProjectNotificationsUrl {
   @prop()
@@ -9,9 +9,10 @@ export class ProjectNotificationsUrl {
   recover?: string;
 }
 
+@index({ type: 1 }, { unique: true })
 export class ProjectNotification {
-  @prop({ enum: NOTIFICATION_TYPES, default: NOTIFICATION_TYPES.NT_UNKNOWN })
-  type?: NOTIFICATION_TYPES;
+  @prop({ enum: NOTIFICATION_TYPES, required: true, unique: true, default: NOTIFICATION_TYPES.NT_UNKNOWN })
+  type!: NOTIFICATION_TYPES;
 
   @prop({ required: true, default: false })
   signup?: boolean;

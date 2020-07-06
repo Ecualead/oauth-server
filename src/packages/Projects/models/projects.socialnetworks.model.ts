@@ -2,11 +2,11 @@ import { prop, index } from "@typegoose/typegoose";
 import { SOCIAL_NETWORK_TYPES } from "@/Projects/models/projects.enum";
 
 class ProjectSocialProfileMapping {
-  @prop()
-  key?: string;
+  @prop({ requried: true })
+  key!: string;
 
-  @prop()
-  fields?: string[];
+  @prop({ requried: true })
+  fields!: string[];
 }
 
 @index({ type: 1 }, { unique: true })

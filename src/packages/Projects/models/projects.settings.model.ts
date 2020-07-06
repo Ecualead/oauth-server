@@ -4,25 +4,25 @@ import {
   PROJECT_RECOVER_TYPE,
   PROJECT_LIFETIME_TYPES,
   PROJECT_EMAIL_CONFIRMATION,
-} from "./projects.enum";
-import { ProjectNotification } from "./projects.notifications.model";
-import { ProjectProfile } from "./projects.profiles.model";
+} from "@/Projects/models/projects.enum";
+import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
+import { ProjectProfile } from "@/Projects/models/projects.profiles.model";
 
 class ProjectPasswordPolicy {
   @prop({ required: true, default: 5 })
-  len?: number;
+  len!: number;
 
   @prop({ required: true, default: true })
-  upperCase?: boolean;
+  upperCase!: boolean;
 
   @prop({ required: true, default: true })
-  lowerCase?: boolean;
+  lowerCase!: boolean;
 
   @prop({ required: true, default: false })
-  specialChars?: boolean;
+  specialChars!: boolean;
 
   @prop({ required: true, default: true })
-  numbers?: boolean;
+  numbers!: boolean;
 }
 
 class ProjectTokenLifetime {
@@ -30,13 +30,13 @@ class ProjectTokenLifetime {
     required: true,
     default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH,
   })
-  accessToken?: number;
+  accessToken!: number;
 
   @prop({
     required: true,
     default: PROJECT_LIFETIME_TYPES.LT_ONE_YEAR,
   })
-  refreshToken?: number;
+  refreshToken!: number;
 }
 
 class ProjectEmailConfirmation {
@@ -59,12 +59,12 @@ export class ProjectSetting {
   socialNetworks?: ProjectSocialNetworkSettings[];
 
   @prop()
-  tokenLifetime?: ProjectTokenLifetime;
+  tokenLifetime!: ProjectTokenLifetime;
 
   @prop({
     enum: PROJECT_RECOVER_TYPE,
     required: true,
-    dafault: PROJECT_RECOVER_TYPE.RT_DISABLED,
+    default: PROJECT_RECOVER_TYPE.RT_DISABLED,
   })
   recover?: PROJECT_RECOVER_TYPE;
 

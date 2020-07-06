@@ -1,10 +1,10 @@
 import { prop, Index } from "@typegoose/typegoose";
-import { PROFILE_FIELD_TYPES } from "./projects.enum";
+import { PROFILE_FIELD_TYPES } from "@/Projects/models/projects.enum";
 
-Index({ name: 1 });
+Index({ name: 1 }, { unique: true });
 Index({ type: 1 });
 export class ProjectProfileField {
-  @prop({ required: true })
+  @prop({ required: true, unique: true })
   name: string;
 
   @prop()
