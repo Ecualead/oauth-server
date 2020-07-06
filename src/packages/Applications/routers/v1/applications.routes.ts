@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { ResponseHandler, Validators, Arrays, ValidateObjectId } from "@ikoabo/core_srv";
+import { ResponseHandler, Validators, ValidateObjectId } from "@ikoabo/core_srv";
 import { Applications } from "@/Applications/controllers/applications.controller";
 import { ApplicationCreateValidation, ApplicationUpdateValidation, ApplicationGrantValidation } from "@/Applications/models/applications.joi";
 import {
@@ -26,7 +26,6 @@ router.post(
       scope: req.body["scope"],
       grants: req.body["grants"],
     };
-    console.log(Arrays.force(req.body["scope"]))
     ApplicationCtrl.create(application)
       .then((value: ApplicationDocument) => {
         res.locals["response"] = {

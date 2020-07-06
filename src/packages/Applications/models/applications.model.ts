@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Arrays, Token, BaseModel } from "@ikoabo/core_srv";
+import { Token, BaseModel } from "@ikoabo/core_srv";
 import {
   getModelForClass,
   prop,
