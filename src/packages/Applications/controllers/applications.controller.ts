@@ -1,5 +1,5 @@
-import { Arrays, Token, CRUD } from "@ikoabo/core_srv";
-import { ERRORS } from "@ikoabo/auth_srv";
+import { Arrays, Token, CRUD, BASE_STATUS } from "@ikoabo/core_srv";
+import { ERRORS } from "@ikoabo/core_srv";
 import {
   Application,
   ApplicationDocument,
@@ -29,17 +29,11 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
     return Applications._instance;
   }
 
-  /**
-   * Create new application
-   *
-   * @param project  Project owning the application
-   * @param data   Data of the new application
-   */
   public create(data: Application): Promise<ApplicationDocument> {
     return new Promise<ApplicationDocument>((resolve, reject) => {
       /* Find the parent project */
       Projects.shared
-        .fetch(<string>data.project)
+        .fetch(data.project.toString())
         .then((project: ProjectDocument) => {
           /* Set the project owning */
           data.project = project.id;
@@ -51,6 +45,52 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
           data.secret = Token.longToken;
 
           super.create(data).then(resolve).catch(reject);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Add new grant type to the applicaiton
+   */
+  public addGrant(id: string, grant: string): Promise<ApplicationDocument> {
+    return new Promise<ApplicationDocument>((resolve, reject) => {
+      this._logger.debug("Adding grant type", {
+        application: id,
+        grant: grant,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $addToSet: { grants: grant } };
+      ApplicationModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ApplicationDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Delete a grant type from the application
+   */
+  public deleteGrant(id: string, grant: string): Promise<ApplicationDocument> {
+    return new Promise<ApplicationDocument>((resolve, reject) => {
+      this._logger.debug("Removing grant type", {
+        project: id,
+        grant: grant,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $pull: { grants: grant } };
+      ApplicationModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ApplicationDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
         })
         .catch(reject);
     });
