@@ -138,7 +138,7 @@ export class Accounts {
   ): Promise<AccountProjectProfileDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
       /* Check if the user is currently registered into the project */
-      const projectModel = AccountProjectCtrl.getModel(application.project);
+      const projectModel = AccountProjectCtrl.getModel(application.project.toString());
       projectModel
         .findOne({ account: account.id })
         .then((value: AccountProjectProfileDocument) => {
