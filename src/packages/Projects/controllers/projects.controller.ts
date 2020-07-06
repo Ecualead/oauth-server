@@ -4,9 +4,12 @@ import {
   ProjectDocument,
   ProjectModel,
 } from "@/Projects/models/projects.model";
-import { Domains } from "@/packages/Domains/controllers/domains.controller";
+import { Domains } from "@/Domains/controllers/domains.controller";
 import { DomainDocument } from "@/Domains/models/domains.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
+import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
+import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
+import { ProjectProfileField, ProjectProfileFieldIndex } from "@/Projects/models/projects.profiles.model";
 
 export class Projects extends DataScoped<Project, ProjectDocument> {
   private static _instance: Projects;
@@ -46,7 +49,7 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
 
   public clearModule(module: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      this._logger.debug("Cleaning module for projects", {
+      this._logger.debug("Cleaning module", {
         module: module,
       });
       const update: any = { $pull: { modules: module } };
@@ -63,7 +66,7 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
    */
   public addModule(id: string, module: string): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
-      this._logger.debug("Adding module to project", {
+      this._logger.debug("Adding module", {
         project: id,
         module: module,
       });
@@ -98,12 +101,282 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
    */
   public deleteModule(id: string, module: string): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
-      this._logger.debug("Removing module from domain", {
-        domain: id,
+      this._logger.debug("Removing module", {
+        project: id,
         module: module,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
       const update: any = { $pull: { modules: module } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public addIp(id: string, ip: string): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Adding ip restriction", {
+        project: id,
+        ip: ip,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $addToSet: { 'settings.restrictIps': ip } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public deleteIp(id: string, ip: string): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Removing ip restriction", {
+        project: id,
+        ip: ip,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $pull: { 'settings.restrictIps': ip } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public addSocialNetwork(id: string, socialNetwork: ProjectSocialNetworkSettings): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Adding social network", {
+        project: id,
+        socialNetwork: socialNetwork,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $push: { 'settings.socialNetworks': socialNetwork } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public updateSocialNetwork(id: string, socialType: number, socialNetwork: ProjectSocialNetworkSettings): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Updating social network", {
+        project: id,
+        socialNetwork: socialType,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = {
+        $set: {
+          'settings.socialNetworks.$[elem].clientId': socialNetwork.clientId,
+          'settings.socialNetworks.$[elem].clientSecret': socialNetwork.clientSecret,
+          'settings.socialNetworks.$[elem].scope': socialNetwork.scope,
+          'settings.socialNetworks.$[elem].profile': socialNetwork.profile,
+          'settings.socialNetworks.$[elem].profileMap': socialNetwork.profileMap,
+          'settings.socialNetworks.$[elem].description': socialNetwork.description,
+        }
+      };
+      ProjectModel.findOneAndUpdate(query, update, {
+        new: true,
+        arrayFilters: [{ "elem.type": socialType }]
+      })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public deleteSocialNetwork(id: string, socialType: number): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Removing social network", {
+        project: id,
+        socialNetwork: socialType,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $pull: { 'settings.socialNetworks': { type: socialType } } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public addNotification(id: string, notification: ProjectNotification): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Adding notification", {
+        project: id,
+        notification: notification,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $push: { 'settings.notifications': notification } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public updateNotification(id: string, notificationType: number, notification: ProjectNotification): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Updating notification", {
+        project: id,
+        notification: notificationType,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = {
+        $set: {
+          'settings.notifications.$[elem].signup': notification.signup,
+          'settings.notifications.$[elem].confirm': notification.confirm,
+          'settings.notifications.$[elem].signin': notification.signin,
+          'settings.notifications.$[elem].chPwd': notification.chPwd,
+          'settings.notifications.$[elem].recover': notification.recover,
+          'settings.notifications.$[elem].urls': notification.urls,
+        }
+      };
+      ProjectModel.findOneAndUpdate(query, update, {
+        new: true,
+        arrayFilters: [{ "elem.type": notificationType }]
+      })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public deleteNotification(id: string, notificationType: number): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Removing notification", {
+        project: id,
+        notification: notificationType,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $pull: { 'settings.notifications': { type: notificationType } } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public addProfileField(id: string, profile: ProjectProfileField): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Adding profile field definition", {
+        project: id,
+        field: profile,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $push: { 'settings.profile.fields': profile } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public deleteProfileField(id: string, field: string): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Removing profile field definition", {
+        project: id,
+        field: field,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $pull: { 'settings.profile.fields': { name: field } } };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public addProfileIndex(index: string, id: string, profile: ProjectProfileFieldIndex): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Adding profile field index", {
+        project: id,
+        index: index,
+        field: profile,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      let obj: any = {};
+      obj['settings.profile.' + index] = profile;
+      const update: any = { $push: obj };
+      ProjectModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ProjectDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  public deleteProfileIndex(index: string, id: string, fieldIdx: number): Promise<ProjectDocument> {
+    return new Promise<ProjectDocument>((resolve, reject) => {
+      this._logger.debug("Removing profile field definition", {
+        project: id,
+        index: index,
+        field: fieldIdx,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      let obj: any = {};
+      obj['settings.profile.' + index] = fieldIdx;
+      const update: any = { $pull: obj };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
