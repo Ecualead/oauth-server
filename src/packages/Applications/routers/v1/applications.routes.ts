@@ -1,11 +1,12 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { ResponseHandler, Validators, Arrays, ValidateObjectId } from "@ikoabo/core_srv";
-import { Applications } from "../../controllers/applications.controller";
-import { ApplicationCreateValidation } from "../../models/applications.joi";
+import { Applications } from "@/Applications/controllers/applications.controller";
+import { ApplicationCreateValidation, ApplicationUpdateValidation, ApplicationGrantValidation } from "@/Applications/models/applications.joi";
 import {
   Application,
   ApplicationDocument,
-} from "../../models/applications.model";
+} from "@/Applications/models/applications.model";
+import { StatusValidation, ScopeValidation } from "@/models/base.joi";
 
 const router = Router();
 const ApplicationCtrl = Applications.shared;
@@ -17,17 +18,22 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     let application: Application = {
       name: req.body["name"],
+      project: <any>req.params['id'],
       description: req.body["description"],
       image: req.body["image"],
       type: req.body["type"],
       owner: "5e7d8203cef9b37116a6aeef",
-      scope: Arrays.force(req.body["scope"]),
+      scope: req.body["scope"],
+      grants: req.body["grants"],
     };
+    console.log(Arrays.force(req.body["scope"]))
     ApplicationCtrl.create(application)
       .then((value: ApplicationDocument) => {
         res.locals["response"] = {
+          id: value.id,
           clientId: value.id,
           clientSecret: value.secret,
+          base64: value.getBase64Secret(),
         };
         next();
       })
@@ -36,18 +42,20 @@ router.post(
   ResponseHandler.success,
   ResponseHandler.error
 );
-/* 
+
 router.put('/:id',
-  Validators.joi(CheckId, 'params'),
-  Validators.joi(ApplicationUpdate),
+  Validators.joi(ValidateObjectId, 'params'),
+  Validators.joi(ApplicationUpdateValidation),
   (req: Request, res: Response, next: NextFunction) => {
-    let project: IApplication = {
-      name: req.body['name'],
-      description: req.body['description'],
-      type: req.body['type'],
-    }
-    ApplicationCtrl.update(req.params.id, project)
-      .then((value: DApplication) => {
+    let application: Application = {
+      name: req.body["name"],
+      description: req.body["description"],
+      image: req.body["image"],
+      type: req.body["type"],
+      modifiedBy: "5e7d8203cef9b37116a6aeef",
+    };
+    ApplicationCtrl.update(req.params.id, application)
+      .then((value: ApplicationDocument) => {
         res.locals['response'] = { id: value.id };
         next();
       }).catch(next);
@@ -57,18 +65,22 @@ router.put('/:id',
 );
 
 router.get('/:id',
-  Validators.joi(CheckId, 'params'),
+  Validators.joi(ValidateObjectId, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
-    ApplicationCtrl.get(req.params.id)
-      .then((value: DApplication) => {
+    ApplicationCtrl.fetch(req.params.id)
+      .then((value: ApplicationDocument) => {
         res.locals['response'] = {
           id: value.id,
           name: value.name,
           description: value.description,
+          image: value.image,
           type: value.type,
           scope: value.scope,
+          grants: value.grants,
+          domain: value.domain,
           status: value.status,
           createdAt: value.createdAt,
+          updatedAt: value.updatedAt,
         };
         next();
       }).catch(next);
@@ -78,10 +90,10 @@ router.get('/:id',
 );
 
 router.delete('/:id',
-  Validators.joi(CheckId, 'params'),
+  Validators.joi(ValidateObjectId, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.delete(req.params.id)
-      .then((value: DApplication) => {
+      .then((value: ApplicationDocument) => {
         res.locals['response'] = { id: value.id };
         next();
       }).catch(next);
@@ -91,10 +103,10 @@ router.delete('/:id',
 );
 
 router.put('/:id/:action',
-  Validators.joi(CheckStatus, 'params'),
+  Validators.joi(StatusValidation, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     const handler = (req.params.action === 'enable') ? ApplicationCtrl.enable(req.params.id) : ApplicationCtrl.disable(req.params.id);
-    handler.then((value: DApplication) => {
+    handler.then((value: ApplicationDocument) => {
       res.locals['response'] = { id: value.id };
       next();
     }).catch(next);
@@ -104,10 +116,10 @@ router.put('/:id/:action',
 );
 
 router.post('/:id/scope/:scope',
-  Validators.joi(Checkscope, 'params'),
+  Validators.joi(ScopeValidation, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.addScope(req.params.id, req.params.scope)
-      .then((value: DApplication) => {
+      .then((value: ApplicationDocument) => {
         res.locals['response'] = { id: value.id };
         next();
       }).catch(next);
@@ -117,10 +129,10 @@ router.post('/:id/scope/:scope',
 );
 
 router.delete('/:id/scope/:scope',
-  Validators.joi(Checkscope, 'params'),
+  Validators.joi(ScopeValidation, 'params'),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.deleteScope(req.params.id, req.params.scope)
-      .then((value: DApplication) => {
+      .then((value: ApplicationDocument) => {
         res.locals['response'] = { id: value.id };
         next();
       }).catch(next);
@@ -128,5 +140,31 @@ router.delete('/:id/scope/:scope',
   ResponseHandler.success,
   ResponseHandler.error
 );
- */
+
+router.post('/:id/grant/:grant',
+  Validators.joi(ApplicationGrantValidation, 'params'),
+  (req: Request, res: Response, next: NextFunction) => {
+    ApplicationCtrl.addGrant(req.params.id, req.params.grant)
+      .then((value: ApplicationDocument) => {
+        res.locals['response'] = { id: value.id };
+        next();
+      }).catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.delete('/:id/grant/:grant',
+  Validators.joi(ApplicationGrantValidation, 'params'),
+  (req: Request, res: Response, next: NextFunction) => {
+    ApplicationCtrl.deleteGrant(req.params.id, req.params.grant)
+      .then((value: ApplicationDocument) => {
+        res.locals['response'] = { id: value.id };
+        next();
+      }).catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
 export default router;
