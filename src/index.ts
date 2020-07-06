@@ -11,6 +11,7 @@ import { AccountsProjects } from "./packages/Accounts/controllers/accounts.proje
 import ModulesRouter from "@/Modules/routers/v1/modules.routes";
 import DomainRouter from "@/Domains/routers/v1/domains.routes";
 import ProjectRouter from "@/Projects/routers/v1/projects.routes";
+import ProjectSettingsRouter from "@/Projects/routers/v1/projects.settings.routes";
 import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
 import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
 import OAuth2Router from "@/OAuth2/routers/v1/oauth2.routes";
@@ -25,7 +26,7 @@ function initializeProjects(): Promise<void> {
   return new Promise<void>((resolve) => {
     AccountsProjects.shared
       .initialize()
-      .then(() => {})
+      .then(() => { })
       .catch((err: any) => {
         console.error(err);
       })
@@ -43,7 +44,7 @@ function requestCredentials(): Promise<void> {
     Authenticator.shared.setup(Settings.AUTH.SERVER);
     Authenticator.shared
       .authService(Settings.AUTH.ID, Settings.AUTH.SECRET)
-      .then(() => {})
+      .then(() => { })
       .catch((err) => {
         console.error(err);
       })
@@ -100,7 +101,7 @@ const clusterServer = ClusterServer.setup(
 clusterServer.run({
   "/v1/module": ModulesRouter,
   "/v1/domain": DomainRouter,
-  "/v1/project": ProjectRouter,
+  "/v1/project": [ProjectRouter, ProjectSettingsRouter],
   "/v1/application": ApplicationRouter,
   "/v1/oauth": [AccountRouter, OAuth2Router],
 });
