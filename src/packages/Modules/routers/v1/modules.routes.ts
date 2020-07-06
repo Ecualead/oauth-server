@@ -4,7 +4,6 @@ import {
   ResponseHandler,
   Token,
   Validators,
-  Arrays,
   ValidateObjectId,
   BASE_STATUS,
 } from "@ikoabo/core_srv";
@@ -31,7 +30,7 @@ router.post(
       description: req.body["description"],
       image: req.body["image"],
       owner: "5e7d8203cef9b37116a6aeef",
-      scope: Arrays.force(req.body["scope"]),
+      scope: req.body["scope"],
       url: req.body["url"],
       terms: req.body["terms"],
       secret: Token.longToken,

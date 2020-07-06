@@ -1,22 +1,11 @@
 import {
   prop,
   getModelForClass,
-  DocumentType,
-  pre,
+  DocumentType
 } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { BaseModel, Arrays } from "@ikoabo/core_srv";
+import { BaseModel } from "@ikoabo/core_srv";
 
-@pre<Module>("save", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
-@pre<Module>("findOneAndUpdate", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
 export class Module extends BaseModel {
   @prop({ required: true })
   name!: string;
