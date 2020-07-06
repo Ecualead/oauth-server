@@ -43,10 +43,10 @@ const AccountCtrl = Accounts.shared;
 
 export class OAuth2Model
   implements
-    PasswordModel,
-    ClientCredentialsModel,
-    AuthorizationCodeModel,
-    RefreshTokenModel {
+  PasswordModel,
+  ClientCredentialsModel,
+  AuthorizationCodeModel,
+  RefreshTokenModel {
   private _logger: Logger;
   constructor() {
     this._logger = new Logger("OAuth2");
@@ -191,7 +191,7 @@ export class OAuth2Model
             expiresAt: code.expiresAt,
             redirectUri: code.redirectUri,
             scope: validScope,
-            application: application.id,
+            application: <any>(application.id),
             user: "id" in user && user.id !== application.id ? user.id : null,
           })
             .then((value: OAuth2CodeDocument) => {
@@ -401,7 +401,7 @@ export class OAuth2Model
             refreshToken: token.refreshToken,
             refreshTokenExpiresAt: token.refreshTokenExpiresAt,
             scope: validScope,
-            application: application.id,
+            application: <any>application.id,
             keep: application.accessTokenLifetime === -1,
             user: "id" in user && user.id !== application.id ? user.id : null,
           })
@@ -412,7 +412,7 @@ export class OAuth2Model
               /* Check if client token never expires */
               if (application.accessTokenLifetime === -1) {
                 accessToken.accessTokenExpiresAt = new Date(
-                  Date.now() + 100000000
+                  Date.now() + 999999999
                 );
               }
               resolve(accessToken.toToken());
@@ -447,16 +447,10 @@ export class OAuth2Model
           }
 
           /* Check if client token don't expire and there is no user involved */
-          const accesTokenLifetime: number = Objects.get(
-            token.application,
-            "settings.lifetime.accessToken",
-            0
-          );
-          if (
-            accesTokenLifetime === -1 &&
+          if (token.keep &&
             token.user &&
             (<AccountDocument>token.user).id !==
-              (<ApplicationDocument>token.application).id
+            (<ApplicationDocument>token.application).id
           ) {
             reject({
               boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
@@ -466,8 +460,8 @@ export class OAuth2Model
           }
 
           /* Check if client token never expires */
-          if (accesTokenLifetime === -1) {
-            token.accessTokenExpiresAt = new Date(Date.now() + 100000000);
+          if (token.keep) {
+            token.accessTokenExpiresAt = new Date(Date.now() + 999999999);
           }
 
           /* Check if the token is expired */
