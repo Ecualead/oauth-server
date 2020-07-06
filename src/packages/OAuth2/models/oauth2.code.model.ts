@@ -1,31 +1,16 @@
 import mongoose from "mongoose";
-import { Arrays, BaseModel } from "@ikoabo/core_srv";
-import { AuthorizationCode, Client } from "oauth2-server";
+import { BaseModel } from "@ikoabo/core_srv";
+import { AuthorizationCode } from "oauth2-server";
 import {
   prop,
   index,
-  pre,
-  modelOptions,
   getModelForClass,
   DocumentType,
+  Ref,
 } from "@typegoose/typegoose";
-import { Account, AccountDocument } from "@/packages/Accounts/models/accounts.model";
-import { Application, ApplicationDocument } from "@/packages/Applications/models/applications.model";
+import { Account } from "@/Accounts/models/accounts.model";
+import { Application } from "@/Applications/models/applications.model";
 
-@modelOptions({
-  schemaOptions: { collection: "oauth2.tokens", timestamps: true },
-  options: { automaticName: false },
-})
-@pre<OAuth2Code>("save", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
-@pre<OAuth2Code>("findOneAndUpdate", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
 @index({ code: 1 })
 @index({ expiresAt: 1 })
 @index({ application: 1 })
@@ -40,14 +25,14 @@ export class OAuth2Code extends BaseModel {
   @prop()
   redirectUri?: string;
 
-  @prop()
+  @prop({ type: String })
   scope: string[];
 
-  @prop({ required: true, type: mongoose.Types.ObjectId, ref: Application })
-  application: string | ApplicationDocument;
+  @prop({ required: true, ref: Application })
+  application: Ref<Application>;
 
-  @prop({ type: mongoose.Types.ObjectId, ref: Account })
-  user?: string | ApplicationDocument | AccountDocument;
+  @prop({ ref: Account })
+  user?: Ref<Account>;
 
   /**
    * Convert the document into OAuth Authorization Code
@@ -72,7 +57,32 @@ export class OAuth2Code extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(OAuth2Code);
+    return getModelForClass(OAuth2Code, {
+      schemaOptions: {
+        collection: "oauth2.codes",
+        timestamps: true,
+        toJSON: {
+          virtuals: true,
+          versionKey: false,
+          transform: (_doc: any, ret: any) => {
+            let authCode = {
+              authorizationCode: ret.code,
+              expiresAt: ret.expiresAt,
+              redirectUri: ret.redirectUri,
+              scope: ret.scope || [],
+              client: ret.application,
+              user: (ret.user ? ret.user : ret.application),
+            };
+            authCode.scope.push(
+              authCode.client.id == authCode.user.id ? "application" : "user"
+            );
+            authCode.scope.push("default");
+            return authCode;
+          },
+        },
+      },
+      options: { automaticName: false },
+    });
   }
 }
 

@@ -1,37 +1,16 @@
 import mongoose from "mongoose";
-import { Arrays, BaseModel } from "@ikoabo/core_srv";
+import { BaseModel } from "@ikoabo/core_srv";
 import { Token, RefreshToken } from "oauth2-server";
 import {
   prop,
   index,
-  pre,
-  modelOptions,
   getModelForClass,
   DocumentType,
+  Ref,
 } from "@typegoose/typegoose";
-import {
-  Application,
-  ApplicationDocument,
-} from "@/packages/Applications/models/applications.model";
-import {
-  Account,
-  AccountDocument,
-} from "@/packages/Accounts/models/accounts.model";
+import { Application } from "@/Applications/models/applications.model";
+import { Account } from "@/Accounts/models/accounts.model";
 
-@modelOptions({
-  schemaOptions: { collection: "oauth2.tokens", timestamps: true },
-  options: { automaticName: false },
-})
-@pre<OAuth2Token>("save", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
-@pre<OAuth2Token>("findOneAndUpdate", function (next) {
-  const obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
 @index({ accessToken: 1 })
 @index({ accessTokenExpiresAt: 1 })
 @index({ refreshToken: 1 })
@@ -51,14 +30,14 @@ export class OAuth2Token extends BaseModel {
   @prop()
   refreshTokenExpiresAt?: Date;
 
-  @prop()
+  @prop({ type: String })
   scope?: string[];
 
-  @prop({ required: true, type: mongoose.Types.ObjectId, ref: Application })
-  application?: string | ApplicationDocument;
+  @prop({ required: true, ref: Application })
+  application?: Ref<Application>;
 
-  @prop({ type: mongoose.Types.ObjectId, ref: Account })
-  user?: string | ApplicationDocument | AccountDocument;
+  @prop({ ref: Account })
+  user?: Ref<Account>;
 
   @prop({ required: true, default: false })
   keep?: boolean;
@@ -105,7 +84,33 @@ export class OAuth2Token extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(OAuth2Token);
+    return getModelForClass(OAuth2Token, {
+      schemaOptions: {
+        collection: "oauth2.tokens",
+        timestamps: true,
+        toJSON: {
+          virtuals: true,
+          versionKey: false,
+          transform: (_doc: any, ret: any) => {
+            let token = {
+              accessToken: ret.accessToken,
+              accessTokenExpiresAt: ret.accessTokenExpiresAt,
+              refreshToken: ret.refreshToken,
+              refreshTokenExpiresAt: ret.refreshTokenExpiresAt,
+              scope: ret.scope || [],
+              client: ret.application,
+              user: (ret.user ? ret.user : ret.application),
+              keep: ret.keep,
+              createdAt: ret.createdAt,
+            };
+            token.scope.push(token.client.id == token.user.id ? "application" : "user");
+            token.scope.push("default");
+            return token;
+          },
+        },
+      },
+      options: { automaticName: false },
+    });
   }
 }
 
