@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Token, BaseModel } from "@ikoabo/core_srv";
+import { Token, BaseModel, Objects } from "@ikoabo/core_srv";
 import {
   getModelForClass,
   prop,
@@ -11,6 +11,7 @@ import {
 import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
 import { Project } from "@/Projects/models/projects.model";
 import { Client } from "oauth2-server";
+import { PROJECT_LIFETIME_TYPES } from "@/packages/Projects/models/projects.enum";
 
 @pre<Application>("save", function (next) {
   const obj: any = this;
@@ -89,12 +90,11 @@ export class Application extends BaseModel {
     const obj: any = this;
     let client = {
       id: obj.id,
-      redirectUris: obj.redirectUri,
       grants: obj.grants,
-      accessTokenLifetime: obj.settings.lifetime.accessToken,
-      refreshTokenLifetime: obj.settings.lifetime.refreshToken,
-      scope: this.scope,
-      project: this.project,
+      accessTokenLifetime: obj.type === APPLICATION_TYPES.APP_SERVICE ? -1 : Objects.get(obj, 'project.settings.tokenLifetime.accessToken', PROJECT_LIFETIME_TYPES.LT_ONE_MONTH),
+      refreshTokenLifetime: Objects.get(obj, 'project.settings.tokenLifetime.refreshToken', PROJECT_LIFETIME_TYPES.LT_ONE_YEAR),
+      scope: obj.scope,
+      project: obj.project,
     };
     return client;
   }
