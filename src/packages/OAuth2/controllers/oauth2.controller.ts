@@ -6,7 +6,7 @@ import {
   Response as OResponse,
   OAuthError,
 } from "oauth2-server";
-import { HTTP_STATUS } from "@ikoabo/core_srv";
+import { HTTP_STATUS, Objects } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
 import { OAuth2Model } from "@/OAuth2/controllers/oauth2.model.controller";
 
@@ -90,10 +90,23 @@ export class OAuth2 {
   }
 
   public handleError(err: any, re: Request, res: Response, next: NextFunction) {
-    if (err instanceof OAuthError) {
-      next(err.message);
-      return;
+    const error = Objects.get(err, "constructor.name", null);
+    switch (error) {
+      case "UnauthorizedClientError":
+        next({
+          boError: ERRORS.INVALID_APPLICATION,
+          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+        });
+        break;
+      case "ServerError":
+        next(err.message);
+        break;
+      default:
+        if (err instanceof OAuthError) {
+          next(err.message);
+        } else {
+          next(err);
+        }
     }
-    next(err);
   }
 }
