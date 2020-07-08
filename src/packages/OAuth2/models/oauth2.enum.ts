@@ -1,0 +1,6 @@
+export enum OAUTH2_TOKEN_TYPE {
+  TT_UNKNOWN,
+  TT_MODULE = 1,
+  TT_APPLICATION = 2,
+  TT_USER
+}
