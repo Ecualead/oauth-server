@@ -6,7 +6,7 @@ import {
   Response as OResponse,
   OAuthError,
 } from "oauth2-server";
-import { ResponseHandler } from "@ikoabo/core_srv";
+import { ResponseHandler, Objects } from "@ikoabo/core_srv";
 import { OAuth2 } from "@/OAuth2/controllers/oauth2.controller";
 
 const router = Router();
@@ -64,10 +64,6 @@ router.post(
       }*/
         res.locals["token"] = token;
         res.locals["response"] = {
-          name: token.user.name,
-          email: token.user.email,
-          phone: token.user.phone,
-          code: token.user.code,
           tokenType: "Bearer",
           accessToken: token.accessToken,
           refreshToken: token.refreshToken,
@@ -140,17 +136,29 @@ router.post(
           return;
       }*/
 
-        res.locals["response"] = {
-          uid: token.user.id,
-          name: token.user.name,
-          email: token.user.email,
-          phone: token.user.phone,
-          code: token.user.code,
-          application: token.client.id,
-          project: token.client.project.id,
-          domain: token.client.project.domain,
-          scope: token.scope,
-        };
+        const project = Objects.get(token, "client.project.id", null);
+
+        /* Check for module authentication verification */
+        if (!project) {
+          res.locals["response"] = {
+            module: Objects.get(token, "client.id", null),
+            scope: token.scope,
+          };
+        } else {
+          /* Set basic application information into the response */
+          res.locals["response"] = {
+            application: Objects.get(token, "client.id", null),
+            project: project,
+            domain: Objects.get(token, "client.project.domain", null),
+            scope: token.scope,
+          };
+
+          /* Add user information if the token belongs to an user */
+          const user = Objects.get(token, "user.id", null);
+          if (user && user !== res.locals["response"]["application"]) {
+            res.locals["response"]["user"] = user;
+          }
+        }
         next();
       })
       .catch(next);
