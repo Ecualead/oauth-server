@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { BaseModel } from "@ikoabo/core_srv";
+import { BaseModel, Objects } from "@ikoabo/core_srv";
 import { Token, RefreshToken } from "oauth2-server";
 import {
   prop,
@@ -10,6 +10,7 @@ import {
 } from "@typegoose/typegoose";
 import { Application } from "@/Applications/models/applications.model";
 import { Account } from "@/Accounts/models/accounts.model";
+import { OAUTH2_TOKEN_TYPE } from "./oauth2.enum";
 
 @index({ accessToken: 1 })
 @index({ accessTokenExpiresAt: 1 })
@@ -42,6 +43,9 @@ export class OAuth2Token extends BaseModel {
   @prop({ required: true, default: false })
   keep?: boolean;
 
+  @prop({ required: true, default: OAUTH2_TOKEN_TYPE.TT_UNKNOWN })
+  type?: number;
+
   /**
    * Convert the document into Access Token
    */
@@ -54,11 +58,23 @@ export class OAuth2Token extends BaseModel {
       scope: this.scope || [],
       client: <any>this.application,
       user: <any>(this.user ? this.user : this.application),
+      type: this.type,
       keep: this.keep,
       createdAt: this.createdAt,
     };
-    token.scope.push(token.client.id == token.user.id ? "application" : "user");
+
     token.scope.push("default");
+    switch (token.type) {
+      case OAUTH2_TOKEN_TYPE.TT_MODULE:
+        token.scope.push("module");
+        break;
+      case OAUTH2_TOKEN_TYPE.TT_APPLICATION:
+        token.scope.push("application");
+        break;
+      case OAUTH2_TOKEN_TYPE.TT_USER:
+        token.scope.push("user");
+        break;
+    }
     return token;
   }
 
@@ -99,11 +115,13 @@ export class OAuth2Token extends BaseModel {
               refreshTokenExpiresAt: ret.refreshTokenExpiresAt,
               scope: ret.scope || [],
               client: ret.application,
-              user: (ret.user ? ret.user : ret.application),
+              user: ret.user ? ret.user : ret.application,
               keep: ret.keep,
               createdAt: ret.createdAt,
             };
-            token.scope.push(token.client.id == token.user.id ? "application" : "user");
+            token.scope.push(
+              token.client.id == token.user.id ? "application" : "user"
+            );
             token.scope.push("default");
             return token;
           },
