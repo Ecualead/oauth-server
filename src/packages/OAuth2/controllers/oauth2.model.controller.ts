@@ -18,7 +18,7 @@ import {
   HTTP_STATUS,
 } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
-import { Accounts } from "@/packages/Accounts/controllers/accounts.controller";
+import { Accounts } from "@/Accounts/controllers/accounts.controller";
 import {
   OAuth2CodeDocument,
   OAuth2CodeModel,
@@ -26,27 +26,29 @@ import {
 import {
   AccountDocument,
   AccountModel,
-} from "@/packages/Accounts/models/accounts.model";
-import { AccountAccessPolicy } from "@/packages/Accounts/controllers/account.access.policy.controller";
+} from "@/Accounts/models/accounts.model";
+import { AccountAccessPolicy } from "@/Accounts/controllers/account.access.policy.controller";
 import {
   ApplicationModel,
   ApplicationDocument,
-} from "@/packages/Applications/models/applications.model";
+} from "@/Applications/models/applications.model";
 import {
-  OAuth2Token,
   OAuth2TokenModel,
   OAuth2TokenDocument,
-} from "../models/oauth2.token.model";
-import { ProjectDocument } from "@/packages/Projects/models/projects.model";
+} from "@/OAuth2/models/oauth2.token.model";
+import { ProjectDocument } from "@/Projects/models/projects.model";
+import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
+import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
+import { OAUTH2_TOKEN_TYPE } from "../models/oauth2.enum";
 
 const AccountCtrl = Accounts.shared;
 
 export class OAuth2Model
   implements
-  PasswordModel,
-  ClientCredentialsModel,
-  AuthorizationCodeModel,
-  RefreshTokenModel {
+    PasswordModel,
+    ClientCredentialsModel,
+    AuthorizationCodeModel,
+    RefreshTokenModel {
   private _logger: Logger;
   constructor() {
     this._logger = new Logger("OAuth2");
@@ -191,7 +193,7 @@ export class OAuth2Model
             expiresAt: code.expiresAt,
             redirectUri: code.redirectUri,
             scope: validScope,
-            application: <any>(application.id),
+            application: <any>application.id,
             user: "id" in user && user.id !== application.id ? user.id : null,
           })
             .then((value: OAuth2CodeDocument) => {
@@ -213,7 +215,9 @@ export class OAuth2Model
    */
   getUserFromClient(application: Client): Promise<User | Falsey> {
     return new Promise<User | Falsey>((resolve) => {
-      this._logger.debug(`Getting associated user to client ${application.id}`);
+      this._logger.debug("Getting associated user from client", {
+        application: application.id,
+      });
       const userObj = {
         id: application.id,
         clientId: application.clientId,
@@ -241,6 +245,13 @@ export class OAuth2Model
     scope: string | string[]
   ): Promise<string> {
     return new Promise<string>((resolve, reject) => {
+      /* Generate access token */
+      this._logger.debug("Generating access token for application/module", {
+        application: application.id,
+        user: user.id,
+      });
+      const accessToken = TokenUtility.longToken;
+
       // TODO XXX Check for scope scope
       /* Check if the user is registered into the application */
       if (application.id !== user.id) {
@@ -252,21 +263,12 @@ export class OAuth2Model
         )
           .then(() => {
             /* Generate access token */
-            this._logger.debug(
-              `Generating access token for client ${application.id} and user ${user.id}`
-            );
-            let accessToken = TokenUtility.longToken;
             resolve(accessToken);
           })
           .catch(reject);
         return;
       }
 
-      /* Generate access token */
-      this._logger.debug(
-        `Generating access token for client ${application.id} and user ${user.id}`
-      );
-      let accessToken = TokenUtility.longToken;
       resolve(accessToken);
     });
   }
@@ -333,6 +335,38 @@ export class OAuth2Model
   }
 
   /**
+   * Try to get client from modules schema
+   *
+   * @param {string} clientId  Client MongoDB ObjectID
+   * @param {string} clientSecret  Client secret
+   * @returns {Promise<OAuth2Server.Client>}
+   */
+  getClientModule(clientId: string, clientSecret: string): Promise<Client> {
+    return new Promise<Client>((resolve, reject) => {
+      this._logger.debug(
+        `Retrieve client module [clientId: ${clientId}, clientSecret: ${clientSecret}]`
+      );
+
+      /* Prepare the client query */
+      const clientQuery: any = {
+        _id: clientId,
+        secret: clientSecret,
+      };
+
+      /* Search for the client into database */
+      ModuleModel.findOne(clientQuery)
+        .then((value: ModuleDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.INVALID_APPLICATION });
+            return;
+          }
+          resolve(value.toClient());
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
    * Retrieve a client using a client id or a client id/client secret combination
    *
    * @param {string} clientId  Client MongoDB ObjectID
@@ -356,12 +390,19 @@ export class OAuth2Model
         .populate("project")
         .then((value: ApplicationDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.INVALID_APPLICATION });
+            /* If application was not found try to look for module */
+            this.getClientModule(clientId, clientSecret)
+              .then(resolve)
+              .catch(reject);
             return;
           }
           resolve(value.toClient());
         })
-        .catch(reject);
+        .catch(() => {
+          this.getClientModule(clientId, clientSecret)
+            .then(resolve)
+            .catch(reject);
+        });
     });
   }
 
@@ -381,7 +422,8 @@ export class OAuth2Model
 
       /* Check if client token don't expire and there is no user involved */
       if (
-        application.accessTokenLifetime === -1 &&
+        application.accessTokenLifetime ===
+          PROJECT_LIFETIME_TYPES.LT_INFINITE &&
         user.id !== application.id
       ) {
         reject({
@@ -402,7 +444,13 @@ export class OAuth2Model
             refreshTokenExpiresAt: token.refreshTokenExpiresAt,
             scope: validScope,
             application: <any>application.id,
-            keep: application.accessTokenLifetime === -1,
+            keep:
+              application.accessTokenLifetime ===
+              PROJECT_LIFETIME_TYPES.LT_INFINITE,
+            type:
+              "id" in user && user.id !== application.id
+                ? OAUTH2_TOKEN_TYPE.TT_USER
+                : application.type || OAUTH2_TOKEN_TYPE.TT_APPLICATION,
             user: "id" in user && user.id !== application.id ? user.id : null,
           })
             .then((accessToken: OAuth2TokenDocument) => {
@@ -410,9 +458,9 @@ export class OAuth2Model
               accessToken.user = <any>user;
 
               /* Check if client token never expires */
-              if (application.accessTokenLifetime === -1) {
+              if (accessToken.keep) {
                 accessToken.accessTokenExpiresAt = new Date(
-                  Date.now() + 999999999
+                  Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
                 );
               }
               resolve(accessToken.toToken());
@@ -446,11 +494,23 @@ export class OAuth2Model
             return;
           }
 
+          /* Check if the token belongs to a module */
+          if (token.type === OAUTH2_TOKEN_TYPE.TT_MODULE) {
+            token.user = <any>{ id: token.application };
+            token.application = <any>{ id: token.application };
+            token.accessTokenExpiresAt = new Date(
+              Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
+            );
+            resolve(token.toToken());
+            return;
+          }
+
           /* Check if client token don't expire and there is no user involved */
-          if (token.keep &&
+          if (
+            token.keep &&
             token.user &&
             (<AccountDocument>token.user).id !==
-            (<ApplicationDocument>token.application).id
+              (<ApplicationDocument>token.application).id
           ) {
             reject({
               boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
@@ -461,7 +521,9 @@ export class OAuth2Model
 
           /* Check if client token never expires */
           if (token.keep) {
-            token.accessTokenExpiresAt = new Date(Date.now() + 999999999);
+            token.accessTokenExpiresAt = new Date(
+              Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
+            );
           }
 
           /* Check if the token is expired */
