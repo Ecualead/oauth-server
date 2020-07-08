@@ -5,6 +5,9 @@ import {
 } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { BaseModel } from "@ikoabo/core_srv";
+import { Client } from "oauth2-server";
+import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
+import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 
 export class Module extends BaseModel {
   @prop({ required: true })
@@ -56,6 +59,19 @@ export class Module extends BaseModel {
       },
       options: { automaticName: false },
     });
+  }
+
+  public toClient?(): Client {
+    const obj: any = this;
+    let client = {
+      id: obj.id,
+      type: OAUTH2_TOKEN_TYPE.TT_MODULE,
+      grants: ['client_credentials'],
+      accessTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
+      refreshTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
+      scope: obj.scope,
+    };
+    return client;
   }
 }
 
