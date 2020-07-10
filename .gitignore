@@ -2,6 +2,7 @@
 .idea
 .vscode
 .gitmodules
+codes
 build
 dist
 package-lock.json
