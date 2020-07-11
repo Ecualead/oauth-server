@@ -11,7 +11,7 @@ import {
   Module,
   ModuleDocument,
 } from "@/Modules/models/modules.model";
-import { Modules } from "@/Modules/controllers/modules.controller";
+import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import {
   ModuleCreateValidation,
   ModuleUpdateValidation,
@@ -19,7 +19,6 @@ import {
 import { ScopeValidation, StatusValidation } from "@/models/base.joi";
 
 const router = Router();
-const ModuleCtrl = Modules.shared;
 
 router.post(
   "/",
