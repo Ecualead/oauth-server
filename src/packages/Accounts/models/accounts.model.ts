@@ -96,13 +96,35 @@ export class Account extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(Account);
+    return getModelForClass(Account, {
+      schemaOptions: {
+        collection: "accounts.users",
+        timestamps: true,
+        toJSON: {
+          virtuals: true,
+          versionKey: false,
+          transform: (_doc: any, ret: any) => {
+            return {
+              uid: ret.id,
+              name: ret.name,
+              code: ret.code,
+              email: ret.email,
+              phone: ret.phone,
+              status: ret.status,
+              createdAt: ret.createdAt,
+              updatedAt: ret.updatedAt,
+            };
+          },
+        },
+      },
+      options: { automaticName: false },
+    });
   }
 
   public validPassword?(password: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       if (!password || !("password" in this)) {
-        reject({ boErros: ERRORS.INVALID_CREDENTIALS });
+        reject({ boError: ERRORS.INVALID_CREDENTIALS });
       }
       bcrypt.compare(
         password,
@@ -112,7 +134,7 @@ export class Account extends BaseModel {
             return resolve();
           }
 
-          reject(err ? err : { boErros: ERRORS.INVALID_CREDENTIALS });
+          reject(err ? err : { boError: ERRORS.INVALID_CREDENTIALS });
         }
       );
     });

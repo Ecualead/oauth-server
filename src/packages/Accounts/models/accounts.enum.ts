@@ -30,6 +30,15 @@ export enum RECOVER_TOKEN_STATUS {
   RTS_CONFIRMED = 3,
 }
 
+export enum NOTIFICATIONS_EVENTS_TYPES {
+  NET_UNKNOWN = 0,
+  NET_SIGNUP = 1,
+  NET_CONFIRM = 2,
+  NET_SIGNIN = 3,
+  NET_CHPWD = 4,
+  NET_RECOVER = 5,
+}
+
 export const PROTECTED_PROJECT_FIELDS: string[] = [
   "_id",
   "__v",

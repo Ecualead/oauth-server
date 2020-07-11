@@ -1,52 +1,33 @@
 import mongoose from "mongoose";
-import { Arrays, BaseModel } from "@ikoabo/core_srv";
+import { BaseModel } from "@ikoabo/core_srv";
 import {
   prop,
-  pre,
   index,
+  Ref,
   getModelForClass,
   DocumentType,
-  modelOptions,
 } from "@typegoose/typegoose";
-import { Project, ProjectDocument } from "@/Projects/models/projects.model";
+import { Project } from "@/Projects/models/projects.model";
 import { AccountSocialCredential } from "@/Accounts/models/accounts.social.model";
-import { Account, AccountDocument } from "@/Accounts/models/accounts.model";
+import { Account } from "@/Accounts/models/accounts.model";
 
-@modelOptions({
-  schemaOptions: {
-    collection: "accountsProjects",
-    timestamps: true,
-    discriminatorKey: "project",
-  },
-  options: { automaticName: false },
-})
 @index({ account: 1 })
 @index({ project: 1 })
 @index({ account: 1, project: 1 }, { unique: true })
-@pre<AccountProjectProfile>("save", function (next) {
-  let obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
-@pre<AccountProjectProfile>("findOneAndUpdate", function (next) {
-  let obj: any = this;
-  obj.scope = Arrays.force(obj.scope);
-  next();
-})
 export class AccountProjectProfile extends BaseModel {
   @prop({ type: mongoose.Types.ObjectId, required: true, ref: Account })
-  account!: string | AccountDocument;
+  account!: Ref<Account>;
 
   @prop({ type: mongoose.Types.ObjectId, required: true, ref: Project })
-  project: string | ProjectDocument;
+  project: Ref<Project>;
 
-  @prop()
+  @prop({ type: String })
   scope?: string[];
 
-  @prop()
+  @prop({ type: AccountSocialCredential })
   social?: AccountSocialCredential[];
 
-  @prop({type: Object})
+  @prop({ type: Object })
   profile?: {
     [key: string]: any;
   };
@@ -55,7 +36,31 @@ export class AccountProjectProfile extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(AccountProjectProfile);
+    return getModelForClass(AccountProjectProfile, {
+      schemaOptions: {
+        collection: "accounts.projects",
+        timestamps: true,
+        discriminatorKey: "projectId",
+        toJSON: {
+          virtuals: true,
+          versionKey: false,
+          transform: (_doc: any, ret: any) => {
+            return {
+              id: ret.id,
+              account: ret.account,
+              project: ret.project,
+              scope: ret.scope,
+              social: ret.social,
+              profile: ret.profile,
+              status: ret.status,
+              createdAt: ret.createdAt,
+              updatedAt: ret.updatedAt,
+            };
+          },
+        },
+      },
+      options: { automaticName: false },
+    });
   }
 }
 
