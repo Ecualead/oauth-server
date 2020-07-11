@@ -10,7 +10,7 @@ import { HTTP_STATUS, Objects } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
 import { OAuth2Model } from "@/OAuth2/controllers/oauth2.model.controller";
 
-export class OAuth2 {
+class OAuth2 {
   private static _instance: OAuth2;
   private _model: OAuth2Model;
   private _server: any;
@@ -110,3 +110,5 @@ export class OAuth2 {
     }
   }
 }
+
+export const OAuth2Ctrl = OAuth2.shared;

@@ -12,13 +12,12 @@ import {
 } from "oauth2-server";
 import {
   Logger,
-  Objects,
   Arrays,
   Token as TokenUtility,
   HTTP_STATUS,
 } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
-import { Accounts } from "@/Accounts/controllers/accounts.controller";
+import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
 import {
   OAuth2CodeDocument,
   OAuth2CodeModel,
@@ -39,9 +38,7 @@ import {
 import { ProjectDocument } from "@/Projects/models/projects.model";
 import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
-import { OAUTH2_TOKEN_TYPE } from "../models/oauth2.enum";
-
-const AccountCtrl = Accounts.shared;
+import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 
 export class OAuth2Model
   implements
@@ -258,7 +255,7 @@ export class OAuth2Model
         /* Check user signin policy */
         AccountAccessPolicy.canSignin(
           <AccountDocument>user,
-          application.app,
+          <ProjectDocument>(<ApplicationDocument>application).project,
           true
         )
           .then(() => {

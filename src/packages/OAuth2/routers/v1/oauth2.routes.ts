@@ -4,13 +4,11 @@ import {
   Token,
   Request as ORequest,
   Response as OResponse,
-  OAuthError,
 } from "oauth2-server";
 import { ResponseHandler, Objects } from "@ikoabo/core_srv";
-import { OAuth2 } from "@/OAuth2/controllers/oauth2.controller";
+import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 
 const router = Router();
-const OAuth2Server = OAuth2.shared;
 
 const options = {
   authenticateHandler: {
@@ -26,7 +24,7 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     let request = new ORequest(req);
     let response = new OResponse(res);
-    OAuth2Server.server
+    OAuth2Ctrl.server
       .authorize(request, response, options)
       .then((code: AuthorizationCode) => {
         /* TODO XXX Check if the client IP address is valid */
@@ -45,7 +43,7 @@ router.post(
       })
       .catch(next);
   },
-  OAuth2Server.handleError,
+  OAuth2Ctrl.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -55,7 +53,7 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     let request = new ORequest(req);
     let response = new OResponse(res);
-    OAuth2Server.server
+    OAuth2Ctrl.server
       .token(request, response)
       .then((token: Token) => {
         /* TODO XXX Check if the client IP address is valid */
@@ -89,36 +87,7 @@ router.post(
       })
       .catch(next);
   },
-  /* TODO XXX Add tracking */
-  /*(req: Request, res: Response, next: NextFunction) => {
-      /* Register the tracking information */
-  /*AccountTracking.shared.registerInformation(
-      req['token'].user.userId,
-      req['fingerprint'],
-      req.headers['user-agent'],
-      req['ipAddr'],
-      'auth/token'
-  ).then((tracking: AccountTrackingDocument) => {
-      /* Only send notification for users */
-  /*  const token = req['token'];
-    if (token.client.id !== token.user.id) {
-        /* Prepare notification data */
-  /*  let data: INotificationData = Location.parseFromRequest(req, tracking.address[tracking.address.length - 1].location);
-    data.appPayload = req['body'].appPayload;
-
-    /* Check if the user has autenticated from new device */
-  /*  if (tracking.address.filter(value => value.action === 'auth/token').length === 1) {
-        /* Send a notification to the user */
-  /*    Notifications.sendNotification('changeDevice', token.client.app, <AccountDocument>token.user, data, token.user.auth.email);
-  }
-
-  /* Send an authentication notification to the user */
-  /*    Notifications.sendNotification('authentication', token.client.app, <AccountDocument>token.user, data, token.user.auth.email);
-  }
-  next();
-}).catch(next);
-},*/
-  OAuth2Server.handleError,
+  OAuth2Ctrl.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
@@ -128,7 +97,7 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     let request = new ORequest(req);
     let response = new OResponse(res);
-    OAuth2Server.server
+    OAuth2Ctrl.server
       .authenticate(request, response)
       .then((token: Token) => {
         /* TODO XXX  Check if the client IP address is valid */
@@ -163,25 +132,7 @@ router.post(
       })
       .catch(next);
   },
-  OAuth2Server.handleError,
-  ResponseHandler.success,
-  ResponseHandler.error
-);
-
-router.post(
-  "/logout",
-  OAuth2Server.authenticate(),
-  (_req: Request, res: Response, next: NextFunction) => {
-    /* Revoke the access token */
-    OAuth2Server.model
-      .revokeToken(res.locals["token"])
-      .then(() => {
-        res.locals["response"] = {};
-        next();
-      })
-      .catch(next);
-  },
-  OAuth2Server.handleError,
+  OAuth2Ctrl.handleError,
   ResponseHandler.success,
   ResponseHandler.error
 );
