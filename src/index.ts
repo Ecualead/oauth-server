@@ -1,11 +1,21 @@
 import "module-alias/register";
 import { Settings } from "@/config/Settings";
-import { ClusterServer } from "@ikoabo/core_srv";
+import { ClusterServer, Logger } from "@ikoabo/core_srv";
 import { Authenticator } from "@ikoabo/auth_srv";
 import { Mail } from "@ikoabo/comm_srv";
 import AsyncLock from "async-lock";
-import { AccountCode } from "./packages/Accounts/controllers/accounts.code.controller";
-import { AccountsProjects } from "./packages/Accounts/controllers/accounts.projects.controller";
+import { AccountCodeCtrl } from "./packages/Accounts/controllers/accounts.code.controller";
+
+/* Initialize cluster server */
+const clusterServer = ClusterServer.setup(
+  Settings,
+  { running: requestCredentials },
+  { worker: runWorker }
+);
+
+/* Initialize componentes before import routes */
+const lock = new AsyncLock();
+const logger = new Logger('Microservice');
 
 /* Base components routes */
 import ModulesRouter from "@/Modules/routers/v1/modules.routes";
@@ -16,26 +26,6 @@ import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
 import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
 import OAuth2Router from "@/OAuth2/routers/v1/oauth2.routes";
 
-const lock = new AsyncLock();
-const CodeCtrl: AccountCode = AccountCode.shared;
-
-/**
- * Initialize projects custom profiles
- */
-function initializeProjects(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    AccountsProjects.shared
-      .initialize()
-      .then(() => { })
-      .catch((err: any) => {
-        console.error(err);
-      })
-      .finally(() => {
-        resolve();
-      });
-  });
-}
-
 /**
  * Authenticate agains auth service
  */
@@ -44,9 +34,9 @@ function requestCredentials(): Promise<void> {
     Authenticator.shared.setup(Settings.AUTH.SERVER);
     Authenticator.shared
       .authService(Settings.AUTH.ID, Settings.AUTH.SECRET)
-      .then(() => { })
+      .then(() => {})
       .catch((err) => {
-        console.error(err);
+        logger.error('Invalid authentication configuration', err);
       })
       .finally(() => {
         /* Initialize mail component */
@@ -72,7 +62,7 @@ function runWorker(worker: any): Promise<void> {
             "request-code",
             (done) => {
               /* Generate the new vCode */
-              CodeCtrl.code
+              AccountCodeCtrl.code
                 .then((value: string) => {
                   done(null, value);
                 })
@@ -89,13 +79,6 @@ function runWorker(worker: any): Promise<void> {
     });
   });
 }
-
-/* Initialize cluster server */
-const clusterServer = ClusterServer.setup(
-  Settings,
-  { running: requestCredentials, postMongo: initializeProjects },
-  { worker: runWorker }
-);
 
 /* Run cluster with base routes */
 clusterServer.run({
