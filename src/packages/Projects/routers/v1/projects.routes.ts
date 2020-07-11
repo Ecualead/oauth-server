@@ -6,18 +6,17 @@ import {
   ValidateObjectId,
   Objects,
 } from "@ikoabo/core_srv";
-import { Projects } from "@/packages/Projects/controllers/projects.controller";
+import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
 import {
   ProjectCreateValidation,
   ProjectUpdateValidation,
 } from "@/Projects/models/projects.joi";
-import { ProjectDocument, Project } from "../../models/projects.model";
+import { ProjectDocument, Project } from "@/Projects/models/projects.model";
 import { ScopeValidation, StatusValidation } from "@/models/base.joi";
-import { SubModuleValidation } from "@/packages/Modules/models/modules.joi";
-import { Modules } from "@/packages/Modules/controllers/modules.controller";
+import { SubModuleValidation } from "@/Modules/models/modules.joi";
+import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 
 const router = Router();
-const ProjectCtrl = Projects.shared;
 
 router.post(
   "/",
@@ -183,7 +182,7 @@ router.delete(
 router.post(
   "/:id/module/:module",
   Validators.joi(SubModuleValidation, "params"),
-  Modules.validateModule("params.module"),
+  ModuleCtrl.validateModule("params.module"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.addModule(req.params.id, req.params.module)
       .then((value: ProjectDocument) => {

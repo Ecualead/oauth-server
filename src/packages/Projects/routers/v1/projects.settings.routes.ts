@@ -4,7 +4,7 @@ import {
   Validators,
   ValidateObjectId,
 } from "@ikoabo/core_srv";
-import { Projects } from "@/Projects/controllers/projects.controller";
+import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
 import {
   TokenLifetimeValidation,
   RecoverTypeValidation,
@@ -20,9 +20,7 @@ import {
 } from "@/Projects/models/projects.joi";
 import { ProjectDocument } from "@/Projects/models/projects.model";
 
-
 const router = Router();
-const ProjectCtrl = Projects.shared;
 
 router.post(
   "/:id/setting/social",

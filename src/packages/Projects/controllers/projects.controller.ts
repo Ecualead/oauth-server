@@ -4,14 +4,17 @@ import {
   ProjectDocument,
   ProjectModel,
 } from "@/Projects/models/projects.model";
-import { Domains } from "@/Domains/controllers/domains.controller";
+import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { DomainDocument } from "@/Domains/models/domains.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
 import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
-import { ProjectProfileField, ProjectProfileFieldIndex } from "@/Projects/models/projects.profiles.model";
+import {
+  ProjectProfileField,
+  ProjectProfileFieldIndex,
+} from "@/Projects/models/projects.profiles.model";
 
-export class Projects extends DataScoped<Project, ProjectDocument> {
+class Projects extends DataScoped<Project, ProjectDocument> {
   private static _instance: Projects;
 
   /**
@@ -34,8 +37,7 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
   public create(data: Project): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       /* Find for the parent domain */
-      Domains.shared
-        .fetch(data.domain.toString())
+      DomainCtrl.fetch(data.domain.toString())
         .then((value: DomainDocument) => {
           /* Intersect scope with domain scope */
           data.scope = Arrays.intersect(data.scope, value.scope);
@@ -80,8 +82,7 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
           }
 
           /* Ensure domain contains this module */
-          Domains.shared
-            .addModule(value.domain.toString(), module)
+          DomainCtrl.addModule(value.domain.toString(), module)
             .then(() => {
               resolve(value);
             })
@@ -126,7 +127,7 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
         ip: ip,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $addToSet: { 'settings.restrictIps': ip } };
+      const update: any = { $addToSet: { "settings.restrictIps": ip } };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -146,7 +147,7 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
         ip: ip,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $pull: { 'settings.restrictIps': ip } };
+      const update: any = { $pull: { "settings.restrictIps": ip } };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -159,14 +160,19 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public addSocialNetwork(id: string, socialNetwork: ProjectSocialNetworkSettings): Promise<ProjectDocument> {
+  public addSocialNetwork(
+    id: string,
+    socialNetwork: ProjectSocialNetworkSettings
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding social network", {
         project: id,
         socialNetwork: socialNetwork,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $push: { 'settings.socialNetworks': socialNetwork } };
+      const update: any = {
+        $push: { "settings.socialNetworks": socialNetwork },
+      };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -179,7 +185,11 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public updateSocialNetwork(id: string, socialType: number, socialNetwork: ProjectSocialNetworkSettings): Promise<ProjectDocument> {
+  public updateSocialNetwork(
+    id: string,
+    socialType: number,
+    socialNetwork: ProjectSocialNetworkSettings
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Updating social network", {
         project: id,
@@ -188,17 +198,20 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
       const update: any = {
         $set: {
-          'settings.socialNetworks.$[elem].clientId': socialNetwork.clientId,
-          'settings.socialNetworks.$[elem].clientSecret': socialNetwork.clientSecret,
-          'settings.socialNetworks.$[elem].scope': socialNetwork.scope,
-          'settings.socialNetworks.$[elem].profile': socialNetwork.profile,
-          'settings.socialNetworks.$[elem].profileMap': socialNetwork.profileMap,
-          'settings.socialNetworks.$[elem].description': socialNetwork.description,
-        }
+          "settings.socialNetworks.$[elem].clientId": socialNetwork.clientId,
+          "settings.socialNetworks.$[elem].clientSecret":
+            socialNetwork.clientSecret,
+          "settings.socialNetworks.$[elem].scope": socialNetwork.scope,
+          "settings.socialNetworks.$[elem].profile": socialNetwork.profile,
+          "settings.socialNetworks.$[elem].profileMap":
+            socialNetwork.profileMap,
+          "settings.socialNetworks.$[elem].description":
+            socialNetwork.description,
+        },
       };
       ProjectModel.findOneAndUpdate(query, update, {
         new: true,
-        arrayFilters: [{ "elem.type": socialType }]
+        arrayFilters: [{ "elem.type": socialType }],
       })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -211,14 +224,19 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public deleteSocialNetwork(id: string, socialType: number): Promise<ProjectDocument> {
+  public deleteSocialNetwork(
+    id: string,
+    socialType: number
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing social network", {
         project: id,
         socialNetwork: socialType,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $pull: { 'settings.socialNetworks': { type: socialType } } };
+      const update: any = {
+        $pull: { "settings.socialNetworks": { type: socialType } },
+      };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -231,14 +249,17 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public addNotification(id: string, notification: ProjectNotification): Promise<ProjectDocument> {
+  public addNotification(
+    id: string,
+    notification: ProjectNotification
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding notification", {
         project: id,
         notification: notification,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $push: { 'settings.notifications': notification } };
+      const update: any = { $push: { "settings.notifications": notification } };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -251,7 +272,11 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public updateNotification(id: string, notificationType: number, notification: ProjectNotification): Promise<ProjectDocument> {
+  public updateNotification(
+    id: string,
+    notificationType: number,
+    notification: ProjectNotification
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Updating notification", {
         project: id,
@@ -260,17 +285,17 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
       const update: any = {
         $set: {
-          'settings.notifications.$[elem].signup': notification.signup,
-          'settings.notifications.$[elem].confirm': notification.confirm,
-          'settings.notifications.$[elem].signin': notification.signin,
-          'settings.notifications.$[elem].chPwd': notification.chPwd,
-          'settings.notifications.$[elem].recover': notification.recover,
-          'settings.notifications.$[elem].urls': notification.urls,
-        }
+          "settings.notifications.$[elem].signup": notification.signup,
+          "settings.notifications.$[elem].confirm": notification.confirm,
+          "settings.notifications.$[elem].signin": notification.signin,
+          "settings.notifications.$[elem].chPwd": notification.chPwd,
+          "settings.notifications.$[elem].recover": notification.recover,
+          "settings.notifications.$[elem].urls": notification.urls,
+        },
       };
       ProjectModel.findOneAndUpdate(query, update, {
         new: true,
-        arrayFilters: [{ "elem.type": notificationType }]
+        arrayFilters: [{ "elem.type": notificationType }],
       })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -283,14 +308,19 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public deleteNotification(id: string, notificationType: number): Promise<ProjectDocument> {
+  public deleteNotification(
+    id: string,
+    notificationType: number
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing notification", {
         project: id,
         notification: notificationType,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $pull: { 'settings.notifications': { type: notificationType } } };
+      const update: any = {
+        $pull: { "settings.notifications": { type: notificationType } },
+      };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -303,14 +333,17 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public addProfileField(id: string, profile: ProjectProfileField): Promise<ProjectDocument> {
+  public addProfileField(
+    id: string,
+    profile: ProjectProfileField
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding profile field definition", {
         project: id,
         field: profile,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $push: { 'settings.profile.fields': profile } };
+      const update: any = { $push: { "settings.profile.fields": profile } };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -323,14 +356,19 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public deleteProfileField(id: string, field: string): Promise<ProjectDocument> {
+  public deleteProfileField(
+    id: string,
+    field: string
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing profile field definition", {
         project: id,
         field: field,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $pull: { 'settings.profile.fields': { name: field } } };
+      const update: any = {
+        $pull: { "settings.profile.fields": { name: field } },
+      };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -343,7 +381,11 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public addProfileIndex(index: string, id: string, profile: ProjectProfileFieldIndex): Promise<ProjectDocument> {
+  public addProfileIndex(
+    index: string,
+    id: string,
+    profile: ProjectProfileFieldIndex
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding profile field index", {
         project: id,
@@ -352,7 +394,7 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
       let obj: any = {};
-      obj['settings.profile.' + index] = profile;
+      obj["settings.profile." + index] = profile;
       const update: any = { $push: obj };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
@@ -366,7 +408,11 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public deleteProfileIndex(index: string, id: string, fieldIdx: number): Promise<ProjectDocument> {
+  public deleteProfileIndex(
+    index: string,
+    id: string,
+    fieldIdx: number
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing profile field definition", {
         project: id,
@@ -375,7 +421,7 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
       let obj: any = {};
-      obj['settings.profile.' + index] = fieldIdx;
+      obj["settings.profile." + index] = fieldIdx;
       const update: any = { $pull: obj };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
@@ -389,3 +435,5 @@ export class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 }
+
+export const ProjectCtrl = Projects.shared;
