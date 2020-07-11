@@ -1,7 +1,7 @@
 import { Logger, Token, Objects, Arrays, HTTP_STATUS } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
-import { AccountsProjects } from "@/Accounts/controllers/accounts.projects.controller";
-import { AccountCode } from "@/Accounts/controllers/accounts.code.controller";
+import { AccountProjectCtrl } from "@/Accounts/controllers/accounts.projects.controller";
+import { AccountCodeCtrl } from "@/Accounts/controllers/accounts.code.controller";
 import { ApplicationDocument } from "@/Applications/models/applications.model";
 import {
   AccountDocument,
@@ -22,13 +22,15 @@ import {
 } from "@/Accounts/models/accounts.enum";
 import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
 import { ProjectDocument } from "@/Projects/models/projects.model";
+import { mongoose } from "@typegoose/typegoose";
+import {
+  AccountTreeModel,
+  AccountTreeDocument,
+} from "../models/accounts.tree.model";
 
-const AccountProjectCtrl = AccountsProjects.shared;
-const AccountCodeCtrl = AccountCode.shared;
-
-export class Accounts {
+class Accounts {
   private static _instance: Accounts;
-  private readonly _logger: Logger;
+  private _logger: Logger;
 
   /**
    * Private constructor to allow singleton instance
@@ -94,13 +96,12 @@ export class Accounts {
                     application.project,
                     "settings.emailConfirmation.time",
                     0
-                  ) *
-                    3600000;
+                  );
               }
 
               /* Set the confirmation token information if its necessary */
               const recoverType = Objects.get(
-                application,
+                application.project,
                 "settings.recover",
                 PROJECT_RECOVER_TYPE.RT_LINK
               );
@@ -133,44 +134,79 @@ export class Accounts {
 
   public registerProject(
     account: AccountDocument,
-    profile: any,
-    application: ApplicationDocument
+    profileData: any,
+    application: ApplicationDocument,
+    referral: string
   ): Promise<AccountProjectProfileDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
+      const project = (<ProjectDocument>application.project)["_id"].toString();
+
       /* Check if the user is currently registered into the project */
-      const projectModel = AccountProjectCtrl.getModel(application.project.toString());
-      projectModel
-        .findOne({ account: account.id })
-        .then((value: AccountProjectProfileDocument) => {
-          if (value) {
-            reject({ boError: ERRORS.USER_DUPLICATED });
+      AccountProjectCtrl.getModel(project)
+        .then((projectModel: mongoose.Model<any>) => {
+          /* Check for a valid project profile model */
+          if (!projectModel) {
+            reject({ boError: ERRORS.INVALID_APPLICATION });
             return;
           }
 
-          /* Ensure profile is valid object */
-          if (!profile) {
-            profile = {};
-          }
-
-          /* Set custom information */
-          profile["account"] = account.id;
-          profile["status"] = ACCOUNT_STATUS.AS_REGISTERED;
-
-          /* Set the new user scope using default values and application scope */
-          profile["scope"] = Arrays.force(
-            SCP_ACCOUNT_DEFAULT,
-            application.scope,
-            SCP_NON_INHERITABLE
-          );
-          profile["scope"] = profile["scope"].filter(
-            (scope: string) => SCP_PREVENT.indexOf(scope) < 0
-          );
-
-          /* Register the user into the current project */
+          /* Check if the user profile is registered */
           projectModel
-            .create(profile)
+            .findOne({ account: account.id })
             .then((value: AccountProjectProfileDocument) => {
-              resolve(value);
+              if (value) {
+                reject({ boError: ERRORS.USER_DUPLICATED });
+                return;
+              }
+
+              /* Initialize the profile */
+              let profile = {
+                account: account._id,
+                project: project,
+                status: ACCOUNT_STATUS.AS_REGISTERED,
+                profile: profileData,
+                scope: Arrays.force(
+                  SCP_ACCOUNT_DEFAULT,
+                  [],
+                  SCP_NON_INHERITABLE
+                ),
+              };
+
+              /* Set the new user scope using default values and application scope */
+              profile["scope"] = profile["scope"].filter(
+                (scope: string) => SCP_PREVENT.indexOf(scope) < 0
+              );
+              console.log(profile);
+              /* Register the user into the current project */
+              projectModel
+                .findOneAndUpdate(
+                  { projectId: project, account: account._id },
+                  { $set: profile },
+                  { upsert: true, new: true }
+                )
+                .populate("project")
+                .populate("account")
+                .then((value: AccountProjectProfileDocument) => {
+                  /* Look for the referral parent user */
+                  AccountTreeModel.findOne({ project: project, code: referral })
+                    .then((parent: AccountTreeDocument) => {
+                      /* Initialize user referral tree */
+                      const tree: any[] = parent ? parent.tree : [];
+                      tree.push(account._id);
+
+                      /* Register the user referral tree */
+                      AccountTreeModel.create({
+                        project: project,
+                        account: account._id,
+                        code: account.code,
+                        tree: tree,
+                      }).finally(() => {
+                        resolve(value);
+                      });
+                    })
+                    .catch(reject);
+                })
+                .catch(reject);
             })
             .catch(reject);
         })
@@ -185,15 +221,50 @@ export class Accounts {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
       /* Check if the user is currently registered into the application */
       const id = typeof project === "string" ? project : project.id;
-      const projectModel = AccountProjectCtrl.getModel(id);
-      projectModel
-        .findOne({ account: account })
-        .then((value: AccountProjectProfileDocument) => {
-          if (!value) {
-            reject({ boError: ERRORS.PROFILE_NOT_FOUND });
-            return;
-          }
-          resolve(value);
+      AccountProjectCtrl.getModel(id)
+        .then((projectModel: mongoose.Model<any>) => {
+          projectModel
+            .findOne({ account: account })
+            .then((value: AccountProjectProfileDocument) => {
+              if (!value) {
+                reject({ boError: ERRORS.PROFILE_NOT_FOUND });
+                return;
+              }
+              resolve(value);
+            })
+            .catch(reject);
+        })
+        .catch(reject);
+    });
+  }
+
+  public updateProfile(
+    account: string,
+    project: string,
+    profile: any
+  ): Promise<AccountProjectProfileDocument> {
+    return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
+      console.log(account);
+      console.log(project);
+      console.log(profile);
+      /* Get the curren project profile data model */
+      AccountProjectCtrl.getModel(project)
+        .then((projectModel: mongoose.Model<any>) => {
+          /* Fetch and update the user account */
+          projectModel
+            .findOneAndUpdate(
+              { account: account },
+              { $set: { profile: profile } },
+              { new: true }
+            )
+            .then((value: AccountProjectProfileDocument) => {
+              if (!value) {
+                reject({ boError: ERRORS.PROFILE_NOT_FOUND });
+                return;
+              }
+              resolve(value);
+            })
+            .catch(reject);
         })
         .catch(reject);
     });
@@ -238,8 +309,12 @@ export class Accounts {
     });
   }
 
-  public confirmAccount(email: string, token: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+  public confirmAccount(
+    email: string,
+    token: string,
+    project: string
+  ): Promise<AccountProjectProfileDocument> {
+    return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
       const update: any = { $inc: { "recoverToken.attempts": 1 } };
       AccountModel.findOneAndUpdate({ email: email }, update, { new: true })
         .then((value: AccountDocument) => {
@@ -297,6 +372,7 @@ export class Accounts {
             return;
           }
 
+          /* Update the confirm account status */
           AccountModel.findOneAndUpdate(
             {
               _id: value.id,
@@ -320,8 +396,31 @@ export class Accounts {
                 });
                 return;
               }
-              this._logger.debug("User account confirmed", { email: email });
-              resolve();
+
+              /* Fetch the user account profile */
+              AccountProjectCtrl.getModel(project)
+                .then((projectModel: mongoose.Model<any>) => {
+                  projectModel
+                    .findOne({ account: value.id })
+                    .populate("account")
+                    .populate("project")
+                    .then((profile: AccountProjectProfileDocument) => {
+                      if (!value) {
+                        reject({
+                          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                          boError: ERRORS.INVALID_TOKEN,
+                        });
+                        return;
+                      }
+
+                      this._logger.debug("User account confirmed", {
+                        email: email,
+                      });
+                      resolve(profile);
+                    })
+                    .catch(reject);
+                })
+                .catch(reject);
             })
             .catch(reject);
         })
@@ -331,7 +430,8 @@ export class Accounts {
 
   public requestRecover(
     email: string,
-    application: ApplicationDocument
+    application: ApplicationDocument,
+    project: string
   ): Promise<AccountDocument> {
     return new Promise<AccountDocument>((resolve, reject) => {
       /* Check if the recover is enabled */
@@ -366,27 +466,37 @@ export class Accounts {
                 ? Token.shortToken
                 : Token.longToken,
             "recoverToken.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
-            "recoverToken.attempts": 0,
+            "recoverToken.attempts": 1,
             "recoverToken.expires":
               Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS * 1000,
           };
 
           const update: any = {
             $set: reset,
-            $inc: { "recoverToken.attempts": 1 },
           };
           /* Register the reset token */
           AccountModel.findOneAndUpdate({ _id: value.id }, update, {
             new: true,
           })
             .then((value: AccountDocument) => {
-              /* Show the verification token */
-              this._logger.debug("Recovery account requested", {
-                id: value.id,
-                email: value.email,
-                token: value.recoverToken.token,
-              });
-              resolve(value);
+              AccountProjectCtrl.getModel(project)
+                .then((projectModel: mongoose.Model<any>) => {
+                  projectModel
+                    .findOne({ account: value.id })
+                    .populate("account")
+                    .populate("project")
+                    .then((profile: AccountProjectProfileDocument) => {
+                      /* Show the verification token */
+                      this._logger.debug("Recovery account requested", {
+                        id: value.id,
+                        email: value.email,
+                        token: value.recoverToken.token,
+                      });
+                      resolve(profile);
+                    })
+                    .catch(reject);
+                })
+                .catch(reject);
             })
             .catch(reject);
         })
@@ -531,4 +641,98 @@ export class Accounts {
         .catch(reject);
     });
   }
+
+  public requestConfirmation(
+    email: string,
+    application: ApplicationDocument
+  ): Promise<AccountProjectProfileDocument> {
+    return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
+      /* Check if the recover is enabled */
+      const recoverType = Objects.get(
+        application,
+        "project.settings.recover",
+        PROJECT_RECOVER_TYPE.RT_DISABLED
+      );
+      if (recoverType === PROJECT_RECOVER_TYPE.RT_DISABLED) {
+        reject({ boError: ERRORS.RECOVER_NOT_ALLOWED });
+        return;
+      }
+
+      const project = Objects.get(application, "project._id");
+
+      /* Look for the user by email, user was previously authenticated */
+      AccountModel.findOne({
+        email: email,
+      })
+        .then((value: AccountDocument) => {
+          if (!value) {
+            /* User always exists, this error should never occurr */
+            reject({
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
+            });
+            return;
+          }
+
+          /* Check if the user has confirmed the account previously */
+          if (
+            value.status !== ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH
+          ) {
+            reject({
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_ALREADY_CONFIRMED,
+            });
+            return;
+          }
+
+          /* Prepare the recover token for the account confirmation */
+          const recoverToken = {
+            token:
+              recoverType !== PROJECT_RECOVER_TYPE.RT_LINK
+                ? Token.shortToken
+                : Token.longToken,
+            attempts: 0,
+            status: RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
+            expires: Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS * 1000,
+          };
+
+          /* Register the reset token */
+          AccountModel.findOneAndUpdate(
+            { _id: value.id },
+            {
+              $set: { recoverToken: recoverToken },
+            },
+            { new: true }
+          )
+            .then((value: AccountDocument) => {
+              AccountProjectCtrl.getModel(project)
+                .then((projectModel: mongoose.Model<any>) => {
+                  projectModel
+                    .findOne({ account: value._id })
+                    .populate("account")
+                    .populate("project")
+                    .then((profile: AccountProjectProfileDocument) => {
+                      if (!profile) {
+                        reject({ boError: ERRORS.PROFILE_NOT_FOUND });
+                        return;
+                      }
+                      /* Show the verification token */
+                      this._logger.debug("Account confirmation requested", {
+                        id: value.id,
+                        email: value.email,
+                        token: value.recoverToken.token,
+                      });
+                      resolve(profile);
+                    })
+                    .catch(reject);
+                })
+                .catch(reject);
+            })
+            .catch(reject);
+        })
+        .catch(reject);
+    });
+  }
 }
+
+export const AccountCtrl = Accounts.shared;

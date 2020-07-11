@@ -5,12 +5,20 @@ import AsyncLock from "async-lock";
 import RoaringBitmap32 from "roaring/RoaringBitmap32";
 import { ERRORS } from "@ikoabo/auth_srv";
 
-const USER_CODE_FILE = path.join(__dirname, "..", "..", "codes", "map.");
+const USER_CODE_FILE = path.join(
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "..",
+  "codes",
+  "map."
+);
 const USER_CODE_SIZE = 8;
 
 const lock = new AsyncLock();
 
-export class AccountCode {
+class AccountCode {
   private static _instance: AccountCode;
   private _logger: Logger;
 
@@ -220,3 +228,5 @@ export class AccountCode {
     return parseInt(strValue);
   }
 }
+
+export const AccountCodeCtrl = AccountCode.shared;

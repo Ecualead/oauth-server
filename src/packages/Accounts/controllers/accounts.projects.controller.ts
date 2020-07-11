@@ -17,16 +17,17 @@ interface ICustomProject {
   [key: string]: mongoose.Model<any>;
 }
 
-export class AccountsProjects {
+class AccountsProjects {
   private static _instance: AccountsProjects;
-  private readonly _logger: Logger;
-  private readonly _models: ICustomProject;
+  private _logger: Logger;
+  private _models: ICustomProject;
 
   /**
    * Private constructor to allow singleton instance
    */
   private constructor() {
     this._logger = new Logger("AccountsProject");
+    this._logger.debug("Instantiating AccountProjects singleton class");
     this._models = {};
   }
 
@@ -48,11 +49,21 @@ export class AccountsProjects {
     this._models[project.id] = model;
   }
 
-  public getModel(
-    project: string | ProjectDocument
-  ): mongoose.Model<any> | null {
-    const idx = typeof project === "string" ? project : project.id;
-    return this._models[idx];
+  public getModel(project: string): Promise<mongoose.Model<any>> {
+    return new Promise<mongoose.Model<any>>((resolve, reject) => {
+      /* Check if the model is precached */
+      if (this._models[project]) {
+        return resolve(this._models[project]);
+      }
+
+      /* Initialize the project data model */
+      ProjectModel.findOne({ _id: project, status: BASE_STATUS.BS_ENABLED })
+        .then((projectObj: ProjectDocument) => {
+          this._loadProfileFields(projectObj);
+          return resolve(this._models[project]);
+        })
+        .catch(reject);
+    });
   }
 
   private _deleteModel(project: ProjectDocument) {
@@ -118,29 +129,6 @@ export class AccountsProjects {
     return field.defaultValue;
   }
 
-  public initialize(): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
-      ProjectModel.find({ status: BASE_STATUS.BS_ENABLED })
-        .then((projects: ProjectDocument[]) => {
-          async.forEachLimit(
-            projects,
-            1,
-            (project: ProjectDocument, cb) => {
-              this._loadProfileFields(project);
-              cb();
-            },
-            (err: any) => {
-              if (err) {
-                reject(err);
-              }
-              resolve(true);
-            }
-          );
-        })
-        .catch(reject);
-    });
-  }
-
   public revoke(project: ProjectDocument) {
     this._deleteModel(project);
   }
@@ -161,7 +149,7 @@ export class AccountsProjects {
           {},
           {
             timestamps: true,
-            discriminatorKey: "project",
+            discriminatorKey: "projectId",
           }
         );
 
@@ -219,3 +207,5 @@ export class AccountsProjects {
     this._addModel(project, pModel);
   }
 }
+
+export const AccountProjectCtrl = AccountsProjects.shared;
