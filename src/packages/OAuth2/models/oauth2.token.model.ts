@@ -66,9 +66,11 @@ export class OAuth2Token extends BaseModel {
     token.scope.push("default");
     switch (token.type) {
       case OAUTH2_TOKEN_TYPE.TT_MODULE:
+        token.scope.push("non_user");
         token.scope.push("module");
         break;
       case OAUTH2_TOKEN_TYPE.TT_APPLICATION:
+        token.scope.push("non_user");
         token.scope.push("application");
         break;
       case OAUTH2_TOKEN_TYPE.TT_USER:
