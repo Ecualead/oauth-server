@@ -6,7 +6,7 @@ import {
   ApplicationModel,
 } from "../models/applications.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
-import { Projects } from "@/packages/Projects/controllers/projects.controller";
+import { ProjectCtrl } from "@/packages/Projects/controllers/projects.controller";
 import { ProjectDocument } from "@/packages/Projects/models/projects.model";
 
 export class Applications extends DataScoped<Application, ApplicationDocument> {
@@ -32,8 +32,7 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
   public create(data: Application): Promise<ApplicationDocument> {
     return new Promise<ApplicationDocument>((resolve, reject) => {
       /* Find the parent project */
-      Projects.shared
-        .fetch(data.project.toString())
+      ProjectCtrl.fetch(data.project.toString())
         .then((project: ProjectDocument) => {
           /* Set the project owning */
           data.project = project.id;
@@ -96,3 +95,5 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
     });
   }
 }
+
+export const ApplicationCtrl = Applications.shared;

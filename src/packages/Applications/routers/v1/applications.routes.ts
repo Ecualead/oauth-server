@@ -1,7 +1,15 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { ResponseHandler, Validators, ValidateObjectId } from "@ikoabo/core_srv";
-import { Applications } from "@/Applications/controllers/applications.controller";
-import { ApplicationCreateValidation, ApplicationUpdateValidation, ApplicationGrantValidation } from "@/Applications/models/applications.joi";
+import {
+  ResponseHandler,
+  Validators,
+  ValidateObjectId,
+} from "@ikoabo/core_srv";
+import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
+import {
+  ApplicationCreateValidation,
+  ApplicationUpdateValidation,
+  ApplicationGrantValidation,
+} from "@/Applications/models/applications.joi";
 import {
   Application,
   ApplicationDocument,
@@ -9,7 +17,6 @@ import {
 import { StatusValidation, ScopeValidation } from "@/models/base.joi";
 
 const router = Router();
-const ApplicationCtrl = Applications.shared;
 
 router.post(
   "/:id",
@@ -18,7 +25,7 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     let application: Application = {
       name: req.body["name"],
-      project: <any>req.params['id'],
+      project: <any>req.params["id"],
       description: req.body["description"],
       image: req.body["image"],
       type: req.body["type"],
@@ -42,8 +49,9 @@ router.post(
   ResponseHandler.error
 );
 
-router.put('/:id',
-  Validators.joi(ValidateObjectId, 'params'),
+router.put(
+  "/:id",
+  Validators.joi(ValidateObjectId, "params"),
   Validators.joi(ApplicationUpdateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     let application: Application = {
@@ -55,20 +63,22 @@ router.put('/:id',
     };
     ApplicationCtrl.update(req.params.id, application)
       .then((value: ApplicationDocument) => {
-        res.locals['response'] = { id: value.id };
+        res.locals["response"] = { id: value.id };
         next();
-      }).catch(next);
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
 );
 
-router.get('/:id',
-  Validators.joi(ValidateObjectId, 'params'),
+router.get(
+  "/:id",
+  Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.fetch(req.params.id)
       .then((value: ApplicationDocument) => {
-        res.locals['response'] = {
+        res.locals["response"] = {
           id: value.id,
           name: value.name,
           description: value.description,
@@ -82,85 +92,102 @@ router.get('/:id',
           updatedAt: value.updatedAt,
         };
         next();
-      }).catch(next);
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
 );
 
-router.delete('/:id',
-  Validators.joi(ValidateObjectId, 'params'),
+router.delete(
+  "/:id",
+  Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.delete(req.params.id)
       .then((value: ApplicationDocument) => {
-        res.locals['response'] = { id: value.id };
+        res.locals["response"] = { id: value.id };
         next();
-      }).catch(next);
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
 );
 
-router.put('/:id/:action',
-  Validators.joi(StatusValidation, 'params'),
+router.put(
+  "/:id/:action",
+  Validators.joi(StatusValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
-    const handler = (req.params.action === 'enable') ? ApplicationCtrl.enable(req.params.id) : ApplicationCtrl.disable(req.params.id);
-    handler.then((value: ApplicationDocument) => {
-      res.locals['response'] = { id: value.id };
-      next();
-    }).catch(next);
+    const handler =
+      req.params.action === "enable"
+        ? ApplicationCtrl.enable(req.params.id)
+        : ApplicationCtrl.disable(req.params.id);
+    handler
+      .then((value: ApplicationDocument) => {
+        res.locals["response"] = { id: value.id };
+        next();
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
 );
 
-router.post('/:id/scope/:scope',
-  Validators.joi(ScopeValidation, 'params'),
+router.post(
+  "/:id/scope/:scope",
+  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.addScope(req.params.id, req.params.scope)
       .then((value: ApplicationDocument) => {
-        res.locals['response'] = { id: value.id };
+        res.locals["response"] = { id: value.id };
         next();
-      }).catch(next);
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
 );
 
-router.delete('/:id/scope/:scope',
-  Validators.joi(ScopeValidation, 'params'),
+router.delete(
+  "/:id/scope/:scope",
+  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.deleteScope(req.params.id, req.params.scope)
       .then((value: ApplicationDocument) => {
-        res.locals['response'] = { id: value.id };
+        res.locals["response"] = { id: value.id };
         next();
-      }).catch(next);
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
 );
 
-router.post('/:id/grant/:grant',
-  Validators.joi(ApplicationGrantValidation, 'params'),
+router.post(
+  "/:id/grant/:grant",
+  Validators.joi(ApplicationGrantValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.addGrant(req.params.id, req.params.grant)
       .then((value: ApplicationDocument) => {
-        res.locals['response'] = { id: value.id };
+        res.locals["response"] = { id: value.id };
         next();
-      }).catch(next);
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
 );
 
-router.delete('/:id/grant/:grant',
-  Validators.joi(ApplicationGrantValidation, 'params'),
+router.delete(
+  "/:id/grant/:grant",
+  Validators.joi(ApplicationGrantValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.deleteGrant(req.params.id, req.params.grant)
       .then((value: ApplicationDocument) => {
-        res.locals['response'] = { id: value.id };
+        res.locals["response"] = { id: value.id };
         next();
-      }).catch(next);
+      })
+      .catch(next);
   },
   ResponseHandler.success,
   ResponseHandler.error
