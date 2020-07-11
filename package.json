@@ -42,7 +42,7 @@
     "@hapi/joi": "^17.1.1",
     "@ikoabo/auth_srv": "^1.0.8",
     "@ikoabo/comm_srv": "^1.0.0",
-    "@ikoabo/core_srv": "^1.0.32",
+    "@ikoabo/core_srv": "^1.0.33",
     "@typegoose/typegoose": "^7.2.0",
     "@types/async-lock": "^1.1.2",
     "JSONStream": "^1.3.5",
