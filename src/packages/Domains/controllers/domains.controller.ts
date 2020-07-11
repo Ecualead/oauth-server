@@ -5,9 +5,9 @@ import {
   DomainDocument,
 } from "@/Domains/models/domains.model";
 import { BASE_STATUS, ERRORS } from "@ikoabo/core_srv";
-import { Projects } from "@/packages/Projects/controllers/projects.controller";
+import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
 
-export class Domains extends DataScoped<Domain, DomainDocument> {
+class Domains extends DataScoped<Domain, DomainDocument> {
   private static _instance: Domains;
 
   private constructor() {
@@ -62,8 +62,8 @@ export class Domains extends DataScoped<Domain, DomainDocument> {
             return;
           }
 
-          Projects.shared
-            .clearModule(module)
+          /* Remove the registered module */
+          ProjectCtrl.clearModule(module)
             .then(() => {
               resolve(value);
             })
@@ -73,3 +73,5 @@ export class Domains extends DataScoped<Domain, DomainDocument> {
     });
   }
 }
+
+export const DomainCtrl = Domains.shared;

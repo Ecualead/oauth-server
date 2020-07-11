@@ -6,18 +6,17 @@ import {
   BASE_STATUS,
   ValidateObjectId,
 } from "@ikoabo/core_srv";
-import { Domains } from "@/Domains/controllers/domains.controller";
+import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { Domain, DomainDocument } from "@/Domains/models/domains.model";
 import {
   DomainCreateValidation,
   DomainUpdateValidation,
 } from "@/Domains/models/domains.joi";
 import { SubModuleValidation } from "@/Modules/models/modules.joi";
-import { Modules } from "@/Modules/controllers/modules.controller";
+import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import { ScopeValidation, StatusValidation } from "@/models/base.joi";
 
 const router = Router();
-const DomainCtrl = Domains.shared;
 
 router.post(
   "/",
@@ -167,7 +166,7 @@ router.delete(
 router.post(
   "/:id/module/:module",
   Validators.joi(SubModuleValidation, "params"),
-  Modules.validateModule("params.module"),
+  ModuleCtrl.validateModule("params.module"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.addModule(req.params.id, req.params.module)
       .then((value: DomainDocument) => {
