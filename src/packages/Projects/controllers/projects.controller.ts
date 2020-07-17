@@ -9,10 +9,7 @@ import { DomainDocument } from "@/Domains/models/domains.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
 import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
-import {
-  ProjectProfileField,
-  ProjectProfileFieldIndex,
-} from "@/Projects/models/projects.profiles.model";
+
 
 class Projects extends DataScoped<Project, ProjectDocument> {
   private static _instance: Projects;
@@ -321,108 +318,6 @@ class Projects extends DataScoped<Project, ProjectDocument> {
       const update: any = {
         $pull: { "settings.notifications": { type: notificationType } },
       };
-      ProjectModel.findOneAndUpdate(query, update, { new: true })
-        .then((value: ProjectDocument) => {
-          if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
-            return;
-          }
-          resolve(value);
-        })
-        .catch(reject);
-    });
-  }
-
-  public addProfileField(
-    id: string,
-    profile: ProjectProfileField
-  ): Promise<ProjectDocument> {
-    return new Promise<ProjectDocument>((resolve, reject) => {
-      this._logger.debug("Adding profile field definition", {
-        project: id,
-        field: profile,
-      });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $push: { "settings.profile.fields": profile } };
-      ProjectModel.findOneAndUpdate(query, update, { new: true })
-        .then((value: ProjectDocument) => {
-          if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
-            return;
-          }
-          resolve(value);
-        })
-        .catch(reject);
-    });
-  }
-
-  public deleteProfileField(
-    id: string,
-    field: string
-  ): Promise<ProjectDocument> {
-    return new Promise<ProjectDocument>((resolve, reject) => {
-      this._logger.debug("Removing profile field definition", {
-        project: id,
-        field: field,
-      });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = {
-        $pull: { "settings.profile.fields": { name: field } },
-      };
-      ProjectModel.findOneAndUpdate(query, update, { new: true })
-        .then((value: ProjectDocument) => {
-          if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
-            return;
-          }
-          resolve(value);
-        })
-        .catch(reject);
-    });
-  }
-
-  public addProfileIndex(
-    index: string,
-    id: string,
-    profile: ProjectProfileFieldIndex
-  ): Promise<ProjectDocument> {
-    return new Promise<ProjectDocument>((resolve, reject) => {
-      this._logger.debug("Adding profile field index", {
-        project: id,
-        index: index,
-        field: profile,
-      });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      let obj: any = {};
-      obj["settings.profile." + index] = profile;
-      const update: any = { $push: obj };
-      ProjectModel.findOneAndUpdate(query, update, { new: true })
-        .then((value: ProjectDocument) => {
-          if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
-            return;
-          }
-          resolve(value);
-        })
-        .catch(reject);
-    });
-  }
-
-  public deleteProfileIndex(
-    index: string,
-    id: string,
-    fieldIdx: number
-  ): Promise<ProjectDocument> {
-    return new Promise<ProjectDocument>((resolve, reject) => {
-      this._logger.debug("Removing profile field definition", {
-        project: id,
-        index: index,
-        field: fieldIdx,
-      });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      let obj: any = {};
-      obj["settings.profile." + index] = fieldIdx;
-      const update: any = { $pull: obj };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {

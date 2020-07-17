@@ -6,7 +6,6 @@ import {
   PROJECT_EMAIL_CONFIRMATION,
 } from "@/Projects/models/projects.enum";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
-import { ProjectProfile } from "@/Projects/models/projects.profiles.model";
 
 class ProjectPasswordPolicy {
   @prop({ required: true, default: 5 })
@@ -79,7 +78,4 @@ export class ProjectSetting {
 
   @prop({ type: ProjectNotification })
   notifications: ProjectNotification[];
-
-  @prop()
-  profile?: ProjectProfile;
 }

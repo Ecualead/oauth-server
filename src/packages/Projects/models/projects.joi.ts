@@ -1,5 +1,5 @@
 import { Joi } from "@ikoabo/core_srv";
-import { PROJECT_LIFETIME_TYPES, PROJECT_RECOVER_TYPE, PROJECT_EMAIL_CONFIRMATION, SOCIAL_NETWORK_TYPES, NOTIFICATION_TYPES, PROFILE_FIELD_TYPES } from "./projects.enum";
+import { PROJECT_LIFETIME_TYPES, PROJECT_RECOVER_TYPE, PROJECT_EMAIL_CONFIRMATION, SOCIAL_NETWORK_TYPES, NOTIFICATION_TYPES } from "./projects.enum";
 
 const ProjectLinks = Joi.object()
   .optional()
@@ -36,11 +36,6 @@ export const ProjectUpdateValidation = Joi.object().keys({
 export const TypeSettingParamsValidation = Joi.object().keys({
   id: Joi.objectId().required(),
   type: Joi.number().required(),
-});
-
-export const ProfileFieldParamsValidation = Joi.object().keys({
-  id: Joi.objectId().required(),
-  name: Joi.string().required(),
 });
 
 export const SocialNetworkSettingValidation = Joi.object().keys({
@@ -94,16 +89,3 @@ export const NotificationsSettingsValidation = Joi.object().keys({
     recover: Joi.string().allow("").optional()
   }).optional()
 });
-
-export const ProfileFieldSettingsValidation = Joi.object().keys({
-  name: Joi.string().required(),
-  description: Joi.string().allow("").optional(),
-  type: Joi.number().default(PROFILE_FIELD_TYPES.PF_UNKNOWN).required(),
-  defaultValue: Joi.string().allow("").optional(),
-  required: Joi.boolean().default(false)
-});
-
-export const ProfileFieldIndexSettingsValidation = Joi.object().keys({
-  names: Joi.array().items(Joi.string()).required()
-});
-
