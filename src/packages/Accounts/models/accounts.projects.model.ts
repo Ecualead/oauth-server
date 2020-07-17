@@ -27,10 +27,11 @@ export class AccountProjectProfile extends BaseModel {
   @prop({ type: AccountSocialCredential })
   social?: AccountSocialCredential[];
 
-  @prop({ type: Object })
-  profile?: {
-    [key: string]: any;
-  };
+  @prop()
+  referral?: string;
+
+  @prop({ default: 0 })
+  type?: number;
 
   /**
    * Get the mongoose data model
@@ -40,7 +41,6 @@ export class AccountProjectProfile extends BaseModel {
       schemaOptions: {
         collection: "accounts.projects",
         timestamps: true,
-        discriminatorKey: "projectId",
         toJSON: {
           virtuals: true,
           versionKey: false,
@@ -51,7 +51,7 @@ export class AccountProjectProfile extends BaseModel {
               project: ret.project,
               scope: ret.scope,
               social: ret.social,
-              profile: ret.profile,
+              type: ret.type,
               status: ret.status,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt,

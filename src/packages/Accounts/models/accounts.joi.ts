@@ -4,8 +4,8 @@ export const RegisterValidation = Joi.object().keys({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
   name: Joi.string().allow("").optional(),
+  lastname: Joi.string().allow("").optional(),
   phone: Joi.string().allow("").optional(),
-  profile: Joi.object().optional(),
   referral: Joi.string().default("none").optional(),
 });
 

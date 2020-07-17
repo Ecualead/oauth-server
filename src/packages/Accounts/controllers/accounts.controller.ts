@@ -1,6 +1,5 @@
 import { Logger, Token, Objects, Arrays, HTTP_STATUS } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
-import { AccountProjectCtrl } from "@/Accounts/controllers/accounts.projects.controller";
 import { AccountCodeCtrl } from "@/Accounts/controllers/accounts.code.controller";
 import { ApplicationDocument } from "@/Applications/models/applications.model";
 import {
@@ -20,7 +19,7 @@ import {
   SCP_PREVENT,
   SCP_NON_INHERITABLE,
 } from "@/Accounts/models/accounts.enum";
-import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
+import { AccountProjectProfileDocument, AccountProjectProfileModel } from "@/Accounts/models/accounts.projects.model";
 import { ProjectDocument } from "@/Projects/models/projects.model";
 import { mongoose } from "@typegoose/typegoose";
 import {
@@ -134,7 +133,6 @@ class Accounts {
 
   public registerProject(
     account: AccountDocument,
-    profileData: any,
     application: ApplicationDocument,
     referral: string
   ): Promise<AccountProjectProfileDocument> {
@@ -142,127 +140,59 @@ class Accounts {
       const project = (<ProjectDocument>application.project)["_id"].toString();
 
       /* Check if the user is currently registered into the project */
-      AccountProjectCtrl.getModel(project)
-        .then((projectModel: mongoose.Model<any>) => {
-          /* Check for a valid project profile model */
-          if (!projectModel) {
-            reject({ boError: ERRORS.INVALID_APPLICATION });
+      AccountProjectProfileModel.findOne({ account: account.id, project: project })
+        .then((value: AccountProjectProfileDocument) => {
+          if (value) {
+            reject({ boError: ERRORS.USER_DUPLICATED });
             return;
           }
 
-          /* Check if the user profile is registered */
-          projectModel
-            .findOne({ account: account.id })
+          /* Initialize the profile */
+          let profile = {
+            account: account._id,
+            project: project,
+            status: ACCOUNT_STATUS.AS_REGISTERED,
+            referral: referral,
+            scope: Arrays.force(
+              SCP_ACCOUNT_DEFAULT,
+              [],
+              SCP_NON_INHERITABLE
+            ),
+          };
+
+          /* Set the new user scope using default values and application scope */
+          profile["scope"] = profile["scope"].filter(
+            (scope: string) => SCP_PREVENT.indexOf(scope) < 0
+          );
+
+          /* Register the user into the current project */
+          AccountProjectProfileModel
+            .findOneAndUpdate(
+              { project: project, account: account._id },
+              { $set: profile },
+              { upsert: true, new: true }
+            )
+            .populate("project")
+            .populate("account")
             .then((value: AccountProjectProfileDocument) => {
-              if (value) {
-                reject({ boError: ERRORS.USER_DUPLICATED });
-                return;
-              }
+              /* Look for the referral parent user */
+              AccountTreeModel.findOne({ project: project, code: referral })
+                .then((parent: AccountTreeDocument) => {
+                  /* Initialize user referral tree */
+                  const tree: any[] = parent ? parent.tree : [];
+                  tree.push(account._id);
 
-              /* Initialize the profile */
-              let profile = {
-                account: account._id,
-                project: project,
-                status: ACCOUNT_STATUS.AS_REGISTERED,
-                profile: profileData,
-                scope: Arrays.force(
-                  SCP_ACCOUNT_DEFAULT,
-                  [],
-                  SCP_NON_INHERITABLE
-                ),
-              };
-
-              /* Set the new user scope using default values and application scope */
-              profile["scope"] = profile["scope"].filter(
-                (scope: string) => SCP_PREVENT.indexOf(scope) < 0
-              );
-              console.log(profile);
-              /* Register the user into the current project */
-              projectModel
-                .findOneAndUpdate(
-                  { projectId: project, account: account._id },
-                  { $set: profile },
-                  { upsert: true, new: true }
-                )
-                .populate("project")
-                .populate("account")
-                .then((value: AccountProjectProfileDocument) => {
-                  /* Look for the referral parent user */
-                  AccountTreeModel.findOne({ project: project, code: referral })
-                    .then((parent: AccountTreeDocument) => {
-                      /* Initialize user referral tree */
-                      const tree: any[] = parent ? parent.tree : [];
-                      tree.push(account._id);
-
-                      /* Register the user referral tree */
-                      AccountTreeModel.create({
-                        project: project,
-                        account: account._id,
-                        code: account.code,
-                        tree: tree,
-                      }).finally(() => {
-                        resolve(value);
-                      });
-                    })
-                    .catch(reject);
+                  /* Register the user referral tree */
+                  AccountTreeModel.create({
+                    project: project,
+                    account: account._id,
+                    code: account.code,
+                    tree: tree,
+                  }).finally(() => {
+                    resolve(value);
+                  });
                 })
                 .catch(reject);
-            })
-            .catch(reject);
-        })
-        .catch(reject);
-    });
-  }
-
-  public getProfile(
-    account: string,
-    project: string | ProjectDocument
-  ): Promise<AccountProjectProfileDocument> {
-    return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
-      /* Check if the user is currently registered into the application */
-      const id = typeof project === "string" ? project : project.id;
-      AccountProjectCtrl.getModel(id)
-        .then((projectModel: mongoose.Model<any>) => {
-          projectModel
-            .findOne({ account: account })
-            .then((value: AccountProjectProfileDocument) => {
-              if (!value) {
-                reject({ boError: ERRORS.PROFILE_NOT_FOUND });
-                return;
-              }
-              resolve(value);
-            })
-            .catch(reject);
-        })
-        .catch(reject);
-    });
-  }
-
-  public updateProfile(
-    account: string,
-    project: string,
-    profile: any
-  ): Promise<AccountProjectProfileDocument> {
-    return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
-      console.log(account);
-      console.log(project);
-      console.log(profile);
-      /* Get the curren project profile data model */
-      AccountProjectCtrl.getModel(project)
-        .then((projectModel: mongoose.Model<any>) => {
-          /* Fetch and update the user account */
-          projectModel
-            .findOneAndUpdate(
-              { account: account },
-              { $set: { profile: profile } },
-              { new: true }
-            )
-            .then((value: AccountProjectProfileDocument) => {
-              if (!value) {
-                reject({ boError: ERRORS.PROFILE_NOT_FOUND });
-                return;
-              }
-              resolve(value);
             })
             .catch(reject);
         })
@@ -398,27 +328,22 @@ class Accounts {
               }
 
               /* Fetch the user account profile */
-              AccountProjectCtrl.getModel(project)
-                .then((projectModel: mongoose.Model<any>) => {
-                  projectModel
-                    .findOne({ account: value.id })
-                    .populate("account")
-                    .populate("project")
-                    .then((profile: AccountProjectProfileDocument) => {
-                      if (!value) {
-                        reject({
-                          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                          boError: ERRORS.INVALID_TOKEN,
-                        });
-                        return;
-                      }
+              AccountProjectProfileModel.findOne({ project: project, account: value.id })
+                .populate("account")
+                .populate("project")
+                .then((profile: AccountProjectProfileDocument) => {
+                  if (!value) {
+                    reject({
+                      boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                      boError: ERRORS.INVALID_TOKEN,
+                    });
+                    return;
+                  }
 
-                      this._logger.debug("User account confirmed", {
-                        email: email,
-                      });
-                      resolve(profile);
-                    })
-                    .catch(reject);
+                  this._logger.debug("User account confirmed", {
+                    email: email,
+                  });
+                  resolve(profile);
                 })
                 .catch(reject);
             })
@@ -479,22 +404,17 @@ class Accounts {
             new: true,
           })
             .then((value: AccountDocument) => {
-              AccountProjectCtrl.getModel(project)
-                .then((projectModel: mongoose.Model<any>) => {
-                  projectModel
-                    .findOne({ account: value.id })
-                    .populate("account")
-                    .populate("project")
-                    .then((profile: AccountProjectProfileDocument) => {
-                      /* Show the verification token */
-                      this._logger.debug("Recovery account requested", {
-                        id: value.id,
-                        email: value.email,
-                        token: value.recoverToken.token,
-                      });
-                      resolve(profile);
-                    })
-                    .catch(reject);
+              AccountProjectProfileModel.findOne({ project: project, account: value.id })
+                .populate("account")
+                .populate("project")
+                .then((profile: AccountProjectProfileDocument) => {
+                  /* Show the verification token */
+                  this._logger.debug("Recovery account requested", {
+                    id: value.id,
+                    email: value.email,
+                    token: value.recoverToken.token,
+                  });
+                  resolve(profile);
                 })
                 .catch(reject);
             })
@@ -705,30 +625,44 @@ class Accounts {
             { new: true }
           )
             .then((value: AccountDocument) => {
-              AccountProjectCtrl.getModel(project)
-                .then((projectModel: mongoose.Model<any>) => {
-                  projectModel
-                    .findOne({ account: value._id })
-                    .populate("account")
-                    .populate("project")
-                    .then((profile: AccountProjectProfileDocument) => {
-                      if (!profile) {
-                        reject({ boError: ERRORS.PROFILE_NOT_FOUND });
-                        return;
-                      }
-                      /* Show the verification token */
-                      this._logger.debug("Account confirmation requested", {
-                        id: value.id,
-                        email: value.email,
-                        token: value.recoverToken.token,
-                      });
-                      resolve(profile);
-                    })
-                    .catch(reject);
+              AccountProjectProfileModel.findOne({ project: project, account: value._id })
+                .populate("account")
+                .populate("project")
+                .then((profile: AccountProjectProfileDocument) => {
+                  if (!profile) {
+                    reject({ boError: ERRORS.PROFILE_NOT_FOUND });
+                    return;
+                  }
+                  /* Show the verification token */
+                  this._logger.debug("Account confirmation requested", {
+                    id: value.id,
+                    email: value.email,
+                    token: value.recoverToken.token,
+                  });
+                  resolve(profile);
                 })
                 .catch(reject);
             })
             .catch(reject);
+        })
+        .catch(reject);
+    });
+  }
+
+  public getProfile(
+    account: string,
+    project: string | ProjectDocument
+  ): Promise<AccountProjectProfileDocument> {
+    return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
+      /* Check if the user is currently registered into the application */
+      const id = typeof project === "string" ? project : project.id;
+      AccountProjectProfileModel.findOne({ project: id, account: account })
+        .then((value: AccountProjectProfileDocument) => {
+          if (!value) {
+            reject({ boError: ERRORS.PROFILE_NOT_FOUND });
+            return;
+          }
+          resolve(value);
         })
         .catch(reject);
     });

@@ -38,6 +38,7 @@ router.post(
     /* Initialize the account data */
     let data: Account = {
       name: req.body["name"],
+      lastname: req.body["lastname"],
       email: req.body["email"],
       password: req.body["password"],
       phone: req.body["phone"],
@@ -49,7 +50,6 @@ router.post(
         /* Register the user account into the given project */
         AccountCtrl.registerProject(
           value,
-          req.body["profile"],
           res.locals["token"].client,
           req.body["referral"]
         )
@@ -248,45 +248,6 @@ router.post(
       .revokeToken(res.locals["token"])
       .then(() => {
         res.locals["response"] = {};
-        next();
-      })
-      .catch(next);
-  },
-  OAuth2Ctrl.handleError,
-  ResponseHandler.success,
-  ResponseHandler.error
-);
-
-router.get(
-  "/profile",
-  OAuth2Ctrl.authenticate(["user"]),
-  (_req: Request, res: Response, next: NextFunction) => {
-    /* Revoke the access token */
-    OAuth2Ctrl.model
-      .revokeToken(res.locals["token"])
-      .then(() => {
-        res.locals["response"] = {};
-        next();
-      })
-      .catch(next);
-  },
-  OAuth2Ctrl.handleError,
-  ResponseHandler.success,
-  ResponseHandler.error
-);
-
-router.put(
-  "/profile",
-  OAuth2Ctrl.authenticate(["user"]),
-  (req: Request, res: Response, next: NextFunction) => {
-    const uid = Objects.get(res.locals, "token.user._id");
-    AccountCtrl.updateProfile(
-      uid,
-      Objects.get(res.locals, "token.client.project._id"),
-      req.body
-    )
-      .then((profile: AccountProjectProfileDocument) => {
-        res.locals["response"] = { uid: uid };
         next();
       })
       .catch(next);

@@ -68,6 +68,9 @@ export class Account extends BaseModel {
   @prop()
   name?: string;
 
+  @prop()
+  lastname?: string;
+
   @prop({ required: true })
   code?: string;
 
@@ -107,9 +110,11 @@ export class Account extends BaseModel {
             return {
               uid: ret.id,
               name: ret.name,
+              lastname: ret.lastname,
               code: ret.code,
               email: ret.email,
               phone: ret.phone,
+              referral: ret.referral,
               status: ret.status,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt,
