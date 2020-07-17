@@ -49,7 +49,7 @@ router.post(
 );
 
 router.post(
-  "/token",
+  "/signin",
   (req: Request, res: Response, next: NextFunction) => {
     let request = new ORequest(req);
     let response = new OResponse(res);

@@ -30,7 +30,7 @@ import { ApplicationDocument } from "@/Applications/models/applications.model";
 const router = Router();
 
 router.post(
-  "/register",
+  "/signup",
   Validators.joi(RegisterValidation),
   OAuth2Ctrl.authenticate(["non_user", "register_user"]),
   (req: Request, res: Response, next: NextFunction) => {
