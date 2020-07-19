@@ -263,4 +263,28 @@ router.post(
   ResponseHandler.error
 );
 
+router.get(
+  "/profile",
+  OAuth2Ctrl.authenticate("user"),
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Request a recover email */
+    AccountCtrl.fetch(Objects.get(res.locals, "token.user._id"))
+      .then((value: AccountDocument) => {
+        res.locals["response"] = {
+          uid: value.id,
+          name: value.name,
+          lastname: value.lastname,
+          email: value.email,
+          phone: value.phone,
+          code: value.code
+        };
+        next();
+      })
+      .catch(next);
+  },
+  OAuth2Ctrl.handleError,
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
 export default router;

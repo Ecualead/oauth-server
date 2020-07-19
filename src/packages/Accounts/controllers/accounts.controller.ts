@@ -1,4 +1,4 @@
-import { Logger, Token, Objects, Arrays, HTTP_STATUS } from "@ikoabo/core_srv";
+import { Logger, Token, Objects, Arrays, HTTP_STATUS, CRUD } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
 import { AccountCodeCtrl } from "@/Accounts/controllers/accounts.code.controller";
 import { ApplicationDocument } from "@/Applications/models/applications.model";
@@ -21,21 +21,20 @@ import {
 } from "@/Accounts/models/accounts.enum";
 import { AccountProjectProfileDocument, AccountProjectProfileModel } from "@/Accounts/models/accounts.projects.model";
 import { ProjectDocument } from "@/Projects/models/projects.model";
-import { mongoose } from "@typegoose/typegoose";
 import {
   AccountTreeModel,
   AccountTreeDocument,
 } from "../models/accounts.tree.model";
 
-class Accounts {
+class Accounts extends CRUD<Account, AccountDocument>{
   private static _instance: Accounts;
-  private _logger: Logger;
+
 
   /**
    * Private constructor to allow singleton instance
    */
   private constructor() {
-    this._logger = new Logger("Accounts");
+    super('Accounts', AccountModel);
   }
 
   /**
