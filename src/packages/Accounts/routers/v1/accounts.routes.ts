@@ -226,11 +226,17 @@ router.post(
     AccountCtrl.doRecover(
       req.body["email"],
       req.body["token"],
-      req.body["password"]
+      req.body["password"],
+      Objects.get(res.locals, "token.client.project._id")
     )
-      .then(() => {
-        res.locals["response"] = { email: req.body["email"] };
-        next();
+      .then((profile: AccountProjectProfileDocument) => {
+        /* Send the account confirmation notification */
+        Notifications.shared
+          .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_CHPWD, profile)
+          .finally(() => {
+            res.locals["response"] = { email: req.body["email"] };
+            next();
+          });
       })
       .catch(next);
   },

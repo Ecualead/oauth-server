@@ -458,9 +458,10 @@ class Accounts {
   public doRecover(
     email: string,
     token: string,
-    password: string
-  ): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+    password: string,
+    project: string
+  ): Promise<AccountProjectProfileDocument> {
+    return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
       const update: any = { $inc: { "recoverToken.attempts": 1 } };
       AccountModel.findOneAndUpdate({ email: email }, update, { new: true })
         .then((value: AccountDocument) => {
@@ -545,16 +546,35 @@ class Accounts {
                   { new: false }
                 )
                   .then((value: AccountDocument) => {
-                    this._logger.debug("User account confirmed", {
-                      id: value.id,
-                      email: value.email,
-                    });
-                    resolve();
+                    /* Look for the user project profile */
+                    AccountProjectProfileModel.findOne({ project: project, account: value.id })
+                      .populate("account")
+                      .populate("project")
+                      .then((profile: AccountProjectProfileDocument) => {
+                        this._logger.debug("User account confirmed", {
+                          id: value.id,
+                          email: value.email,
+                        });
+                        resolve(profile);
+                      })
+                      .catch(reject);
                   })
                   .catch(reject);
                 return;
               }
-              resolve();
+
+              /* Look for the user project profile */
+              AccountProjectProfileModel.findOne({ project: project, account: value.id })
+                .populate("account")
+                .populate("project")
+                .then((profile: AccountProjectProfileDocument) => {
+                  this._logger.debug("User account recovered", {
+                    id: value.id,
+                    email: value.email,
+                  });
+                  resolve(profile);
+                })
+                .catch(reject);
             })
             .catch(reject);
         })
