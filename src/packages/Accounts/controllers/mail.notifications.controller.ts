@@ -60,7 +60,7 @@ export class MailNotifications extends BaseNotifications {
   public doSignup(profile: AccountProjectProfileDocument): Promise<void> {
     return this.sendMail({
       project: Objects.get(profile, "project.id", profile.project),
-      type: "account-register",
+      type: "account-signup",
       subject: "Cuenta de usuario registrada",
       lang: "es",
       account: Objects.get(profile, "account", {}),
