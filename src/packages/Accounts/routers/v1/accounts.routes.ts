@@ -32,7 +32,7 @@ const router = Router();
 router.post(
   "/signup",
   Validators.joi(RegisterValidation),
-  OAuth2Ctrl.authenticate(["non_user", "register_user"]),
+  OAuth2Ctrl.authenticate(["non_user", "mod_ims_register_user"]),
   (req: Request, res: Response, next: NextFunction) => {
     // TODO XXX Add password policy
     /* Initialize the account data */
@@ -80,7 +80,7 @@ router.post(
 router.post(
   "/confirm",
   Validators.joi(AccountValidation),
-  OAuth2Ctrl.authenticate(["application", "confirm_account"]),
+  OAuth2Ctrl.authenticate(["application", "mod_ims_confirm_account"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Confirm the user account */
     AccountCtrl.confirmAccount(
@@ -141,7 +141,7 @@ router.post(
       ApplicationCtrl.fetch(login, null, null, ["project"])
         .then((value: ApplicationDocument) => {
           /* Check application valid scope */
-          if (value.scope.indexOf("resend_confirm") < 0) {
+          if (value.scope.indexOf("mod_ims_resend_confirm") < 0) {
             return next({
               boError: ERRORS.INVALID_OPERATION,
               boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE,
@@ -175,7 +175,7 @@ router.post(
 router.post(
   "/recover/request",
   Validators.joi(EmailValidation),
-  OAuth2Ctrl.authenticate(["non_user", "recover_account"]),
+  OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_account"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
     AccountCtrl.requestRecover(
@@ -202,7 +202,7 @@ router.post(
 router.post(
   "/recover/validate",
   Validators.joi(AccountValidation),
-  OAuth2Ctrl.authenticate(["non_user", "recover_validate"]),
+  OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_validate"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Validate the recover token */
     AccountCtrl.checkRecover(req.body["email"], req.body["token"])
@@ -220,7 +220,7 @@ router.post(
 router.post(
   "/recover/store",
   Validators.joi(RecoverValidation),
-  OAuth2Ctrl.authenticate(["non_user", "recover_change"]),
+  OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_change"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Recover the user account */
     AccountCtrl.doRecover(
