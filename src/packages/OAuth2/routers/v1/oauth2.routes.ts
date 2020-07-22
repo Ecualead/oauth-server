@@ -125,7 +125,7 @@ router.post(
           /* Add user information if the token belongs to an user */
           const user = Objects.get(token, "user.id", null);
           if (user && user !== res.locals["response"]["application"]) {
-            res.locals["response"]["user"] = user;
+            res.locals["response"]["uid"] = user;
           }
         }
         next();
