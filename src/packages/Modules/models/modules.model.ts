@@ -1,7 +1,17 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import {
   prop,
   getModelForClass,
-  DocumentType
+  DocumentType,
+  index,
 } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { BaseModel } from "@ikoabo/core_srv";
@@ -9,8 +19,10 @@ import { Client } from "oauth2-server";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 
+@index({ name: 1 }, { unique: true })
+@index({ secret: 1 })
 export class Module extends BaseModel {
-  @prop({ required: true })
+  @prop({ required: true, unique: true })
   name!: string;
 
   @prop()
@@ -66,7 +78,7 @@ export class Module extends BaseModel {
     let client = {
       id: obj.id,
       type: OAUTH2_TOKEN_TYPE.TT_MODULE,
-      grants: ['client_credentials'],
+      grants: ["client_credentials"],
       accessTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
       refreshTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
       scope: obj.scope,
