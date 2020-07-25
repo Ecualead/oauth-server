@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import { Router, Request, Response, NextFunction } from "express";
 import JSONStream from "jsonstream";
 import {
@@ -5,6 +14,7 @@ import {
   Validators,
   BASE_STATUS,
   ValidateObjectId,
+  Objects,
 } from "@ikoabo/core_srv";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { Domain, DomainDocument } from "@/Domains/models/domains.model";
@@ -15,11 +25,13 @@ import {
 import { SubModuleValidation } from "@/Modules/models/modules.joi";
 import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import { ScopeValidation, StatusValidation } from "@/models/base.joi";
+import { OAuth2Ctrl } from "@/packages/OAuth2/controllers/oauth2.controller";
 
 const router = Router();
 
 router.post(
   "/",
+  OAuth2Ctrl.authenticate(["user"]),
   Validators.joi(DomainCreateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     // TODO XXX Get rigth user
@@ -28,9 +40,9 @@ router.post(
       image: req.body["image"],
       description: req.body["description"],
       scope: req.body["scope"],
-      owner: "5e7d8203cef9b37116a6aeef",
+      owner: Objects.get(res.locals, "token.user._id"),
       status: BASE_STATUS.BS_ENABLED,
-      modifiedBy: "5e7d8203cef9b37116a6aeef",
+      modifiedBy: Objects.get(res.locals, "token.user._id"),
     };
     DomainCtrl.create(domain)
       .then((value: DomainDocument) => {
@@ -45,6 +57,8 @@ router.post(
 
 router.put(
   "/:id",
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(DomainUpdateValidation),
   (req: Request, res: Response, next: NextFunction) => {
@@ -52,7 +66,6 @@ router.put(
       name: req.body["name"],
       image: req.body["image"],
       description: req.body["description"],
-      modifiedBy: "5e7d8203cef9b37116a6aeef",
     };
     DomainCtrl.update(req.params.id, domain)
       .then((value: DomainDocument) => {
@@ -67,6 +80,7 @@ router.put(
 
 router.get(
   "/",
+  OAuth2Ctrl.authenticate(["user"]),
   (_req: Request, res: Response, _next: NextFunction) => {
     DomainCtrl.fetchAll().pipe(JSONStream.stringify()).pipe(res.type("json"));
   },
@@ -76,6 +90,8 @@ router.get(
 
 router.get(
   "/:id",
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.fetch(req.params.id)
@@ -101,6 +117,8 @@ router.get(
 
 router.delete(
   "/:id",
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.delete(req.params.id)
@@ -116,6 +134,8 @@ router.delete(
 
 router.put(
   "/:id/:action",
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(StatusValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     const handler =
@@ -135,6 +155,8 @@ router.put(
 
 router.post(
   "/:id/scope/:scope",
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.addScope(req.params.id, req.params.scope)
@@ -150,6 +172,8 @@ router.post(
 
 router.delete(
   "/:id/scope/:scope",
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.deleteScope(req.params.id, req.params.scope)
@@ -165,10 +189,12 @@ router.delete(
 
 router.post(
   "/:id/module/:module",
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(SubModuleValidation, "params"),
-  ModuleCtrl.validateModule("params.module"),
+  ModuleCtrl.validate("params.module"),
   (req: Request, res: Response, next: NextFunction) => {
-    DomainCtrl.addModule(req.params.id, req.params.module)
+    DomainCtrl.addModule(req.params.id, res.locals["module"])
       .then((value: DomainDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -181,9 +207,12 @@ router.post(
 
 router.delete(
   "/:id/module/:module",
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
+  ModuleCtrl.validate("params.module"),
   Validators.joi(SubModuleValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
-    DomainCtrl.deleteModule(req.params.id, req.params.module)
+    DomainCtrl.deleteModule(req.params.id, res.locals["module"])
       .then((value: DomainDocument) => {
         res.locals["response"] = { id: value.id };
         next();

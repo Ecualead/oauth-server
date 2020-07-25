@@ -1,17 +1,27 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import { DataScoped } from "@/controllers/data.scoped.controller";
 import {
   Domain,
   DomainModel,
   DomainDocument,
 } from "@/Domains/models/domains.model";
-import { BASE_STATUS, ERRORS } from "@ikoabo/core_srv";
+import { BASE_STATUS, ERRORS, HTTP_STATUS } from "@ikoabo/core_srv";
 import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
+import { ModuleDocument } from "@/packages/Modules/models/modules.model";
 
 class Domains extends DataScoped<Domain, DomainDocument> {
   private static _instance: Domains;
 
   private constructor() {
-    super("Domains", DomainModel);
+    super("Domains", DomainModel, "domain");
   }
 
   public static get shared(): Domains {
@@ -24,18 +34,29 @@ class Domains extends DataScoped<Domain, DomainDocument> {
   /**
    * Add new module to the domain
    */
-  public addModule(id: string, module: string): Promise<DomainDocument> {
+  public addModule(
+    id: string,
+    module: ModuleDocument
+  ): Promise<DomainDocument> {
     return new Promise<DomainDocument>((resolve, reject) => {
       this._logger.debug("Adding new module to domain", {
         domain: id,
         module: module,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $addToSet: { modules: module } };
+      const update: any = {
+        $addToSet: {
+          modules: module.id,
+          scope: module.scope,
+        },
+      };
       DomainModel.findOneAndUpdate(query, update, { new: true })
         .then((value: DomainDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({
+              boError: ERRORS.OBJECT_NOT_FOUND,
+              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
+            });
             return;
           }
           resolve(value);
@@ -47,14 +68,20 @@ class Domains extends DataScoped<Domain, DomainDocument> {
   /**
    * Delete a module from the domain
    */
-  public deleteModule(id: string, module: string): Promise<DomainDocument> {
+  public deleteModule(
+    id: string,
+    module: ModuleDocument
+  ): Promise<DomainDocument> {
     return new Promise<DomainDocument>((resolve, reject) => {
       this._logger.debug("Removing module from domain", {
         domain: id,
         module: module,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $pull: { modules: module } };
+      const update: any = {
+        $pull: { modules: module.id },
+        $pullAll: { scope: module.scope },
+      };
       DomainModel.findOneAndUpdate(query, update, { new: true })
         .then((value: DomainDocument) => {
           if (!value) {

@@ -1,16 +1,30 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import {
   Ref,
   prop,
   getModelForClass,
   DocumentType,
+  index,
 } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { BaseModel, Arrays } from "@ikoabo/core_srv";
 import { Module } from "@/Modules/models/modules.model";
 
+@index({ canonical: 1 }, { unique: true })
 export class Domain extends BaseModel {
   @prop({ required: true })
   name!: string;
+
+  @prop({ required: true, unique: true })
+  canonical?: string;
 
   @prop()
   image?: string;
