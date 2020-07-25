@@ -1,25 +1,23 @@
 /**
- * @Author: Reinier Millo Sánchez <millo>
- * @Date:   2020-04-01T07:16:10-05:00
- * @Email:  reinier.millo88@gmail.com
- * @Project: IKOABO Auth Microservice API
- * @Filename: Settings.ts
- * @Last modified by:   millo
- * @Last modified time: 2020-04-13T03:26:46-05:00
- * @Copyright: Copyright 2020 IKOA Business Opportunity
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
  */
-
-import { ISettings } from '@ikoabo/core_srv';
+import { ISettings } from "@ikoabo/core_srv";
 
 export const Settings: ISettings = {
   /* Service information */
   SERVICE: {
-    NAME: "Auth",
+    NAME: "IMS",
     LOG: process.env.LOG || "debug",
-    PORT: parseInt(process.env.PORT || '3000'),
+    PORT: parseInt(process.env.PORT || "3000"),
     INTERFACE: process.env.INTERFACE || "127.0.0.1",
-    ENV: process.env.ENV || 'dev',
-    INSTANCES: parseInt(process.env.INSTANCES || '1'),
+    ENV: process.env.ENV || "dev",
+    INSTANCES: parseInt(process.env.INSTANCES || "1"),
   },
 
   /* Service version */
@@ -31,17 +29,23 @@ export const Settings: ISettings = {
 
   /* Database connection */
   MONGODB: {
-    URI: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ikoabo_auth',
+    URI: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/mod_srv_ims",
   },
 
   /* Authentication server */
   AUTH: {
-    SERVER: process.env.AUTH_SERVER || 'https://auth.ikoabo.com',
+    SERVER: process.env.AUTH_SERVER || "https://ims.ikoabo.com",
     ID: process.env.AUTH_ID,
     SECRET: process.env.AUTH_SECRET,
   },
 
+  /* Notifications server */
   NOTIFICATIONS: {
-    SERVER: process.env.NOTIFICATIONS_SERVER || 'https://comm.ikoabo.com',
-  }
-}
+    SERVER: process.env.NOTIFICATIONS_SERVER || "https://nts.ikoabo.com",
+  },
+
+  /* Real time events server */
+  REALTIME_EVENTS: {
+    SERVER: process.env.NOTIFICATIONS_SERVER || "https://rte.ikoabo.com",
+  },
+};
