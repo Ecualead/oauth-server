@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import { AccountProjectProfileDocument } from "../models/accounts.projects.model";
 import { Objects, Logger } from "@ikoabo/core_srv";
 import async from "async";
@@ -29,10 +38,12 @@ export class Notifications {
    *
    * @param type
    * @param profile
+   * @param payload
    */
   public doNotification(
     type: NOTIFICATIONS_EVENTS_TYPES,
-    profile: AccountProjectProfileDocument
+    profile: AccountProjectProfileDocument,
+    payload?: any
   ): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       /* Retrieve notifications handlers from settings */
@@ -79,7 +90,12 @@ export class Notifications {
               }
 
               /* Call the notifications */
-              this._callNotifications(item.type, type, profile).finally(() => {
+              this._callNotifications(
+                item.type,
+                type,
+                profile,
+                payload
+              ).finally(() => {
                 cb();
               });
               break;
@@ -90,7 +106,7 @@ export class Notifications {
         },
         (err) => {
           if (err) {
-            this._logger.error('Error sending notifications', err);
+            this._logger.error("Error sending notifications", err);
           }
           resolve();
         }
@@ -104,15 +120,18 @@ export class Notifications {
    * @param type
    * @param event
    * @param profile
+   * @param payload
    */
   private _callNotifications(
     type: NOTIFICATION_TYPES,
     event: NOTIFICATIONS_EVENTS_TYPES,
-    profile: AccountProjectProfileDocument
+    profile: AccountProjectProfileDocument,
+    payload?: any
   ): Promise<void> {
+    /* Trigger notification checking notification type */
     switch (type) {
-      case NOTIFICATION_TYPES.NT_EMAIL:
-        return MailNotifications.shared.doNotification(event, profile);
+      case NOTIFICATION_TYPES.NT_EMAIL /* Email notification */:
+        return MailNotifications.shared.doNotification(event, profile, payload);
       default:
         this._logger.error("Not allowed notification type", {
           type: type,

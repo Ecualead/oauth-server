@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express 
+ * permission of the author.
+ */
 import { BASE_STATUS } from "@ikoabo/core_srv";
 
 export enum ACCOUNT_STATUS {
@@ -37,6 +46,12 @@ export enum NOTIFICATIONS_EVENTS_TYPES {
   NET_SIGNIN = 3,
   NET_CHPWD = 4,
   NET_RECOVER = 5,
+}
+
+export enum EMAIL_STATUS {
+  ES_UNKNOWN = 0,
+  ES_NOT_CONFIRMED = 1,
+  ES_CONFIRMED = 3
 }
 
 export const PROTECTED_PROJECT_FIELDS: string[] = [

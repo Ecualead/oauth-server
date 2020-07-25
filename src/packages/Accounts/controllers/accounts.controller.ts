@@ -1,4 +1,20 @@
-import { Logger, Token, Objects, Arrays, HTTP_STATUS, CRUD } from "@ikoabo/core_srv";
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
+import {
+  Logger,
+  Token,
+  Objects,
+  Arrays,
+  HTTP_STATUS,
+  CRUD,
+} from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
 import { AccountCodeCtrl } from "@/Accounts/controllers/accounts.code.controller";
 import { ApplicationDocument } from "@/Applications/models/applications.model";
@@ -19,22 +35,24 @@ import {
   SCP_PREVENT,
   SCP_NON_INHERITABLE,
 } from "@/Accounts/models/accounts.enum";
-import { AccountProjectProfileDocument, AccountProjectProfileModel } from "@/Accounts/models/accounts.projects.model";
+import {
+  AccountProjectProfileDocument,
+  AccountProjectProfileModel,
+} from "@/Accounts/models/accounts.projects.model";
 import { ProjectDocument } from "@/Projects/models/projects.model";
 import {
   AccountTreeModel,
   AccountTreeDocument,
 } from "../models/accounts.tree.model";
 
-class Accounts extends CRUD<Account, AccountDocument>{
+class Accounts extends CRUD<Account, AccountDocument> {
   private static _instance: Accounts;
-
 
   /**
    * Private constructor to allow singleton instance
    */
   private constructor() {
-    super('Accounts', AccountModel);
+    super("Accounts", AccountModel, 'account');
   }
 
   /**
@@ -53,7 +71,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
   ): Promise<AccountDocument> {
     return new Promise<AccountDocument>((resolve, reject) => {
       /* Find if there is an user registered with the email */
-      AccountModel.findOne({ email: data.email })
+      AccountModel.findOne({ "emails.email": data.email })
         .then((user: AccountDocument) => {
           /* Check if user is already registered */
           if (user) {
@@ -103,21 +121,37 @@ class Accounts extends CRUD<Account, AccountDocument>{
                 "settings.recover",
                 PROJECT_RECOVER_TYPE.RT_LINK
               );
+
+              let token = null;
+              let tokenAttempts = 0;
+              let tokenStatus = RECOVER_TOKEN_STATUS.RTS_DISABLED;
+              let tokenExpires = 0;
               if (
                 status !== ACCOUNT_STATUS.AS_REGISTERED &&
                 recoverType !== PROJECT_RECOVER_TYPE.RT_DISABLED
               ) {
-                data.recoverToken = {
-                  token:
-                    recoverType !== PROJECT_RECOVER_TYPE.RT_LINK
-                      ? Token.shortToken
-                      : Token.longToken,
-                  attempts: 0,
-                  status: RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
-                  expires:
-                    Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS * 1000,
-                };
+                token =
+                  recoverType !== PROJECT_RECOVER_TYPE.RT_LINK
+                    ? Token.shortToken
+                    : Token.longToken;
+                tokenAttempts = 0;
+                tokenStatus = RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM;
+                tokenExpires = Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS;
               }
+
+              /* Set the registration email information */
+              data.emails = [
+                {
+                  email: data.email,
+                  status: 1,
+                  confirm: {
+                    token: token,
+                    status: tokenStatus,
+                    expires: tokenExpires,
+                    attempts: tokenAttempts,
+                  },
+                },
+              ];
 
               this._logger.debug("Registering new user account", data);
 
@@ -139,7 +173,10 @@ class Accounts extends CRUD<Account, AccountDocument>{
       const project = (<ProjectDocument>application.project)["_id"].toString();
 
       /* Check if the user is currently registered into the project */
-      AccountProjectProfileModel.findOne({ account: account.id, project: project })
+      AccountProjectProfileModel.findOne({
+        account: account.id,
+        project: project,
+      })
         .then((value: AccountProjectProfileDocument) => {
           if (value) {
             reject({ boError: ERRORS.USER_DUPLICATED });
@@ -152,11 +189,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
             project: project,
             status: ACCOUNT_STATUS.AS_REGISTERED,
             referral: referral,
-            scope: Arrays.force(
-              SCP_ACCOUNT_DEFAULT,
-              [],
-              SCP_NON_INHERITABLE
-            ),
+            scope: Arrays.force(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE),
           };
 
           /* Set the new user scope using default values and application scope */
@@ -165,12 +198,11 @@ class Accounts extends CRUD<Account, AccountDocument>{
           );
 
           /* Register the user into the current project */
-          AccountProjectProfileModel
-            .findOneAndUpdate(
-              { project: project, account: account._id },
-              { $set: profile },
-              { upsert: true, new: true }
-            )
+          AccountProjectProfileModel.findOneAndUpdate(
+            { project: project, account: account._id },
+            { $set: profile },
+            { upsert: true, new: true }
+          )
             .populate("project")
             .populate("account")
             .then((value: AccountProjectProfileDocument) => {
@@ -244,7 +276,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
     project: string
   ): Promise<AccountProjectProfileDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
-      const update: any = { $inc: { "recoverToken.attempts": 1 } };
+      const update: any = { $inc: { "recover.attempts": 1 } };
       AccountModel.findOneAndUpdate({ email: email }, update, { new: true })
         .then((value: AccountDocument) => {
           if (!value) {
@@ -284,7 +316,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
           }
 
           /* Validate max attempts */
-          if (value.recoverToken.attempts > 3) {
+          if (value.recover.attempts > 3) {
             reject({
               boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
               boError: ERRORS.MAX_ATTEMPTS,
@@ -293,7 +325,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
           }
 
           /* Validate expiration time */
-          if (value.recoverToken.expires < Date.now()) {
+          if (value.recover.expires < Date.now()) {
             reject({
               boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
               boError: ERRORS.TOKEN_EXPIRED,
@@ -305,14 +337,14 @@ class Accounts extends CRUD<Account, AccountDocument>{
           AccountModel.findOneAndUpdate(
             {
               _id: value.id,
-              "recoverToken.token": token,
-              "recoverToken.status": RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
+              "recover.token": token,
+              "recover.status": RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
             },
             {
               $set: {
                 status: ACCOUNT_STATUS.AS_CONFIRMED,
-                "recoverToken.expires": 0,
-                "recoverToken.status": RECOVER_TOKEN_STATUS.RTS_DISABLED,
+                "recover.expires": 0,
+                "recover.status": RECOVER_TOKEN_STATUS.RTS_DISABLED,
               },
             },
             { new: true }
@@ -327,7 +359,10 @@ class Accounts extends CRUD<Account, AccountDocument>{
               }
 
               /* Fetch the user account profile */
-              AccountProjectProfileModel.findOne({ project: project, account: value.id })
+              AccountProjectProfileModel.findOne({
+                project: project,
+                account: value.id,
+              })
                 .populate("account")
                 .populate("project")
                 .then((profile: AccountProjectProfileDocument) => {
@@ -385,14 +420,14 @@ class Accounts extends CRUD<Account, AccountDocument>{
 
           /* Prepare the reset token */
           const reset = {
-            "recoverToken.token":
+            "recover.token":
               recoverType === PROJECT_RECOVER_TYPE.RT_CODE
                 ? Token.shortToken
                 : Token.longToken,
-            "recoverToken.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
-            "recoverToken.attempts": 1,
-            "recoverToken.expires":
-              Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS * 1000,
+            "recover.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
+            "recover.attempts": 1,
+            "recover.expires":
+              Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS,
           };
 
           const update: any = {
@@ -403,7 +438,10 @@ class Accounts extends CRUD<Account, AccountDocument>{
             new: true,
           })
             .then((value: AccountDocument) => {
-              AccountProjectProfileModel.findOne({ project: project, account: value.id })
+              AccountProjectProfileModel.findOne({
+                project: project,
+                account: value.id,
+              })
                 .populate("account")
                 .populate("project")
                 .then((profile: AccountProjectProfileDocument) => {
@@ -411,7 +449,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
                   this._logger.debug("Recovery account requested", {
                     id: value.id,
                     email: value.email,
-                    token: value.recoverToken.token,
+                    token: value.recover.token,
                   });
                   resolve(profile);
                 })
@@ -427,13 +465,13 @@ class Accounts extends CRUD<Account, AccountDocument>{
     return new Promise<void>((resolve, reject) => {
       AccountModel.findOneAndUpdate(
         {
-          email: email,
-          "recoverToken.token": token,
-          "recoverToken.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
-          "recoverToken.expires": { $gt: Date.now() + 3600000 },
-          "recoverToken.attempts": { $lt: 3 },
+          'emails.email': email,
+          "recover.token": token,
+          "recover.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
+          "recover.expires": { $gt: Date.now() + 3600000 },
+          "recover.attempts": { $lt: 3 },
         },
-        { $set: { "recoverToken.status": RECOVER_TOKEN_STATUS.RTS_CONFIRMED } },
+        { $set: { "recover.status": RECOVER_TOKEN_STATUS.RTS_CONFIRMED } },
         { new: true }
       )
         .then((value: AccountDocument) => {
@@ -461,7 +499,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
     project: string
   ): Promise<AccountProjectProfileDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
-      const update: any = { $inc: { "recoverToken.attempts": 1 } };
+      const update: any = { $inc: { "recover.attempts": 1 } };
       AccountModel.findOneAndUpdate({ email: email }, update, { new: true })
         .then((value: AccountDocument) => {
           if (!value) {
@@ -495,7 +533,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
           }
 
           /* Validate max attempts */
-          if (value.recoverToken.attempts > 3) {
+          if (value.recover.attempts > 3) {
             reject({
               boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
               boError: ERRORS.MAX_ATTEMPTS,
@@ -504,7 +542,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
           }
 
           /* Validate expiration time */
-          if (value.recoverToken.expires < Date.now()) {
+          if (value.recover.expires < Date.now()) {
             reject({
               boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
               boError: ERRORS.TOKEN_EXPIRED,
@@ -515,13 +553,13 @@ class Accounts extends CRUD<Account, AccountDocument>{
           AccountModel.findOneAndUpdate(
             {
               _id: value.id,
-              "recoverToken.token": token,
-              "recoverToken.status": RECOVER_TOKEN_STATUS.RTS_CONFIRMED,
+              "recover.token": token,
+              "recover.status": RECOVER_TOKEN_STATUS.RTS_CONFIRMED,
             },
             {
               $set: {
-                "recoverToken.expires": 0,
-                "recoverToken.status": RECOVER_TOKEN_STATUS.RTS_DISABLED,
+                "recover.expires": 0,
+                "recover.status": RECOVER_TOKEN_STATUS.RTS_DISABLED,
                 password: password,
               },
             },
@@ -546,7 +584,10 @@ class Accounts extends CRUD<Account, AccountDocument>{
                 )
                   .then((value: AccountDocument) => {
                     /* Look for the user project profile */
-                    AccountProjectProfileModel.findOne({ project: project, account: value.id })
+                    AccountProjectProfileModel.findOne({
+                      project: project,
+                      account: value.id,
+                    })
                       .populate("account")
                       .populate("project")
                       .then((profile: AccountProjectProfileDocument) => {
@@ -563,7 +604,10 @@ class Accounts extends CRUD<Account, AccountDocument>{
               }
 
               /* Look for the user project profile */
-              AccountProjectProfileModel.findOne({ project: project, account: value.id })
+              AccountProjectProfileModel.findOne({
+                project: project,
+                account: value.id,
+              })
                 .populate("account")
                 .populate("project")
                 .then((profile: AccountProjectProfileDocument) => {
@@ -625,7 +669,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
           }
 
           /* Prepare the recover token for the account confirmation */
-          const recoverToken = {
+          const recover = {
             token:
               recoverType !== PROJECT_RECOVER_TYPE.RT_LINK
                 ? Token.shortToken
@@ -639,12 +683,15 @@ class Accounts extends CRUD<Account, AccountDocument>{
           AccountModel.findOneAndUpdate(
             { _id: value.id },
             {
-              $set: { recoverToken: recoverToken },
+              $set: { recover: recover },
             },
             { new: true }
           )
             .then((value: AccountDocument) => {
-              AccountProjectProfileModel.findOne({ project: project, account: value._id })
+              AccountProjectProfileModel.findOne({
+                project: project,
+                account: value._id,
+              })
                 .populate("account")
                 .populate("project")
                 .then((profile: AccountProjectProfileDocument) => {
@@ -656,7 +703,7 @@ class Accounts extends CRUD<Account, AccountDocument>{
                   this._logger.debug("Account confirmation requested", {
                     id: value.id,
                     email: value.email,
-                    token: value.recoverToken.token,
+                    token: value.recover.token,
                   });
                   resolve(profile);
                 })

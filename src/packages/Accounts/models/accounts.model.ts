@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import {
@@ -10,20 +19,35 @@ import {
 } from "@typegoose/typegoose";
 import { BaseModel, Arrays } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
+import { EMAIL_STATUS } from "./accounts.enum";
 
 @index({ token: 1 })
-export class AccountRecoverToken {
+@index({ status: 1 })
+@index({ expires: 1 })
+export class AccountToken {
   @prop()
   token?: string;
 
-  @prop()
+  @prop({ required: true, default: 0 })
   attempts?: number;
 
-  @prop()
+  @prop({ required: true, default: 0 })
   status?: number;
 
-  @prop()
+  @prop({ required: true, default: 0 })
   expires?: number;
+}
+
+@index({ email: 1 }, { unique: true })
+export class AccountEmail {
+  @prop({ required: true, unique: true })
+  email!: string;
+
+  @prop({ required: true, default: EMAIL_STATUS.ES_NOT_CONFIRMED })
+  status?: number;
+
+  @prop({ required: true })
+  confirm!: AccountToken;
 }
 
 @modelOptions({
@@ -74,8 +98,11 @@ export class Account extends BaseModel {
   @prop({ required: true })
   code?: string;
 
-  @prop({ required: true })
+  @prop({ required: true, unique: true })
   email?: string;
+
+  @prop({ type: AccountEmail })
+  emails?: AccountEmail[];
 
   @prop()
   phone?: string;
@@ -93,7 +120,7 @@ export class Account extends BaseModel {
   confirmationExpires?: number;
 
   @prop()
-  recoverToken?: AccountRecoverToken;
+  recover?: AccountToken;
 
   /**
    * Get the mongoose data model
