@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import { Router, Request, Response, NextFunction } from "express";
 import {
   ResponseHandler,
@@ -25,6 +34,7 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     let application: Application = {
       name: req.body["name"],
+      canonical: req.body["canonical"],
       project: <any>req.params["id"],
       description: req.body["description"],
       image: req.body["image"],

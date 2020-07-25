@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import mongoose from "mongoose";
 import { Token, BaseModel, Objects } from "@ikoabo/core_srv";
 import {
@@ -23,9 +32,13 @@ import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 })
 @index({ project: 1 })
 @index({ type: 1 })
+@index({ canonical: 1 }, {unique: true})
 export class Application extends BaseModel {
   @prop({ required: true })
   name!: string;
+
+  @prop({ required: true, unique: true })
+  canonical?: string;
 
   @prop()
   image?: string;
@@ -54,6 +67,9 @@ export class Application extends BaseModel {
 
   @prop({ type: String })
   scope?: string[];
+
+  @prop({type: String})
+  restriction?: string[];
 
   /**
    * Get the mongoose data model
