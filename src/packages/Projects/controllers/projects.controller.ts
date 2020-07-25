@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import { Arrays, BASE_STATUS, ERRORS } from "@ikoabo/core_srv";
 import {
   Project,
@@ -9,7 +18,7 @@ import { DomainDocument } from "@/Domains/models/domains.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
 import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
-
+import { ModuleDocument } from "@/packages/Modules/models/modules.model";
 
 class Projects extends DataScoped<Project, ProjectDocument> {
   private static _instance: Projects;
@@ -18,7 +27,7 @@ class Projects extends DataScoped<Project, ProjectDocument> {
    * Private constructor
    */
   private constructor() {
-    super("Projects", ProjectModel);
+    super("Projects", ProjectModel, 'project');
   }
 
   /**
@@ -46,12 +55,15 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public clearModule(module: string): Promise<void> {
+  public clearModule(module: ModuleDocument): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this._logger.debug("Cleaning module", {
         module: module,
       });
-      const update: any = { $pull: { modules: module } };
+      const update: any = {
+        $pull: { modules: module.id },
+        $pullAll: { scope: module.scope },
+      };
       ProjectModel.updateMany({}, update)
         .then(() => {
           resolve();
@@ -63,14 +75,19 @@ class Projects extends DataScoped<Project, ProjectDocument> {
   /**
    * Add new module to the domain
    */
-  public addModule(id: string, module: string): Promise<ProjectDocument> {
+  public addModule(
+    id: string,
+    module: ModuleDocument
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding module", {
         project: id,
         module: module,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $addToSet: { modules: module } };
+      const update: any = {
+        $addToSet: { modules: module.id, scope: module.scope },
+      };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
@@ -97,14 +114,20 @@ class Projects extends DataScoped<Project, ProjectDocument> {
   /**
    * Delete a module from the domain
    */
-  public deleteModule(id: string, module: string): Promise<ProjectDocument> {
+  public deleteModule(
+    id: string,
+    module: ModuleDocument
+  ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing module", {
         project: id,
         module: module,
       });
       const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $pull: { modules: module } };
+      const update: any = {
+        $pull: { modules: module },
+        $pullAll: { scope: module.scope },
+      };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {

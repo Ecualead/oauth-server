@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import { Router, Request, Response, NextFunction } from "express";
 import JSONStream from "jsonstream";
 import {
@@ -24,7 +33,7 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     const project: Project = {
       domain: req.body["domain"],
-      cannonical: req.body["cannonical"],
+      canonical: req.body["canonical"],
       name: req.body["name"],
       description: req.body["description"],
       image: req.body["image"],
@@ -86,7 +95,7 @@ router.get(
       .then((value: ProjectDocument) => {
         res.locals["response"] = {
           id: value.id,
-          cannonical: value.cannonical,
+          canonical: value.canonical,
           name: value.name,
           image: value.image,
           description: value.description,
@@ -182,9 +191,9 @@ router.delete(
 router.post(
   "/:id/module/:module",
   Validators.joi(SubModuleValidation, "params"),
-  ModuleCtrl.validateModule("params.module"),
+  ModuleCtrl.validate("params.module"),
   (req: Request, res: Response, next: NextFunction) => {
-    ProjectCtrl.addModule(req.params.id, req.params.module)
+    ProjectCtrl.addModule(req.params.id, res.locals['module'])
       .then((value: ProjectDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -198,8 +207,9 @@ router.post(
 router.delete(
   "/:id/module/:module",
   Validators.joi(SubModuleValidation, "params"),
+  ModuleCtrl.validate("params.module"),
   (req: Request, res: Response, next: NextFunction) => {
-    ProjectCtrl.deleteModule(req.params.id, req.params.module)
+    ProjectCtrl.deleteModule(req.params.id, res.locals['module'])
       .then((value: ProjectDocument) => {
         res.locals["response"] = { id: value.id };
         next();

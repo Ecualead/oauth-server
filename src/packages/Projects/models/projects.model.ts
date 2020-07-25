@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import {
   prop,
   mongoose,
@@ -13,14 +22,14 @@ import { Domain } from "@/packages/Domains/models/domains.model";
 import { Module } from "@/packages/Modules/models/modules.model";
 
 @index({ domain: 1 })
-@index({ cannonical: 1 }, { unique: true })
+@index({ canonical: 1 }, { unique: true })
 @index({ name: 1 })
 export class Project extends BaseModel {
   @prop({ required: true, ref: Domain })
   domain?: Ref<Domain>;
 
   @prop({ required: true, unique: true })
-  cannonical?: string;
+  canonical?: string;
 
   @prop({ required: true })
   name!: string;
@@ -61,7 +70,7 @@ export class Project extends BaseModel {
               name: ret.name,
               image: ret.image,
               description: ret.description,
-              cannonical: ret.cannonical,
+              canonical: ret.canonical,
               links: {
                 app: Objects.get(ret, "links.app"),
                 web: Objects.get(ret, "links.web"),

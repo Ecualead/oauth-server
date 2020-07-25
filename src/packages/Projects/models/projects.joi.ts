@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import { Joi } from "@ikoabo/core_srv";
 import { PROJECT_LIFETIME_TYPES, PROJECT_RECOVER_TYPE, PROJECT_EMAIL_CONFIRMATION, SOCIAL_NETWORK_TYPES, NOTIFICATION_TYPES } from "./projects.enum";
 
@@ -16,7 +25,7 @@ const ProjectLinks = Joi.object()
 
 export const ProjectCreateValidation = Joi.object().keys({
   domain: Joi.objectId().required(),
-  cannonical: Joi.string()
+  canonical: Joi.string()
     .pattern(new RegExp("^[a-zA-Z0-9][a-zA-Z0-9.]+[a-zA-Z0-9]$"))
     .required(),
   name: Joi.string().required(),
