@@ -1,3 +1,12 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import "module-alias/register";
 import { Settings } from "@/config/Settings";
 import { ClusterServer, Logger } from "@ikoabo/core_srv";
@@ -15,7 +24,7 @@ const clusterServer = ClusterServer.setup(
 
 /* Initialize componentes before import routes */
 const lock = new AsyncLock();
-const logger = new Logger('Microservice');
+const logger = new Logger("Microservice");
 
 /* Base components routes */
 import ModulesRouter from "@/Modules/routers/v1/modules.routes";
@@ -25,6 +34,7 @@ import ProjectSettingsRouter from "@/Projects/routers/v1/projects.settings.route
 import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
 import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
 import OAuth2Router from "@/OAuth2/routers/v1/oauth2.routes";
+import { DomainModel } from "./packages/Domains/models/domains.model";
 
 /**
  * Authenticate agains auth service
@@ -36,7 +46,7 @@ function requestCredentials(): Promise<void> {
       .authService(Settings.AUTH.ID, Settings.AUTH.SECRET)
       .then(() => {})
       .catch((err) => {
-        logger.error('Invalid authentication configuration', err);
+        logger.error("Invalid authentication configuration", err);
       })
       .finally(() => {
         /* Initialize mail component */

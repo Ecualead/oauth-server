@@ -1,11 +1,18 @@
+/**
+ * Copyright (C) 2020 IKOA Business Opportunity
+ * All Rights Reserved
+ * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ *
+ * This file is part of the IKOA Business Opportunity Auth Service.
+ * It can't be copied and/or distributed without the express
+ * permission of the author.
+ */
 import mongoose from "mongoose";
 import { CRUD, BASE_STATUS, ERRORS } from "@ikoabo/core_srv";
-export abstract class DataScoped<T, D extends mongoose.Document> extends CRUD<
-  T,
-  D
-> {
-  constructor(logger: string, model: mongoose.Model<D>) {
-    super(logger, model);
+
+export abstract class DataScoped<T, D extends mongoose.Document> extends CRUD<T, D> {
+  constructor(logger: string, model: mongoose.Model<D>, modelname: string) {
+    super(logger, model, modelname);
   }
 
   /**
