@@ -23,17 +23,22 @@ import {
   ModuleCreateValidation,
   ModuleUpdateValidation,
 } from "@/Modules/models/modules.joi";
-import { ScopeValidation, StatusValidation } from "@/models/base.joi";
-import { OAuth2Ctrl } from "@/packages/OAuth2/controllers/oauth2.controller";
+import {
+  ScopeValidation,
+  StatusValidation,
+  RestrictionValidation,
+} from "@/models/base.joi";
+import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 
 const router = Router();
 
 router.post(
   "/",
-  OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   Validators.joi(ModuleCreateValidation),
+  OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   (req: Request, res: Response, next: NextFunction) => {
-    const module: Module = {
+    /* Create the new module */
+    ModuleCtrl.create({
       name: req.body["name"],
       description: req.body["description"],
       image: req.body["image"],
@@ -42,11 +47,9 @@ router.post(
       url: req.body["url"],
       terms: req.body["terms"],
       secret: Token.longToken,
+      restriction: req.body["restriction"],
       status: BASE_STATUS.BS_ENABLED,
-    };
-
-    /* Create the new module */
-    ModuleCtrl.create(module)
+    })
       .then((value: ModuleDocument) => {
         res.locals["response"] = {
           id: value.id,
@@ -62,19 +65,18 @@ router.post(
 
 router.put(
   "/:id",
-  OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
-  ModuleCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(ModuleUpdateValidation),
+  OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
+  ModuleCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    const module: Module = {
+    ModuleCtrl.update(req.params.id, {
       name: req.body["name"],
       description: req.body["description"],
       image: req.body["image"],
       url: req.body["url"],
       terms: req.body["terms"],
-    };
-    ModuleCtrl.update(req.params.id, module)
+    })
       .then((value: ModuleDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -99,8 +101,8 @@ router.get(
 
 router.get(
   "/:id",
-  OAuth2Ctrl.authenticate(["user"]),
   Validators.joi(ValidateObjectId, "params"),
+  OAuth2Ctrl.authenticate(["user"]),
   (req: Request, res: Response, next: NextFunction) => {
     ModuleCtrl.fetch(req.params.id)
       .then((value: ModuleDocument) => {
@@ -126,9 +128,8 @@ router.get(
 
 router.delete(
   "/:id",
-  OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
-  ModuleCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
+  OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   (req: Request, res: Response, next: NextFunction) => {
     ModuleCtrl.delete(req.params.id)
       .then((value: ModuleDocument) => {
@@ -143,9 +144,9 @@ router.delete(
 
 router.put(
   "/:id/:action",
+  Validators.joi(StatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(StatusValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     const handler =
       req.params.action === "enable"
@@ -163,10 +164,11 @@ router.put(
 );
 
 router.put(
-  "/:id/scope/:scope",
+  "/:id/scope",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ModuleCtrl.addScope(req.params.id, req.params.scope)
       .then((value: ModuleDocument) => {
@@ -180,12 +182,49 @@ router.put(
 );
 
 router.delete(
-  "/:id/scope/:scope",
+  "/:id/scope",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ModuleCtrl.deleteScope(req.params.id, req.params.scope)
+      .then((value: ModuleDocument) => {
+        res.locals["response"] = { id: value.id };
+        next();
+      })
+      .catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.put(
+  "/:id/restriction",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(RestrictionValidation),
+  OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
+  ModuleCtrl.validate("params.id", "token.user._id"),
+  (req: Request, res: Response, next: NextFunction) => {
+    ModuleCtrl.addRestriction(req.params.id, req.body["restriction"])
+      .then((value: ModuleDocument) => {
+        res.locals["response"] = { id: value.id };
+        next();
+      })
+      .catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.delete(
+  "/:id/restriction",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(RestrictionValidation),
+  OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
+  ModuleCtrl.validate("params.id", "token.user._id"),
+  (req: Request, res: Response, next: NextFunction) => {
+    ModuleCtrl.deleteRestriction(req.params.id, req.body["restriction"])
       .then((value: ModuleDocument) => {
         res.locals["response"] = { id: value.id };
         next();

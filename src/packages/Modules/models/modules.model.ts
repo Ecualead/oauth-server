@@ -17,13 +17,16 @@ import mongoose from "mongoose";
 import { BaseModel } from "@ikoabo/core_srv";
 import { Client } from "oauth2-server";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
-import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
+import { APPLICATION_TYPES } from "@/packages/Applications/models/applications.enum";
 
 @index({ name: 1 }, { unique: true })
 @index({ secret: 1 })
 export class Module extends BaseModel {
   @prop({ required: true, unique: true })
   name!: string;
+
+  @prop({ required: true, default: APPLICATION_TYPES.APP_MODULE })
+  type?: number;
 
   @prop()
   image?: string;
@@ -42,6 +45,9 @@ export class Module extends BaseModel {
 
   @prop({ required: true })
   secret?: string;
+
+  @prop({ type: String })
+  restriction?: string[];
 
   /**
    * Get the mongoose data model
@@ -76,12 +82,13 @@ export class Module extends BaseModel {
   public toClient?(): Client {
     const obj: any = this;
     let client = {
-      id: obj.id,
-      type: OAUTH2_TOKEN_TYPE.TT_MODULE,
+      id: obj._id.toString(),
+      type: APPLICATION_TYPES.APP_MODULE,
       grants: ["client_credentials"],
       accessTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
       refreshTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
       scope: obj.scope,
+      restriction: this.restriction,
     };
     return client;
   }
