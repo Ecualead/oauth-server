@@ -18,9 +18,9 @@ export class ProjectNotificationsUrl {
   recover?: string;
 }
 
-@index({ type: 1 }, { unique: true })
+@index({ type: 1 })
 export class ProjectNotification {
-  @prop({ enum: NOTIFICATION_TYPES, required: true, unique: true, default: NOTIFICATION_TYPES.NT_UNKNOWN })
+  @prop({ enum: NOTIFICATION_TYPES, required: true, default: NOTIFICATION_TYPES.NT_UNKNOWN })
   type!: NOTIFICATION_TYPES;
 
   @prop({ required: true, default: false })

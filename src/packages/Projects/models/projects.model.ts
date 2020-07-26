@@ -24,6 +24,12 @@ import { Module } from "@/packages/Modules/models/modules.model";
 @index({ domain: 1 })
 @index({ canonical: 1 }, { unique: true })
 @index({ name: 1 })
+@index({ canonical: 1, "settings.socialNetworks.type": 1 }, { unique: true })
+@index(
+  { canonical: 1, "settings.socialNetworks.clientId": 1 },
+  { unique: true }
+)
+@index({ canonical: 1, "settings.notifications.type": 1 }, { unique: true })
 export class Project extends BaseModel {
   @prop({ required: true, ref: Domain })
   domain?: Ref<Domain>;

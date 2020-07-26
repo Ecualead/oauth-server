@@ -18,19 +18,19 @@ class ProjectSocialProfileMapping {
   fields!: string[];
 }
 
-@index({ type: 1 }, { unique: true })
-@index({ clientId: 1 }, { unique: true })
+@index({ type: 1 })
+@index({ clientId: 1 })
 @index({ clientSecret: 1 })
+@index({ clientId: 1, clientSecret: 1 })
 export class ProjectSocialNetworkSettings {
   @prop({
     enum: SOCIAL_NETWORK_TYPES,
     required: true,
-    unique: true,
     default: SOCIAL_NETWORK_TYPES.SN_UNKNOWN,
   })
   type!: SOCIAL_NETWORK_TYPES;
 
-  @prop({ required: true, unique: true })
+  @prop({ required: true })
   clientId!: string;
 
   @prop({ required: true })
