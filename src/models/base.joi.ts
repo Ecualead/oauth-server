@@ -15,6 +15,9 @@ export const StatusValidation = Joi.object().keys({
 });
 
 export const ScopeValidation = Joi.object().keys({
-  id: Joi.objectId().required(),
   scope: Joi.string().required(),
+});
+
+export const RestrictionValidation = Joi.object().keys({
+  restriction: Joi.string().required(),
 });
