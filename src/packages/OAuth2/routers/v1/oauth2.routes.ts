@@ -149,7 +149,6 @@ router.post(
               if (user && user !== res.locals["response"]["application"]) {
                 res.locals["response"]["user"] = user;
               }
-
               next();
             })
             .catch(next);
