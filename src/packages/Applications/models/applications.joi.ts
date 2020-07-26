@@ -27,6 +27,5 @@ export const ApplicationUpdateValidation = Joi.object().keys({
 });
 
 export const ApplicationGrantValidation = Joi.object().keys({
-  id: Joi.objectId().required(),
   grant: Joi.string().valid('authorization_code', 'client_credentials', 'refresh_token', 'password').required(),
 });

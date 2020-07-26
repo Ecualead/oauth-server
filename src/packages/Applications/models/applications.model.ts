@@ -32,7 +32,7 @@ import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 })
 @index({ project: 1 })
 @index({ type: 1 })
-@index({ canonical: 1 }, {unique: true})
+@index({ canonical: 1 }, { unique: true })
 export class Application extends BaseModel {
   @prop({ required: true })
   name!: string;
@@ -68,7 +68,7 @@ export class Application extends BaseModel {
   @prop({ type: String })
   scope?: string[];
 
-  @prop({type: String})
+  @prop({ type: String })
   restriction?: string[];
 
   /**
@@ -110,8 +110,8 @@ export class Application extends BaseModel {
   public toClient?(): Client {
     const obj: any = this;
     let client = {
-      id: obj.id,
-      type: OAUTH2_TOKEN_TYPE.TT_APPLICATION,
+      id: obj._id.toString(),
+      type: this.type,
       grants: obj.grants,
       accessTokenLifetime:
         obj.type === APPLICATION_TYPES.APP_SERVICE
@@ -128,6 +128,7 @@ export class Application extends BaseModel {
       ),
       scope: obj.scope,
       project: obj.project,
+      restriction: obj.restriction,
     };
     return client;
   }

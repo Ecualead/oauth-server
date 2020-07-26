@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Arrays, Token, CRUD, BASE_STATUS } from "@ikoabo/core_srv";
+import { Arrays, Token, BASE_STATUS, HTTP_STATUS } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/core_srv";
 import {
   Application,
@@ -25,7 +25,7 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
    * Private constructor
    */
   private constructor() {
-    super("Applications", ApplicationModel, 'application');
+    super("Applications", ApplicationModel, "application");
   }
 
   /**
@@ -96,6 +96,64 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
         .then((value: ApplicationDocument) => {
           if (!value) {
             reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Add new access restriction to the application
+   */
+  public addRestriction(
+    id: string,
+    restriction: string
+  ): Promise<ApplicationDocument> {
+    return new Promise<ApplicationDocument>((resolve, reject) => {
+      this._logger.debug("Adding restriction", {
+        application: id,
+        restriction: restriction,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $addToSet: { restriction: restriction } };
+      ApplicationModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ApplicationDocument) => {
+          if (!value) {
+            reject({
+              boError: ERRORS.OBJECT_NOT_FOUND,
+              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
+            });
+            return;
+          }
+          resolve(value);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Delete an access restriction from the application
+   */
+  public deleteRestriction(
+    id: string,
+    restriction: string
+  ): Promise<ApplicationDocument> {
+    return new Promise<ApplicationDocument>((resolve, reject) => {
+      this._logger.debug("Removing restriction", {
+        application: id,
+        restriction: restriction,
+      });
+      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const update: any = { $pull: { restriction: restriction } };
+      ApplicationModel.findOneAndUpdate(query, update, { new: true })
+        .then((value: ApplicationDocument) => {
+          if (!value) {
+            reject({
+              boError: ERRORS.OBJECT_NOT_FOUND,
+              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
+            });
             return;
           }
           resolve(value);

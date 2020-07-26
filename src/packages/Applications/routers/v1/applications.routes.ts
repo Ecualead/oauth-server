@@ -12,6 +12,7 @@ import {
   ResponseHandler,
   Validators,
   ValidateObjectId,
+  Objects,
 } from "@ikoabo/core_srv";
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import {
@@ -23,7 +24,12 @@ import {
   Application,
   ApplicationDocument,
 } from "@/Applications/models/applications.model";
-import { StatusValidation, ScopeValidation } from "@/models/base.joi";
+import {
+  StatusValidation,
+  ScopeValidation,
+  RestrictionValidation,
+} from "@/models/base.joi";
+import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 
 const router = Router();
 
@@ -31,19 +37,19 @@ router.post(
   "/:id",
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(ApplicationCreateValidation),
+  OAuth2Ctrl.authenticate(["user"]),
   (req: Request, res: Response, next: NextFunction) => {
-    let application: Application = {
+    ApplicationCtrl.create({
       name: req.body["name"],
       canonical: req.body["canonical"],
       project: <any>req.params["id"],
       description: req.body["description"],
       image: req.body["image"],
       type: req.body["type"],
-      owner: "5e7d8203cef9b37116a6aeef",
+      owner: Objects.get(res.locals, "token.user._id"),
       scope: req.body["scope"],
       grants: req.body["grants"],
-    };
-    ApplicationCtrl.create(application)
+    })
       .then((value: ApplicationDocument) => {
         res.locals["response"] = {
           id: value.id,
@@ -63,15 +69,15 @@ router.put(
   "/:id",
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(ApplicationUpdateValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    let application: Application = {
+    ApplicationCtrl.update(req.params.id, {
       name: req.body["name"],
       description: req.body["description"],
       image: req.body["image"],
       type: req.body["type"],
-      modifiedBy: "5e7d8203cef9b37116a6aeef",
-    };
-    ApplicationCtrl.update(req.params.id, application)
+    })
       .then((value: ApplicationDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -85,6 +91,8 @@ router.put(
 router.get(
   "/:id",
   Validators.joi(ValidateObjectId, "params"),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.fetch(req.params.id)
       .then((value: ApplicationDocument) => {
@@ -112,6 +120,8 @@ router.get(
 router.delete(
   "/:id",
   Validators.joi(ValidateObjectId, "params"),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.delete(req.params.id)
       .then((value: ApplicationDocument) => {
@@ -127,6 +137,8 @@ router.delete(
 router.put(
   "/:id/:action",
   Validators.joi(StatusValidation, "params"),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const handler =
       req.params.action === "enable"
@@ -144,10 +156,13 @@ router.put(
 );
 
 router.post(
-  "/:id/scope/:scope",
-  Validators.joi(ScopeValidation, "params"),
+  "/:id/scope",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ApplicationCtrl.addScope(req.params.id, req.params.scope)
+    ApplicationCtrl.addScope(req.params.id, req.body["scope"])
       .then((value: ApplicationDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -159,10 +174,13 @@ router.post(
 );
 
 router.delete(
-  "/:id/scope/:scope",
-  Validators.joi(ScopeValidation, "params"),
+  "/:id/scope",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ApplicationCtrl.deleteScope(req.params.id, req.params.scope)
+    ApplicationCtrl.deleteScope(req.params.id, req.body["scope"])
       .then((value: ApplicationDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -174,10 +192,13 @@ router.delete(
 );
 
 router.post(
-  "/:id/grant/:grant",
-  Validators.joi(ApplicationGrantValidation, "params"),
+  "/:id/grant",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ApplicationGrantValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ApplicationCtrl.addGrant(req.params.id, req.params.grant)
+    ApplicationCtrl.addGrant(req.params.id, req.body["grant"])
       .then((value: ApplicationDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -189,10 +210,49 @@ router.post(
 );
 
 router.delete(
-  "/:id/grant/:grant",
-  Validators.joi(ApplicationGrantValidation, "params"),
+  "/:id/grant",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ApplicationGrantValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ApplicationCtrl.deleteGrant(req.params.id, req.params.grant)
+    ApplicationCtrl.deleteGrant(req.params.id, req.body["grant"])
+      .then((value: ApplicationDocument) => {
+        res.locals["response"] = { id: value.id };
+        next();
+      })
+      .catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.put(
+  "/:id/restriction",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(RestrictionValidation, "body"),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
+  (req: Request, res: Response, next: NextFunction) => {
+    ApplicationCtrl.addRestriction(req.params.id, req.body["restriction"])
+      .then((value: ApplicationDocument) => {
+        res.locals["response"] = { id: value.id };
+        next();
+      })
+      .catch(next);
+  },
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.delete(
+  "/:id/restriction",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(RestrictionValidation, "body"),
+  OAuth2Ctrl.authenticate(["user"]),
+  ApplicationCtrl.validate("params.id", "token.user._id"),
+  (req: Request, res: Response, next: NextFunction) => {
+    ApplicationCtrl.deleteRestriction(req.params.id, req.body["restriction"])
       .then((value: ApplicationDocument) => {
         res.locals["response"] = { id: value.id };
         next();
