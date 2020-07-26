@@ -25,7 +25,7 @@ import {
 import { SubModuleValidation } from "@/Modules/models/modules.joi";
 import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import { ScopeValidation, StatusValidation } from "@/models/base.joi";
-import { OAuth2Ctrl } from "@/packages/OAuth2/controllers/oauth2.controller";
+import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 
 const router = Router();
 
@@ -34,8 +34,8 @@ router.post(
   OAuth2Ctrl.authenticate(["user"]),
   Validators.joi(DomainCreateValidation),
   (req: Request, res: Response, next: NextFunction) => {
-    // TODO XXX Get rigth user
-    let domain: Domain = {
+    /* Create the new domain */
+    DomainCtrl.create({
       name: req.body["name"],
       image: req.body["image"],
       description: req.body["description"],
@@ -43,8 +43,7 @@ router.post(
       owner: Objects.get(res.locals, "token.user._id"),
       status: BASE_STATUS.BS_ENABLED,
       modifiedBy: Objects.get(res.locals, "token.user._id"),
-    };
-    DomainCtrl.create(domain)
+    })
       .then((value: DomainDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -62,12 +61,12 @@ router.put(
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(DomainUpdateValidation),
   (req: Request, res: Response, next: NextFunction) => {
-    let domain: Domain = {
+    /* Update the domain information */
+    DomainCtrl.update(req.params.id, {
       name: req.body["name"],
       image: req.body["image"],
       description: req.body["description"],
-    };
-    DomainCtrl.update(req.params.id, domain)
+    })
       .then((value: DomainDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -82,7 +81,10 @@ router.get(
   "/",
   OAuth2Ctrl.authenticate(["user"]),
   (_req: Request, res: Response, _next: NextFunction) => {
-    DomainCtrl.fetchAll().pipe(JSONStream.stringify()).pipe(res.type("json"));
+    /* Fetch all domains of the current user */
+    DomainCtrl.fetchAll({ owner: Objects.get(res.locals, "token.user._id") })
+      .pipe(JSONStream.stringify())
+      .pipe(res.type("json"));
   },
   ResponseHandler.success,
   ResponseHandler.error
@@ -93,23 +95,20 @@ router.get(
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
-  (req: Request, res: Response, next: NextFunction) => {
-    DomainCtrl.fetch(req.params.id)
-      .then((value: DomainDocument) => {
-        res.locals["response"] = {
-          id: value.id,
-          name: value.name,
-          image: value.image,
-          description: value.description,
-          scope: value.scope,
-          modules: value.modules,
-          status: value.status,
-          createdAt: value.createdAt,
-          updatedAt: value.updatedAt,
-        };
-        next();
-      })
-      .catch(next);
+  (_req: Request, res: Response, next: NextFunction) => {
+    /* Return the domain information */
+    res.locals["response"] = {
+      id: res.locals["domain"].id,
+      name: res.locals["domain"].name,
+      image: res.locals["domain"].image,
+      description: res.locals["domain"].description,
+      scope: res.locals["domain"].scope,
+      modules: res.locals["domain"].modules,
+      status: res.locals["domain"].status,
+      createdAt: res.locals["domain"].createdAt,
+      updatedAt: res.locals["domain"].updatedAt,
+    };
+    next();
   },
   ResponseHandler.success,
   ResponseHandler.error
@@ -121,6 +120,7 @@ router.delete(
   DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
+    /* Delete a domain */
     DomainCtrl.delete(req.params.id)
       .then((value: DomainDocument) => {
         res.locals["response"] = { id: value.id };
