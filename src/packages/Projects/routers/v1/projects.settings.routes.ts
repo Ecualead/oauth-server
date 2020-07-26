@@ -31,10 +31,10 @@ const router = Router();
 
 router.post(
   "/:id/setting/social",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(SocialNetworkSettingValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.addSocialNetwork(req.params["id"], req.body)
       .then((value: ProjectDocument) => {
@@ -49,10 +49,10 @@ router.post(
 
 router.put(
   "/:id/setting/social/:type",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(TypeSettingParamsValidation, "params"),
   Validators.joi(SocialNetworkSettingValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.updateSocialNetwork(
       req.params["id"],
@@ -71,9 +71,9 @@ router.put(
 
 router.delete(
   "/:id/setting/social/:type",
+  Validators.joi(TypeSettingParamsValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(TypeSettingParamsValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.deleteSocialNetwork(
       req.params["id"],
@@ -91,10 +91,10 @@ router.delete(
 
 router.post(
   "/:id/setting/lifetime",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(TokenLifetimeValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const update: any = {
       "settings.tokenLifetime.accessToken": req.body["accessToken"],
@@ -113,10 +113,10 @@ router.post(
 
 router.post(
   "/:id/setting/recover",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(RecoverTypeValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const update: any = {
       "settings.recover": req.body["recover"],
@@ -134,10 +134,10 @@ router.post(
 
 router.post(
   "/:id/setting/restrictip",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(RestrictIpValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.addIp(req.params["id"], req.body["ipAddress"])
       .then((value: ProjectDocument) => {
@@ -152,10 +152,10 @@ router.post(
 
 router.delete(
   "/:id/setting/restrictip",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(RestrictIpValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.deleteIp(req.params["id"], req.body["ipAddress"])
       .then((value: ProjectDocument) => {
@@ -170,10 +170,10 @@ router.delete(
 
 router.post(
   "/:id/setting/confirmation",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(EmailConfirmationValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const update: any = {
       "settings.emailConfirmation.type": req.body["type"],
@@ -192,10 +192,10 @@ router.post(
 
 router.post(
   "/:id/setting/password",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(PasswordPolicyValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const update: any = {
       "settings.passwordPolicy.len": req.body["len"],
@@ -217,10 +217,10 @@ router.post(
 
 router.post(
   "/:id/setting/notification",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(NotificationsSettingsValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.addNotification(req.params["id"], req.body)
       .then((value: ProjectDocument) => {
@@ -235,10 +235,10 @@ router.post(
 
 router.put(
   "/:id/setting/notification/:type",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(TypeSettingParamsValidation, "params"),
   Validators.joi(NotificationsSettingsValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.updateNotification(
       req.params["id"],
@@ -257,9 +257,9 @@ router.put(
 
 router.delete(
   "/:id/setting/notification/:type",
+  Validators.joi(TypeSettingParamsValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(TypeSettingParamsValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.deleteNotification(
       req.params["id"],

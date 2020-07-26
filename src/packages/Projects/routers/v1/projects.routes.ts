@@ -31,9 +31,9 @@ const router = Router();
 
 router.post(
   "/",
+  Validators.joi(ProjectCreateValidation),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("body.domain", "token.user._id"),
-  Validators.joi(ProjectCreateValidation),
   (req: Request, res: Response, next: NextFunction) => {
     /* Register the new project */
     ProjectCtrl.create({
@@ -58,10 +58,10 @@ router.post(
 
 router.put(
   "/:id",
-  OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(ProjectUpdateValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     /* Update the project data */
     ProjectCtrl.update(req.params.id, {
@@ -82,9 +82,9 @@ router.put(
 
 router.get(
   "/domain/:id",
+  Validators.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.fetchAll({ domain: req.params.id })
       .pipe(JSONStream.stringify())
@@ -96,9 +96,9 @@ router.get(
 
 router.get(
   "/:id",
+  Validators.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ValidateObjectId, "params"),
   (_req: Request, res: Response, next: NextFunction) => {
     res.locals["response"] = {
       id: res.locals["project"].id,
@@ -131,9 +131,9 @@ router.get(
 
 router.delete(
   "/:id",
+  Validators.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.delete(req.params.id)
       .then((value: ProjectDocument) => {
@@ -148,9 +148,9 @@ router.delete(
 
 router.put(
   "/:id/:action",
+  Validators.joi(StatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(StatusValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     const handler =
       req.params.action === "enable"
@@ -168,12 +168,13 @@ router.put(
 );
 
 router.post(
-  "/:id/scope/:scope",
+  "/:id/scope",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
-    ProjectCtrl.addScope(req.params.id, req.params.scope)
+    ProjectCtrl.addScope(req.params.id, req.body['scope'])
       .then((value: ProjectDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -185,12 +186,13 @@ router.post(
 );
 
 router.delete(
-  "/:id/scope/:scope",
+  "/:id/scope",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
-    ProjectCtrl.deleteScope(req.params.id, req.params.scope)
+    ProjectCtrl.deleteScope(req.params.id, req.body['scope'])
       .then((value: ProjectDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -202,11 +204,12 @@ router.delete(
 );
 
 router.post(
-  "/:id/module/:module",
+  "/:id/module",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(SubModuleValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(SubModuleValidation, "params"),
-  ModuleCtrl.validate("params.module"),
+  ModuleCtrl.validate("body.module"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.addModule(req.params.id, res.locals["module"])
       .then((value: ProjectDocument) => {
@@ -220,11 +223,12 @@ router.post(
 );
 
 router.delete(
-  "/:id/module/:module",
+  "/:id/module",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(SubModuleValidation, "params"),
-  ModuleCtrl.validate("params.module"),
+  ModuleCtrl.validate("body.module"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectCtrl.deleteModule(req.params.id, res.locals["module"])
       .then((value: ProjectDocument) => {
