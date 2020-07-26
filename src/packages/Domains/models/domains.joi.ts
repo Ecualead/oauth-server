@@ -11,6 +11,9 @@ import { Joi } from "@ikoabo/core_srv";
 
 export const DomainCreateValidation = Joi.object().keys({
   name: Joi.string().required(),
+  canonical: Joi.string()
+    .pattern(new RegExp("^[a-zA-Z0-9][a-zA-Z0-9.]+[a-zA-Z0-9]$"))
+    .required(),
   image: Joi.string().allow("").optional(),
   description: Joi.string().allow("").optional(),
   scope: Joi.array().items(Joi.string()).optional(),

@@ -37,6 +37,7 @@ router.post(
     /* Create the new domain */
     DomainCtrl.create({
       name: req.body["name"],
+      canonical: req.body["canonical"],
       image: req.body["image"],
       description: req.body["description"],
       scope: req.body["scope"],
