@@ -17,7 +17,7 @@ import {
   Objects,
 } from "@ikoabo/core_srv";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
-import { Domain, DomainDocument } from "@/Domains/models/domains.model";
+import { DomainDocument } from "@/Domains/models/domains.model";
 import {
   DomainCreateValidation,
   DomainUpdateValidation,
@@ -31,8 +31,8 @@ const router = Router();
 
 router.post(
   "/",
-  OAuth2Ctrl.authenticate(["user"]),
   Validators.joi(DomainCreateValidation),
+  OAuth2Ctrl.authenticate(["user"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Create the new domain */
     DomainCtrl.create({
@@ -56,10 +56,10 @@ router.post(
 
 router.put(
   "/:id",
-  OAuth2Ctrl.authenticate(["user"]),
-  DomainCtrl.validate("params.id", "token.user._id"),
   Validators.joi(ValidateObjectId, "params"),
   Validators.joi(DomainUpdateValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  DomainCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     /* Update the domain information */
     DomainCtrl.update(req.params.id, {
@@ -92,9 +92,9 @@ router.get(
 
 router.get(
   "/:id",
+  Validators.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ValidateObjectId, "params"),
   (_req: Request, res: Response, next: NextFunction) => {
     /* Return the domain information */
     res.locals["response"] = {
@@ -116,9 +116,9 @@ router.get(
 
 router.delete(
   "/:id",
+  Validators.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ValidateObjectId, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     /* Delete a domain */
     DomainCtrl.delete(req.params.id)
@@ -134,9 +134,9 @@ router.delete(
 
 router.put(
   "/:id/:action",
+  Validators.joi(StatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(StatusValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     const handler =
       req.params.action === "enable"
@@ -154,12 +154,13 @@ router.put(
 );
 
 router.post(
-  "/:id/scope/:scope",
+  "/:id/scope",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
-    DomainCtrl.addScope(req.params.id, req.params.scope)
+    DomainCtrl.addScope(req.params.id, req.body["scope"])
       .then((value: DomainDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -171,12 +172,13 @@ router.post(
 );
 
 router.delete(
-  "/:id/scope/:scope",
+  "/:id/scope",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(ScopeValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
-    DomainCtrl.deleteScope(req.params.id, req.params.scope)
+    DomainCtrl.deleteScope(req.params.id, req.body["scope"])
       .then((value: DomainDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -188,11 +190,12 @@ router.delete(
 );
 
 router.post(
-  "/:id/module/:module",
+  "/:id/module",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(SubModuleValidation),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
-  Validators.joi(SubModuleValidation, "params"),
-  ModuleCtrl.validate("params.module"),
+  ModuleCtrl.validate("body.module"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.addModule(req.params.id, res.locals["module"])
       .then((value: DomainDocument) => {
@@ -206,11 +209,12 @@ router.post(
 );
 
 router.delete(
-  "/:id/module/:module",
+  "/:id/module",
+  Validators.joi(ValidateObjectId, "params"),
+  Validators.joi(SubModuleValidation),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
   ModuleCtrl.validate("params.module"),
-  Validators.joi(SubModuleValidation, "params"),
   (req: Request, res: Response, next: NextFunction) => {
     DomainCtrl.deleteModule(req.params.id, res.locals["module"])
       .then((value: DomainDocument) => {
