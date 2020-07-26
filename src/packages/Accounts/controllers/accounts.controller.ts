@@ -44,6 +44,7 @@ import {
   AccountTreeModel,
   AccountTreeDocument,
 } from "../models/accounts.tree.model";
+import { ApplicationCtrl } from "@/packages/Applications/controllers/applications.controller";
 
 class Accounts extends CRUD<Account, AccountDocument> {
   private static _instance: Accounts;
@@ -52,7 +53,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
    * Private constructor to allow singleton instance
    */
   private constructor() {
-    super("Accounts", AccountModel, 'account');
+    super("Accounts", AccountModel, "account");
   }
 
   /**
@@ -166,12 +167,10 @@ class Accounts extends CRUD<Account, AccountDocument> {
 
   public registerProject(
     account: AccountDocument,
-    application: ApplicationDocument,
+    project: string,
     referral: string
   ): Promise<AccountProjectProfileDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
-      const project = (<ProjectDocument>application.project)["_id"].toString();
-
       /* Check if the user is currently registered into the project */
       AccountProjectProfileModel.findOne({
         account: account.id,
@@ -186,7 +185,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
           /* Initialize the profile */
           let profile = {
             account: account._id,
-            project: project,
+            project: project as any,
             status: ACCOUNT_STATUS.AS_REGISTERED,
             referral: referral,
             scope: Arrays.force(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE),
@@ -426,8 +425,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
                 : Token.longToken,
             "recover.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
             "recover.attempts": 1,
-            "recover.expires":
-              Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS,
+            "recover.expires": Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS,
           };
 
           const update: any = {
@@ -465,7 +463,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
     return new Promise<void>((resolve, reject) => {
       AccountModel.findOneAndUpdate(
         {
-          'emails.email': email,
+          "emails.email": email,
           "recover.token": token,
           "recover.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
           "recover.expires": { $gt: Date.now() + 3600000 },
@@ -720,12 +718,18 @@ class Accounts extends CRUD<Account, AccountDocument> {
     project: string | ProjectDocument
   ): Promise<AccountProjectProfileDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
-      /* Check if the user is currently registered into the application */
+      /* Ensure that user profile exists on the given project */
       const id = typeof project === "string" ? project : project.id;
       AccountProjectProfileModel.findOne({ project: id, account: account })
         .then((value: AccountProjectProfileDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.PROFILE_NOT_FOUND });
+            AccountCtrl.fetch(account)
+            .then((account: AccountDocument)=>{
+              this.registerProject(account, id, null)
+              .then((profile: AccountProjectProfileDocument)=>{
+                resolve(profile);
+              }).catch(reject);
+            }).catch(reject);
             return;
           }
           resolve(value);

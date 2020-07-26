@@ -17,6 +17,7 @@ import {
   AccountProjectProfileModel,
   AccountProjectProfileDocument,
 } from "@/Accounts/models/accounts.projects.model";
+import { AccountCtrl } from "./accounts.controller";
 
 export class AccountAccessPolicy {
   /**
@@ -93,10 +94,7 @@ export class AccountAccessPolicy {
       }
 
       /* [LOCAL POLICY] Prevent non app user to signin */
-      AccountProjectProfileModel.findOne({
-        account: user.id,
-        project: project.id,
-      })
+      AccountCtrl.getProfile(user.id, project.id)
         .then((value: AccountProjectProfileDocument) => {
           /* User not registered */
           if (!value) {

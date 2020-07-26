@@ -59,7 +59,7 @@ router.post(
         /* Register the user account into the given project */
         AccountCtrl.registerProject(
           value,
-          res.locals["token"].client,
+          Objects.get(res, "locals.token.client.project._id"),
           req.body["referral"]
         )
           .then((profile: AccountProjectProfileDocument) => {
@@ -76,10 +76,6 @@ router.post(
           .catch(next);
       })
       .catch(next);
-  },
-  (err, req, res, next) => {
-    console.log(err);
-    next(err);
   },
   OAuth2Ctrl.handleError,
   ResponseHandler.success,
@@ -285,7 +281,7 @@ router.get(
           lastname: value.lastname,
           email: value.email,
           phone: value.phone,
-          code: value.code
+          code: value.code,
         };
         next();
       })
