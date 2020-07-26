@@ -12,6 +12,9 @@ import { APPLICATION_TYPES } from './applications.enum';
 
 export const ApplicationCreateValidation = Joi.object().keys({
   name: Joi.string().required(),
+  canonical: Joi.string()
+    .pattern(new RegExp("^[a-zA-Z0-9][a-zA-Z0-9.]+[a-zA-Z0-9]$"))
+    .required(),
   description: Joi.string().allow('').optional(),
   image: Joi.string().allow('').optional(),
   type: Joi.number().integer().min(APPLICATION_TYPES.APP_UNKNOWN).max(APPLICATION_TYPES.APP_MAX).required(),
