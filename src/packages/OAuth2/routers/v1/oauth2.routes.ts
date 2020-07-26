@@ -14,8 +14,10 @@ import {
   Request as ORequest,
   Response as OResponse,
 } from "oauth2-server";
-import { ResponseHandler, Objects } from "@ikoabo/core_srv";
+import { ResponseHandler, Objects, ERRORS } from "@ikoabo/core_srv";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
+import { ApplicationAccessPolicyCtrl } from "@/packages/Applications/controllers/application.access.policy.controller";
+import { OAUTH2_TOKEN_TYPE } from "../../models/oauth2.enum";
 
 const router = Router();
 
@@ -36,19 +38,19 @@ router.post(
     OAuth2Ctrl.server
       .authorize(request, response, options)
       .then((code: AuthorizationCode) => {
-        /* TODO XXX Check if the client IP address is valid */
-        /*if (!Validators.validClientIp(req, next, code.client)) {
-          return;
-      }*/
+        /* Validate application restrictions */
+        ApplicationAccessPolicyCtrl.canAccess(req, code.client.toString())
+          .then(() => {
+            res.locals["response"] = {
+              authorizationCode: code.authorizationCode,
+              redirectUri: code.redirectUri,
+              scope: code.scope,
+              expiresAt: code.expiresAt ? code.expiresAt.getTime() : null,
+            };
 
-        res.locals["response"] = {
-          authorizationCode: code.authorizationCode,
-          redirectUri: code.redirectUri,
-          scope: code.scope,
-          expiresAt: code.expiresAt ? code.expiresAt.getTime() : null,
-        };
-
-        next();
+            next();
+          })
+          .catch(next);
       })
       .catch(next);
   },
@@ -65,34 +67,36 @@ router.post(
     OAuth2Ctrl.server
       .token(request, response)
       .then((token: Token) => {
-        /* TODO XXX Check if the client IP address is valid */
-        /*if (!Validators.validClientIp(req, next, token.client)) {
-          return;
-      }*/
-        res.locals["token"] = token;
-        res.locals["response"] = {
-          tokenType: "Bearer",
-          accessToken: token.accessToken,
-          refreshToken: token.refreshToken,
-          accessTokenExpiresAt: token.accessTokenExpiresAt
-            ? token.accessTokenExpiresAt.getTime()
-            : null,
-          refreshTokenExpiresAt: token.refreshTokenExpiresAt
-            ? token.refreshTokenExpiresAt.getTime()
-            : null,
-          createdAt: token.createdAt.getTime(),
-          scope: token.scope,
-        };
+        /* Validate application restrictions */
+        ApplicationAccessPolicyCtrl.canAccess(req, token.client.toString())
+          .then(() => {
+            /* Return the access token */
+            res.locals["token"] = token;
+            res.locals["response"] = {
+              tokenType: "Bearer",
+              accessToken: token.accessToken,
+              refreshToken: token.refreshToken,
+              accessTokenExpiresAt: token.accessTokenExpiresAt
+                ? token.accessTokenExpiresAt.getTime()
+                : null,
+              refreshTokenExpiresAt: token.refreshTokenExpiresAt
+                ? token.refreshTokenExpiresAt.getTime()
+                : null,
+              createdAt: token.createdAt.getTime(),
+              scope: token.scope,
+            };
 
-        /* TODO XXX If the token is granted to an user then ensure user profile into application */
-        /* if (token.user && token.user.userId && token.user.userId !== token.client.clientId) {
-          UserCtrl.ensureApplicationProfile(<AccountDocument>token.user, token.client.app)
-              .then(() => {
-                  next();
-              }).catch(next);
-          return;
-      }*/
-        next();
+            /* TODO XXX If the token is granted to an user then ensure user profile into application */
+            /* if (token.user && token.user.userId && token.user.userId !== token.client.clientId) {
+            UserCtrl.ensureApplicationProfile(<AccountDocument>token.user, token.client.app)
+                .then(() => {
+                    next();
+                }).catch(next);
+            return;
+        }*/
+            next();
+          })
+          .catch(next);
       })
       .catch(next);
   },
@@ -109,35 +113,47 @@ router.post(
     OAuth2Ctrl.server
       .authenticate(request, response)
       .then((token: Token) => {
-        /* TODO XXX  Check if the client IP address is valid */
-        /*if (!Validators.validClientIp(req, next, token.client)) {
-          return;
-      }*/
-
         const project = Objects.get(token, "client.project.id", null);
-
         /* Check for module authentication verification */
-        if (!project) {
-          res.locals["response"] = {
-            module: Objects.get(token, "client.id", null),
-            scope: token.scope,
-          };
+        if (token.type === OAUTH2_TOKEN_TYPE.TT_MODULE) {
+          /* Validate module restriction */
+          ApplicationAccessPolicyCtrl.canAccess(
+            req,
+            Objects.get(token, "client", null)
+          )
+            .then(() => {
+              res.locals["response"] = {
+                module: Objects.get(token, "client", null),
+                scope: token.scope,
+              };
+              next();
+            })
+            .catch(next);
         } else {
-          /* Set basic application information into the response */
-          res.locals["response"] = {
-            application: Objects.get(token, "client.id", null),
-            project: project,
-            domain: Objects.get(token, "client.project.domain", null),
-            scope: token.scope,
-          };
+          /* Validate application restrictions */
+          ApplicationAccessPolicyCtrl.canAccess(
+            req,
+            Objects.get(token, "client.id", null)
+          )
+            .then(() => {
+              /* Set basic application information into the response */
+              res.locals["response"] = {
+                application: Objects.get(token, "client.id", null),
+                project: project,
+                domain: Objects.get(token, "client.project.domain", null),
+                scope: token.scope,
+              };
 
-          /* Add user information if the token belongs to an user */
-          const user = Objects.get(token, "user.id", null);
-          if (user && user !== res.locals["response"]["application"]) {
-            res.locals["response"]["user"] = user;
-          }
+              /* Add user information if the token belongs to an user */
+              const user = Objects.get(token, "user.id", null);
+              if (user && user !== res.locals["response"]["application"]) {
+                res.locals["response"]["user"] = user;
+              }
+
+              next();
+            })
+            .catch(next);
         }
-        next();
       })
       .catch(next);
   },

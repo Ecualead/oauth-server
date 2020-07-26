@@ -48,6 +48,9 @@ import { ProjectDocument } from "@/Projects/models/projects.model";
 import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
+import { ModuleCtrl } from "@/packages/Modules/controllers/modules.controller";
+import { ApplicationCtrl } from "@/packages/Applications/controllers/applications.controller";
+import { APPLICATION_TYPES } from "@/packages/Applications/models/applications.enum";
 
 export class OAuth2Model
   implements
@@ -227,11 +230,7 @@ export class OAuth2Model
       const userObj = {
         id: application.id,
         clientId: application.clientId,
-        grants: application.grants,
-        accessTokenLifetime: application.accessTokenLifetime,
-        refreshTokenLifetime: application.refreshTokenLifetime,
         scope: application.scope,
-        description: application.description,
       };
       resolve(userObj);
     });
@@ -289,7 +288,7 @@ export class OAuth2Model
   getUser(username: string, password: string): Promise<User> {
     return new Promise<User>((resolve, reject) => {
       /* Look for the target user */
-      AccountModel.findOne({ email: username })
+      AccountModel.findOne({ "emails.email": username })
         .then((user: AccountDocument) => {
           if (!user) {
             reject({
@@ -363,7 +362,10 @@ export class OAuth2Model
       ModuleModel.findOne(clientQuery)
         .then((value: ModuleDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.INVALID_APPLICATION });
+            reject({
+              boError: ERRORS.INVALID_APPLICATION,
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            });
             return;
           }
           resolve(value.toClient());
@@ -394,19 +396,23 @@ export class OAuth2Model
       /* Search for the client into database */
       ApplicationModel.findOne(clientQuery)
         .populate("project")
-        .then((value: ApplicationDocument) => {
-          if (!value) {
+        .then((application: ApplicationDocument) => {
+          if (!application) {
             /* If application was not found try to look for module */
             this.getClientModule(clientId, clientSecret)
-              .then(resolve)
+              .then((module: Client) => {
+                resolve(module);
+              })
               .catch(reject);
             return;
           }
-          resolve(value.toClient());
+          resolve(application.toClient());
         })
         .catch(() => {
           this.getClientModule(clientId, clientSecret)
-            .then(resolve)
+            .then((module: Client) => {
+              resolve(module);
+            })
             .catch(reject);
         });
     });
@@ -439,6 +445,35 @@ export class OAuth2Model
         return;
       }
 
+      /* Check the token generated type */
+      let tokenType = OAUTH2_TOKEN_TYPE.TT_USER;
+      switch (application.type) {
+        case APPLICATION_TYPES.APP_MODULE /* Force module token */:
+          tokenType = OAUTH2_TOKEN_TYPE.TT_MODULE;
+          break;
+
+        case APPLICATION_TYPES.APP_SERVICE /* Force application token */:
+          tokenType = OAUTH2_TOKEN_TYPE.TT_APPLICATION;
+          break;
+
+        case APPLICATION_TYPES.APP_ANDROID: /* Check application or user token */
+        case APPLICATION_TYPES.APP_IOS:
+        case APPLICATION_TYPES.APP_WEB_CLIENT_SIDE:
+        case APPLICATION_TYPES.APP_WEB_SERVER_SIDE:
+          tokenType =
+            "id" in user && user.id !== application.id
+              ? OAUTH2_TOKEN_TYPE.TT_USER
+              : OAUTH2_TOKEN_TYPE.TT_APPLICATION;
+          break;
+
+        default:
+          /* Invalid application value */
+          return reject({
+            boError: ERRORS.INVALID_APPLICATION,
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+          });
+      }
+
       /* Get all valid scope from the match */
       OAuth2Model.matchScope(application, user, Arrays.force(token.scope))
         .then((validScope: string[]) => {
@@ -453,11 +488,8 @@ export class OAuth2Model
             keep:
               application.accessTokenLifetime ===
               PROJECT_LIFETIME_TYPES.LT_INFINITE,
-            type:
-              "id" in user && user.id !== application.id
-                ? OAUTH2_TOKEN_TYPE.TT_USER
-                : application.type || OAUTH2_TOKEN_TYPE.TT_APPLICATION,
-            user: "id" in user && user.id !== application.id ? user.id : null,
+            type: tokenType,
+            user: user.id !== application.id ? user.id : null,
           })
             .then((accessToken: OAuth2TokenDocument) => {
               accessToken.application = <any>application;
@@ -489,7 +521,6 @@ export class OAuth2Model
       OAuth2TokenModel.findOne({
         accessToken: accessToken,
       })
-        .populate({ path: "application", populate: { path: "project" } })
         .populate("user")
         .then((token: OAuth2TokenDocument) => {
           if (!token) {
@@ -502,61 +533,74 @@ export class OAuth2Model
 
           /* Check if the token belongs to a module */
           if (token.type === OAUTH2_TOKEN_TYPE.TT_MODULE) {
-            token.user = <any>{ id: token.application };
-            token.application = <any>{ id: token.application };
-            token.accessTokenExpiresAt = new Date(
-              Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
-            );
-            resolve(token.toToken());
-            return;
-          }
-
-          /* Check if client token don't expire and there is no user involved */
-          if (
-            token.keep &&
-            token.user &&
-            (<AccountDocument>token.user).id !==
-              (<ApplicationDocument>token.application).id
-          ) {
-            reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.NOT_ALLOWED_SIGNIN,
-            });
-            return;
-          }
-
-          /* Check if client token never expires */
-          if (token.keep) {
-            token.accessTokenExpiresAt = new Date(
-              Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
-            );
-          }
-
-          /* Check if the token is expired */
-          if (token.accessTokenExpiresAt.getTime() < Date.now()) {
-            reject({
-              boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
-              boError: ERRORS.TOKEN_EXPIRED,
-            });
-            return;
-          }
-
-          /* Check if the user is registered into the application */
-          if (token.user) {
-            /* Check user signin policy */
-            AccountAccessPolicy.canSignin(
-              <AccountDocument>token.user,
-              <ProjectDocument>(<ApplicationDocument>token.application).project,
-              true
-            )
-              .then(() => {
+            /* Get the target module */
+            ModuleCtrl.fetch(token.application.toString())
+              .then((module: ModuleDocument) => {
+                token.application = module.id;
+                token.accessTokenExpiresAt = new Date(
+                  Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
+                );
                 resolve(token.toToken());
               })
               .catch(reject);
-            return;
-          }
+          } else {
+            /* Get the target application */
+            ApplicationCtrl.fetch(token.application.toString(), {}, {}, [
+              "project",
+            ])
+              .then((application: ApplicationDocument) => {
+                token.application = application;
 
-          resolve(token.toToken());
+                /* Check if client token don't expire and there is no user involved */
+                if (
+                  token.keep &&
+                  token.user &&
+                  (<AccountDocument>token.user).id !==
+                    (<ApplicationDocument>token.application).id
+                ) {
+                  reject({
+                    boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                    boError: ERRORS.NOT_ALLOWED_SIGNIN,
+                  });
+                  return;
+                }
+
+                /* Check if client token never expires */
+                if (token.keep) {
+                  token.accessTokenExpiresAt = new Date(
+                    Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
+                  );
+                }
+
+                /* Check if the token is expired */
+                if (token.accessTokenExpiresAt.getTime() < Date.now()) {
+                  reject({
+                    boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
+                    boError: ERRORS.TOKEN_EXPIRED,
+                  });
+                  return;
+                }
+
+                /* Check if the user is registered into the application */
+                if (token.user) {
+                  /* Check user signin policy */
+                  AccountAccessPolicy.canSignin(
+                    <AccountDocument>token.user,
+                    <ProjectDocument>(
+                      (<ApplicationDocument>token.application).project
+                    ),
+                    true
+                  )
+                    .then(() => {
+                      resolve(token.toToken());
+                    })
+                    .catch(reject);
+                  return;
+                }
+                resolve(token.toToken());
+              })
+              .catch(reject);
+          }
         })
         .catch(reject);
     });
