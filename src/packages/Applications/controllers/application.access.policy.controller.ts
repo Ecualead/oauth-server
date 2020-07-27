@@ -45,7 +45,7 @@ class ApplicationAccessPolicy {
     switch (type) {
       /* Validate request origin */
       case APPLICATION_TYPES.APP_WEB_CLIENT_SIDE:
-        const url = URL.parse(req.headers["origin"]);
+        const url = URL.parse(req.headers["origin"] || `https://${req.hostname}`);
         if (restriction.indexOf(url.hostname) < 0) {
           this._logger.error("Application access restricted", {
             origin: req.headers["origin"],
