@@ -95,6 +95,15 @@ export class Account extends BaseModel {
   @prop()
   lastname?: string;
 
+  @prop()
+  initials?: string;
+
+  @prop()
+  color1?: string;
+
+  @prop()
+  color2?: string;
+
   @prop({ required: true })
   code?: string;
 

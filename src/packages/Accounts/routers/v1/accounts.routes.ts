@@ -14,6 +14,7 @@ import {
   Objects,
   ERRORS,
   HTTP_STATUS,
+  ValidateObjectId,
 } from "@ikoabo/core_srv";
 import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
@@ -282,6 +283,31 @@ router.get(
           email: value.email,
           phone: value.phone,
           code: value.code,
+        };
+        next();
+      })
+      .catch(next);
+  },
+  OAuth2Ctrl.handleError,
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+router.get(
+  "/avatar-info/:id",
+  Validators.joi(ValidateObjectId, "params"),
+  OAuth2Ctrl.authenticate(["non-user", "mod_ims_avatar_info"]),
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Request a recover email */
+    AccountCtrl.fetch(req.params.id)
+      .then((value: AccountDocument) => {
+        res.locals["response"] = {
+          uid: value.id,
+          name: value.name,
+          lastname: value.lastname,
+          initials: value.initials,
+          color1: value.color1,
+          color2: value.color2,
         };
         next();
       })

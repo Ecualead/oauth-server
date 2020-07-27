@@ -45,6 +45,7 @@ import {
   AccountTreeDocument,
 } from "../models/accounts.tree.model";
 import { ApplicationCtrl } from "@/packages/Applications/controllers/applications.controller";
+import { AccountIconCtrl } from "./account.icon.controller";
 
 class Accounts extends CRUD<Account, AccountDocument> {
   private static _instance: Accounts;
@@ -153,6 +154,11 @@ class Accounts extends CRUD<Account, AccountDocument> {
                   },
                 },
               ];
+
+              /* Initialize avatar metadata */
+              const fullname = `${data.name} ${data.lastname}`;
+              data.initials = AccountIconCtrl.getInitials(fullname);
+              data.color1 = AccountIconCtrl.getColor(fullname);
 
               this._logger.debug("Registering new user account", data);
 
