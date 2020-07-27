@@ -15,6 +15,7 @@ import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import { ModuleDocument } from "@/Modules/models/modules.model";
+import URL from "url";
 
 class ApplicationAccessPolicy {
   private static _instance: ApplicationAccessPolicy;
@@ -44,9 +45,11 @@ class ApplicationAccessPolicy {
     switch (type) {
       /* Validate request origin */
       case APPLICATION_TYPES.APP_WEB_CLIENT_SIDE:
-        if (restriction.indexOf(req.headers['origin']) < 0) {
+        const url = URL.parse(req.headers["origin"]);
+        if (restriction.indexOf(url.hostname) < 0) {
           this._logger.error("Application access restricted", {
-            origin: req.headers['origin'],
+            origin: req.headers["origin"],
+            hostname: url.hostname,
             restriction: restriction,
           });
           return reject({
