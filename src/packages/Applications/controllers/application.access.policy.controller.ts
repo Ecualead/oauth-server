@@ -42,11 +42,11 @@ class ApplicationAccessPolicy {
     reject: any
   ) {
     switch (type) {
-      /* Validate request hostname */
+      /* Validate request origin */
       case APPLICATION_TYPES.APP_WEB_CLIENT_SIDE:
-        if (restriction.indexOf(req.hostname) < 0) {
+        if (restriction.indexOf(req.headers['origin']) < 0) {
           this._logger.error("Application access restricted", {
-            hostname: req.hostname,
+            origin: req.headers['origin'],
             restriction: restriction,
           });
           return reject({
@@ -99,7 +99,7 @@ class ApplicationAccessPolicy {
    * Check if the given application can access to the resource using
    * the given credentials. Access restrictions are preconfigured into
    * the application creation. Web application (client side) restrictions
-   * are handled by request hostname, module, services and Web application
+   * are handled by request origin, module, services and Web application
    * (server side) are handled by request ip address. Mobile applications
    * are not validated yet.
    *
