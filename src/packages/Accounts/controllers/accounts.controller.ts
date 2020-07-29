@@ -339,7 +339,9 @@ class Accounts extends CRUD<Account, AccountDocument> {
       },
       {
         new: true,
-        arrayFilters: [{ element: { email: email, "confirm.token": token } }],
+        arrayFilters: [
+          { "element.email": email, "element.confirm.token": token },
+        ],
       }
     )
       .then((account: AccountDocument) => {
@@ -494,7 +496,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
               /* Register the reset token */
               AccountModel.findOneAndUpdate({ _id: account._id }, update, {
                 new: true,
-                arrayFilters: [{ element: { email: email } }],
+                arrayFilters: [{ "element.email": email }],
               })
                 .then((account: AccountDocument) => {
                   /* Look for the user project related profile */
@@ -538,7 +540,10 @@ class Accounts extends CRUD<Account, AccountDocument> {
               RECOVER_TOKEN_STATUS.RTS_CONFIRMED,
           },
         },
-        { new: true, arrayFilters: [{ element: { email: email } }] }
+        {
+          new: true,
+          arrayFilters: [{ "element.email": email }],
+        }
       )
         .then((account: AccountDocument) => {
           if (!account) {
@@ -637,7 +642,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
                 {
                   new: true,
                   arrayFilters: [
-                    { element: { email: email, "confirm.token": token } },
+                    { "element.email": email, "element.confirm.token": token },
                   ],
                 }
               )
@@ -704,7 +709,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
     /* Register the reset token */
     AccountModel.findOneAndUpdate({ _id: account._id }, update, {
       new: true,
-      arrayFilters: [{ element: { email: email } }],
+      arrayFilters: [{ "element.email": email }],
     })
       .then((account: AccountDocument) => {
         /* Look for the user project related profile */
