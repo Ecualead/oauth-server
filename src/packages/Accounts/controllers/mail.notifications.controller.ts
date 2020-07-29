@@ -65,11 +65,28 @@ export class MailNotifications extends BaseNotifications {
     payload?: any
   ): string {
     /* Fetch the user account token to be sent */
-    const token: string = Objects.get(
-      payload,
-      "token",
-      Objects.get(profile, "account.recover.token", "")
-    );
+    let token: string = Objects.get(payload, "token");
+    let email: string = Objects.get(payload, "email");
+    if (!token) {
+      if (email) {
+        /* Iterate over each email addresss */
+        const emails: any[] = Objects.get(profile, "account.emails", []);
+        let itr = 0;
+        while (itr < emails.length && emails[itr].email !== email) {
+          itr++;
+        }
+
+        /* Get the token related to the email */
+        if (itr < emails.length) {
+          token = Objects.get(emails[itr], "confirm.token");
+        }
+      }
+
+      /* If the token is not valid get the default */
+      if (!token) {
+        token = Objects.get(profile, "account.recover.token");
+      }
+    }
     return token;
   }
 

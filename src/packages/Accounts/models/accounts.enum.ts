@@ -4,7 +4,7 @@
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity Auth Service.
- * It can't be copied and/or distributed without the express 
+ * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { BASE_STATUS } from "@ikoabo/core_srv";
@@ -18,9 +18,6 @@ export enum ACCOUNT_STATUS {
   AS_DISABLED = 1,
   AS_ENABLED = 2,
   AS_REGISTERED = 3,
-  AS_CONFIRMED = 4,
-  AS_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH = 5,
-  AS_NEEDS_CONFIRM_EMAIL_CAN_AUTH = 6,
 }
 
 export enum ACCOUNT_SOCIAL_NETWORKS {
@@ -49,9 +46,16 @@ export enum NOTIFICATIONS_EVENTS_TYPES {
 }
 
 export enum EMAIL_STATUS {
+  ES_DISABLED_BY_ADMIN = -3,
+  ES_TEMPORALLY_BLOCKED = -2,
+  ES_CANCELLED = -1,
   ES_UNKNOWN = 0,
-  ES_NOT_CONFIRMED = 1,
-  ES_CONFIRMED = 3
+  ES_DISABLED = 1,
+  ES_ENABLED = 2,
+  ES_REGISTERED = 3,
+  ES_CONFIRMED = 4,
+  ES_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH = 5,
+  ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH = 6,
 }
 
 export const PROTECTED_PROJECT_FIELDS: string[] = [

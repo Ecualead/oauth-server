@@ -19,7 +19,7 @@ import {
 } from "@typegoose/typegoose";
 import { BaseModel, Arrays } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
-import { EMAIL_STATUS } from "./accounts.enum";
+import { EMAIL_STATUS, RECOVER_TOKEN_STATUS } from "./accounts.enum";
 
 @index({ token: 1 })
 @index({ status: 1 })
@@ -31,7 +31,7 @@ export class AccountToken {
   @prop({ required: true, default: 0 })
   attempts?: number;
 
-  @prop({ required: true, default: 0 })
+  @prop({ required: true, default: RECOVER_TOKEN_STATUS.RTS_DISABLED })
   status?: number;
 
   @prop({ required: true, default: 0 })
@@ -43,7 +43,7 @@ export class AccountEmail {
   @prop({ required: true, unique: true })
   email!: string;
 
-  @prop({ required: true, default: EMAIL_STATUS.ES_NOT_CONFIRMED })
+  @prop({ required: true, default: EMAIL_STATUS.ES_REGISTERED })
   status?: number;
 
   @prop({ required: true })
@@ -179,6 +179,14 @@ export class Account extends BaseModel {
         }
       );
     });
+  }
+
+  public locateEmail?(email: string): AccountEmail | null {
+    let itr = 0;
+    while (itr < this.emails.length && this.emails[itr].email !== email) {
+      itr++;
+    }
+    return itr < this.emails.length ? this.emails[itr] : null;
   }
 }
 

@@ -11,12 +11,9 @@ import { Objects, HTTP_STATUS } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
 import { AccountDocument } from "@/Accounts/models/accounts.model";
 import { ProjectDocument } from "@//Projects/models/projects.model";
-import { ACCOUNT_STATUS } from "@/Accounts/models/accounts.enum";
+import { ACCOUNT_STATUS, EMAIL_STATUS } from "@/Accounts/models/accounts.enum";
 import { PROJECT_EMAIL_CONFIRMATION } from "@/Projects/models/projects.enum";
-import {
-  AccountProjectProfileModel,
-  AccountProjectProfileDocument,
-} from "@/Accounts/models/accounts.projects.model";
+import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
 import { AccountCtrl } from "./accounts.controller";
 
 export class AccountAccessPolicy {
@@ -30,6 +27,7 @@ export class AccountAccessPolicy {
   public static canSignin(
     user: AccountDocument,
     project: ProjectDocument,
+    email: string,
     checkLocal?: boolean
   ): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -42,22 +40,8 @@ export class AccountAccessPolicy {
       /* Fetch user confirmation expiration */
       const confirmationExpires = Objects.get(user, "confirmationExpires", 0);
 
-      /* Check the curren user state */
+      /* Check the current user state */
       switch (user.status) {
-        case ACCOUNT_STATUS.AS_REGISTERED:
-          if (
-            confirmationPolicy ===
-              PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED ||
-            (confirmationPolicy ===
-              PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME &&
-              confirmationExpires < Date.now())
-          ) {
-            return reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.EMAIL_NOT_CONFIRMED,
-            });
-          }
-          break;
         case ACCOUNT_STATUS.AS_TEMPORALLY_BLOCKED:
           return reject({
             boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
@@ -74,13 +58,58 @@ export class AccountAccessPolicy {
             boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
             boError: ERRORS.ACCOUNT_DISABLED,
           });
+      }
 
-        case ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH:
+      /* Ensure the used email to authenticate is valid */
+      if (!email) {
+        return reject({
+          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+          boError: ERRORS.NOT_ALLOWED_SIGNIN,
+        });
+      }
+
+      /* Get the email setting from the account */
+      const accountEmail = user.locateEmail(email);
+
+      /* Check the current user email state */
+      switch (accountEmail.status) {
+        case EMAIL_STATUS.ES_REGISTERED:
+          if (
+            confirmationPolicy ===
+              PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED ||
+            (confirmationPolicy ===
+              PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME &&
+              confirmationExpires < Date.now())
+          ) {
+            return reject({
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.EMAIL_NOT_CONFIRMED,
+            });
+          }
+          break;
+        case EMAIL_STATUS.ES_TEMPORALLY_BLOCKED:
+          return reject({
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: ERRORS.ACCOUNT_BLOCKED,
+          });
+
+        case EMAIL_STATUS.ES_CANCELLED:
+          return reject({
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: ERRORS.ACCOUNT_CANCELLED,
+          });
+        case EMAIL_STATUS.ES_DISABLED_BY_ADMIN:
+          return reject({
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: ERRORS.ACCOUNT_DISABLED,
+          });
+
+        case EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH:
           return reject({
             boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
             boError: ERRORS.EMAIL_NOT_CONFIRMED,
           });
-        case ACCOUNT_STATUS.AS_NEEDS_CONFIRM_EMAIL_CAN_AUTH:
+        case EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH:
           if (confirmationExpires < Date.now()) {
             return reject({
               boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
@@ -90,7 +119,7 @@ export class AccountAccessPolicy {
       }
 
       if (!checkLocal) {
-        return resolve(null);
+        return resolve(true);
       }
 
       /* [LOCAL POLICY] Prevent non app user to signin */

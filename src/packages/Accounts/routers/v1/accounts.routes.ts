@@ -58,7 +58,7 @@ router.post(
     AccountCtrl.register(data, res.locals["token"].client)
       .then((value: AccountDocument) => {
         /* Register the user account into the given project */
-        AccountCtrl.registerProject(
+        AccountCtrl.createUserProfile(
           value,
           Objects.get(res, "locals.token.client.project._id"),
           req.body["referral"]
@@ -92,7 +92,7 @@ router.post(
     AccountCtrl.confirmAccount(
       req.body["email"],
       req.body["token"],
-      Objects.get(res.locals, "token.client.project._id")
+      Objects.get(res.locals, "token.client.project")
     )
       .then((profile: AccountProjectProfileDocument) => {
         /* Send the account confirmation notification */
@@ -145,9 +145,9 @@ router.post(
 
       /* Fetch the requesting application */
       ApplicationCtrl.fetch(login, null, null, ["project"])
-        .then((value: ApplicationDocument) => {
+        .then((application: ApplicationDocument) => {
           /* Check application valid scope */
-          if (value.scope.indexOf("mod_ims_resend_confirm") < 0) {
+          if (application.scope.indexOf("mod_ims_resend_confirm") < 0) {
             return next({
               boError: ERRORS.INVALID_OPERATION,
               boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE,
@@ -155,7 +155,10 @@ router.post(
           }
 
           /* Call to resend confirmation */
-          AccountCtrl.requestConfirmation(req.body["username"], value)
+          AccountCtrl.requestConfirmation(
+            req.body["username"],
+            Objects.get(application, "project")
+          )
             .then((profile: AccountProjectProfileDocument) => {
               /* Send the register notification */
               Notifications.shared
@@ -186,8 +189,7 @@ router.post(
     /* Request a recover email */
     AccountCtrl.requestRecover(
       req.body["email"],
-      res.locals["token"].client,
-      Objects.get(res.locals, "token.client.project._id")
+      Objects.get(res.locals, "token.client.project")
     )
       .then((profile: AccountProjectProfileDocument) => {
         /* Send the account confirmation notification */
@@ -233,7 +235,7 @@ router.post(
       req.body["email"],
       req.body["token"],
       req.body["password"],
-      Objects.get(res.locals, "token.client.project._id")
+      Objects.get(res.locals, "token.client.project")
     )
       .then((profile: AccountProjectProfileDocument) => {
         /* Send the account confirmation notification */
