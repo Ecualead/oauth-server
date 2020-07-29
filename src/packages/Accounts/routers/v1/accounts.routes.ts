@@ -56,17 +56,20 @@ router.post(
 
     /* Register the new user account */
     AccountCtrl.register(data, res.locals["token"].client)
-      .then((value: AccountDocument) => {
+      .then((account: AccountDocument) => {
         /* Register the user account into the given project */
         AccountCtrl.createUserProfile(
-          value,
+          account,
           Objects.get(res, "locals.token.client.project._id"),
           req.body["referral"]
         )
           .then((profile: AccountProjectProfileDocument) => {
             /* Send the register notification */
             Notifications.shared
-              .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_SIGNUP, profile)
+              .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_SIGNUP, profile, {
+                token: Objects.get(account, "emails.0.confirm.token"),
+                email: req.body["email"],
+              })
               .finally(() => {
                 res.locals["response"] = {
                   uid: Objects.get(profile, "account._id", profile.account),
@@ -97,7 +100,9 @@ router.post(
       .then((profile: AccountProjectProfileDocument) => {
         /* Send the account confirmation notification */
         Notifications.shared
-          .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_CONFIRM, profile)
+          .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_CONFIRM, profile, {
+            email: req.body["email"],
+          })
           .finally(() => {
             res.locals["response"] = { email: req.body["email"] };
             next();
@@ -162,7 +167,13 @@ router.post(
             .then((profile: AccountProjectProfileDocument) => {
               /* Send the register notification */
               Notifications.shared
-                .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_SIGNUP, profile)
+                .doNotification(
+                  NOTIFICATIONS_EVENTS_TYPES.NET_SIGNUP,
+                  profile,
+                  {
+                    email: req.body["email"],
+                  }
+                )
                 .finally(() => {
                   res.locals["response"] = {
                     uid: Objects.get(profile, "account._id", profile.account),
@@ -194,7 +205,9 @@ router.post(
       .then((profile: AccountProjectProfileDocument) => {
         /* Send the account confirmation notification */
         Notifications.shared
-          .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_RECOVER, profile)
+          .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_RECOVER, profile, {
+            email: req.body["email"],
+          })
           .finally(() => {
             res.locals["response"] = { email: req.body["email"] };
             next();
