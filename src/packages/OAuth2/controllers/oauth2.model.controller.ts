@@ -493,6 +493,7 @@ export class OAuth2Model
               PROJECT_LIFETIME_TYPES.LT_INFINITE,
             type: tokenType,
             user: user.id !== application.id ? user.id : null,
+            username: user.id !== application.id ? user["username"] : null,
           })
             .then((accessToken: OAuth2TokenDocument) => {
               accessToken.application = <any>application;
