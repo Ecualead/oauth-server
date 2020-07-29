@@ -270,7 +270,7 @@ HttpServer.shared.initMongo().then(() => {
                           _logger.debug("User registered", { user: user });
 
                           /* Register the user into the application */
-                          AccountCtrl.registerProject(user, project.id, null)
+                          AccountCtrl.createUserProfile(user, project.id, null)
                             .then((profile: AccountProjectProfileDocument) => {
                               _logger.debug("User profile registered", {
                                 profile: profile,
