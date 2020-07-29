@@ -264,6 +264,7 @@ export class OAuth2Model
         AccountAccessPolicy.canSignin(
           <AccountDocument>user,
           <ProjectDocument>(<ApplicationDocument>application).project,
+          user["username"],
           true
         )
           .then(() => {
@@ -302,6 +303,8 @@ export class OAuth2Model
           user
             .validPassword(password)
             .then(() => {
+              /* Set the used username */
+              (<any>user)["username"] = username;
               resolve(user);
             })
             .catch(reject);
@@ -589,6 +592,7 @@ export class OAuth2Model
                     <ProjectDocument>(
                       (<ApplicationDocument>token.application).project
                     ),
+                    token.username,
                     true
                   )
                     .then(() => {

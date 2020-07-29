@@ -52,6 +52,9 @@ export class OAuth2Token extends BaseModel {
   @prop({ required: true, default: false })
   keep?: boolean;
 
+  @prop()
+  username?: string;
+
   @prop({ required: true, default: OAUTH2_TOKEN_TYPE.TT_UNKNOWN })
   type?: number;
 
