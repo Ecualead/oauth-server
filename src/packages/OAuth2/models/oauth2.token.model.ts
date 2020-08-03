@@ -74,7 +74,7 @@ export class OAuth2Token extends BaseModel {
       keep: this.keep,
       createdAt: this.createdAt,
     };
-
+    console.log(this.application);
     token.scope.push("default");
     switch (token.type) {
       case OAUTH2_TOKEN_TYPE.TT_MODULE:
@@ -86,6 +86,7 @@ export class OAuth2Token extends BaseModel {
         token.scope.push("application");
         break;
       case OAUTH2_TOKEN_TYPE.TT_USER:
+
         token.scope.push("user");
         break;
     }
