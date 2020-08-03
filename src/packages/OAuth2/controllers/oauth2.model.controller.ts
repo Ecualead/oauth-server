@@ -505,6 +505,7 @@ export class OAuth2Model
                   Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
                 );
               }
+              accessToken.application = <any>application;
               resolve(accessToken.toToken());
             })
             .catch(reject);
