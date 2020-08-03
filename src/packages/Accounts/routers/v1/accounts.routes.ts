@@ -72,7 +72,7 @@ router.post(
               })
               .finally(() => {
                 res.locals["response"] = {
-                  uid: Objects.get(profile, "account._id", profile.account),
+                  user: Objects.get(profile, "account._id", profile.account),
                 };
                 next();
               });
@@ -176,7 +176,7 @@ router.post(
                 )
                 .finally(() => {
                   res.locals["response"] = {
-                    uid: Objects.get(profile, "account._id", profile.account),
+                    user: Objects.get(profile, "account._id", profile.account),
                   };
                   next();
                 });
@@ -292,7 +292,7 @@ router.get(
     AccountCtrl.fetch(Objects.get(res.locals, "token.user._id"))
       .then((value: AccountDocument) => {
         res.locals["response"] = {
-          uid: value.id,
+          user: value.id,
           name: value.name,
           lastname: value.lastname,
           email: value.email,
@@ -311,13 +311,13 @@ router.get(
 router.get(
   "/avatar-info/:id",
   Validators.joi(ValidateObjectId, "params"),
-  OAuth2Ctrl.authenticate(["non-user", "mod_ims_avatar_info"]),
+  OAuth2Ctrl.authenticate(["non_user", "mod_ims_avatar_info"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
     AccountCtrl.fetch(req.params.id)
       .then((value: AccountDocument) => {
         res.locals["response"] = {
-          uid: value.id,
+          user: value.id,
           name: value.name,
           lastname: value.lastname,
           initials: value.initials,
