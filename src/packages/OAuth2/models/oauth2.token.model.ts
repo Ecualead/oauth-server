@@ -74,7 +74,7 @@ export class OAuth2Token extends BaseModel {
       keep: this.keep,
       createdAt: this.createdAt,
     };
-    console.log(this.application);
+
     token.scope.push("default");
     switch (token.type) {
       case OAUTH2_TOKEN_TYPE.TT_MODULE:
@@ -86,6 +86,20 @@ export class OAuth2Token extends BaseModel {
         token.scope.push("application");
         break;
       case OAUTH2_TOKEN_TYPE.TT_USER:
+        /* Get application parameters */
+        const applicationOwner = Objects.get(this.application, 'owner');
+        const projectOwner = Objects.get(this.application, '.project.owner');
+        const user = Objects.get(this.user, 'id', this.user);
+
+        /* Check if the user is the application owner */
+        if (applicationOwner === user) {
+          token.scope.push("application_owner");
+        }
+
+        /* Check if the user is the project owner */
+        if (projectOwner === user) {
+          token.scope.push("project_owner");
+        }
 
         token.scope.push("user");
         break;
