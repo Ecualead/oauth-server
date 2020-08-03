@@ -87,9 +87,9 @@ export class OAuth2Token extends BaseModel {
         break;
       case OAUTH2_TOKEN_TYPE.TT_USER:
         /* Get application parameters */
-        const applicationOwner = Objects.get(this.application, 'owner');
-        const projectOwner = Objects.get(this.application, '.project.owner');
-        const user = Objects.get(this.user, 'id', this.user);
+        const applicationOwner = Objects.get(token.client, 'owner','').toString();
+        const projectOwner = Objects.get(token.client, 'project.owner','').toString();
+        const user = Objects.get(token.user, 'id', this.user).toString();
 
         /* Check if the user is the application owner */
         if (applicationOwner === user) {
