@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { Router, Request, Response, NextFunction } from "express";
-import { Validators, Objects, HTTP_STATUS } from "@ikoabo/core_srv";
+import { Validators, Objects, HTTP_STATUS, ResponseHandler } from "@ikoabo/core_srv";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 import { ERRORS as AUTH_ERRORS } from "@ikoabo/auth_srv";
 import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
@@ -41,6 +41,7 @@ router.get(
     /* Force authentication with token */
     const token: string = Objects.get(req, "query.token", "").toString();
     req.headers.authorization = `Bearer ${token}`;
+    console.log(req.headers);
     OAuth2Ctrl.authenticate()(req, res, next);
   },
   (req: Request, res: Response, next: NextFunction) => {
@@ -57,6 +58,8 @@ router.get(
     ).filter(
       (value: ProjectSocialNetworkSettings) => value.type === socialType
     );
+
+    console.log(socialNetworks);
 
     /* Check if the social network settings is valid */
     if (
@@ -83,6 +86,7 @@ router.get(
       .then((request: AccountSocialRequestDocument) => {
         /* Pass the object to the next middleware */
         res.locals["request"] = request;
+        console.log(res.locals);
         next();
       })
       .catch(next);
@@ -105,7 +109,9 @@ router.get(
   },
   (err: any, req: Request, res: Response, next: NextFunction) => {
     console.log(err);
-  }
+    next(err);
+  },
+  ResponseHandler.error
 );
 
 export default router;
