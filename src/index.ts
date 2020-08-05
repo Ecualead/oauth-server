@@ -33,6 +33,7 @@ import ProjectRouter from "@/Projects/routers/v1/projects.routes";
 import ProjectSettingsRouter from "@/Projects/routers/v1/projects.settings.routes";
 import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
 import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
+import AccountSocialRouter from "@/Accounts/routers/v1/accounts.social.networks.routes";
 import OAuth2Router from "@/OAuth2/routers/v1/oauth2.routes";
 import { DomainModel } from "./packages/Domains/models/domains.model";
 
@@ -44,7 +45,7 @@ function requestCredentials(): Promise<void> {
     Authenticator.shared.setup(Settings.AUTH.SERVER);
     Authenticator.shared
       .authService(Settings.AUTH.ID, Settings.AUTH.SECRET)
-      .then(() => {})
+      .then(() => { })
       .catch((err) => {
         logger.error("Invalid authentication configuration", err);
       })
@@ -96,5 +97,5 @@ clusterServer.run({
   "/v1/domain": DomainRouter,
   "/v1/project": [ProjectRouter, ProjectSettingsRouter],
   "/v1/application": ApplicationRouter,
-  "/v1/oauth": [AccountRouter, OAuth2Router],
+  "/v1/oauth": [AccountRouter, AccountSocialRouter, OAuth2Router],
 });
