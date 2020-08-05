@@ -20,6 +20,7 @@ import {
   PROJECT_EMAIL_CONFIRMATION,
   PROJECT_RECOVER_TYPE,
   PROJECT_LIFETIME_TYPES,
+  SOCIAL_NETWORK_TYPES,
 } from "@/Projects/models/projects.enum";
 import {
   ACCOUNT_STATUS,
@@ -40,6 +41,10 @@ import {
 } from "@/Accounts/models/accounts.tree.model";
 import { AccountIconCtrl } from "@/Accounts/controllers/account.icon.controller";
 import { AccountAccessPolicy } from "./account.access.policy.controller";
+import {
+  socialNetworkToInt,
+  AccountSocialCredential,
+} from "../models/accounts.social.model";
 
 const MAX_ATTEMPTS = 5;
 
@@ -172,6 +177,45 @@ class Accounts extends CRUD<Account, AccountDocument> {
     });
   }
 
+  public registerSocial(
+    data: Account,
+    socialType: SOCIAL_NETWORK_TYPES,
+    profile: any
+  ): Promise<AccountDocument> {
+    return new Promise<AccountDocument>((resolve, reject) => {
+      /* Request user code creation */
+      AccountCodeCtrl.code
+        .then((code: string) => {
+          /* Set the user code */
+          data.code = code;
+          /* Set the new user status */
+          data.status = ACCOUNT_STATUS.AS_REGISTERED;
+          /* Set the registration email information */
+          data.emails = [];
+          /* Set social network profile information */
+          data.social = [
+            {
+              type: socialType,
+              profile: profile,
+            },
+          ];
+          /* Initialize avatar metadata */
+          const fullname = `${data.name} ${data.lastname}`;
+          data.initials = AccountIconCtrl.getInitials(fullname);
+          data.color1 = AccountIconCtrl.getColor(fullname);
+
+          this._logger.debug(
+            "Registering new user account from social network",
+            data
+          );
+
+          /* Register the new user */
+          AccountModel.create(data).then(resolve).catch(reject);
+        })
+        .catch(reject);
+    });
+  }
+
   public createUserProfile(
     account: AccountDocument,
     project: string,
@@ -196,6 +240,73 @@ class Accounts extends CRUD<Account, AccountDocument> {
             status: ACCOUNT_STATUS.AS_REGISTERED,
             referral: referral,
             scope: Arrays.force(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE),
+          };
+
+          /* Set the new user scope using default values and application scope */
+          profile["scope"] = profile["scope"].filter(
+            (scope: string) => SCP_PREVENT.indexOf(scope) < 0
+          );
+
+          /* Register the user into the current project */
+          AccountProjectProfileModel.findOneAndUpdate(
+            { project: project, account: account._id },
+            { $set: profile },
+            { upsert: true, new: true }
+          )
+            .populate("project")
+            .populate("account")
+            .then((value: AccountProjectProfileDocument) => {
+              /* Look for the referral parent user */
+              AccountTreeModel.findOne({ project: project, code: referral })
+                .then((parent: AccountTreeDocument) => {
+                  /* Initialize user referral tree */
+                  const tree: any[] = parent ? parent.tree : [];
+                  tree.push(account._id);
+
+                  /* Register the user referral tree */
+                  AccountTreeModel.create({
+                    project: project,
+                    account: account._id,
+                    code: account.code,
+                    tree: tree,
+                  }).finally(() => {
+                    resolve(value);
+                  });
+                })
+                .catch(reject);
+            })
+            .catch(reject);
+        })
+        .catch(reject);
+    });
+  }
+
+  public createSocialProfile(
+    account: AccountDocument,
+    project: string,
+    credentials: AccountSocialCredential,
+    referral?: string
+  ): Promise<AccountProjectProfileDocument> {
+    return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
+      /* Check if the user is currently registered into the project */
+      AccountProjectProfileModel.findOne({
+        account: account.id,
+        project: project,
+      })
+        .then((value: AccountProjectProfileDocument) => {
+          if (value) {
+            reject({ boError: ERRORS.USER_DUPLICATED });
+            return;
+          }
+
+          /* Initialize the profile */
+          let profile = {
+            account: account._id,
+            project: project as any,
+            status: ACCOUNT_STATUS.AS_REGISTERED,
+            referral: referral,
+            scope: Arrays.force(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE),
+            social: [credentials],
           };
 
           /* Set the new user scope using default values and application scope */
