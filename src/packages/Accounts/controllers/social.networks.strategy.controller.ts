@@ -29,7 +29,7 @@ import {
   AccountSocialRequestModel,
 } from "@/Accounts/models/accounts.social.request.model";
 import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
-import { AccountSocialCredential } from "@/Accounts/models/accounts.social.model";
+import { AccountSocialCredential, socialNetworkToStr } from "@/Accounts/models/accounts.social.model";
 import { SOCIAL_NETWORK_TYPES } from "@/Projects/models/projects.enum";
 import {
   AccountModel,
@@ -42,6 +42,7 @@ import {
   AccountProjectProfileModel,
 } from "@/Accounts/models/accounts.projects.model";
 import { Response } from "oauth2-server";
+import { Settings } from "@/config/Settings";
 
 class SocialNetworksStrategy {
   private static _instance: SocialNetworksStrategy;
@@ -97,7 +98,7 @@ class SocialNetworksStrategy {
       );
     };
 
-    const callbackURI = "?state=${accountSocialRequest.id}"; //`${IAMSettings.shared.IAM_URL}/api/v1/iam/oauth/social/${credentials.name}/callback`;
+    const callbackURI = `${Settings.AUTH.SERVER}/v1/oauth/social/${socialNetworkToStr(socialNetwork.type)}/callback`;
 
     /* Initialize the passport strategy for the given network type */
     let strategy: passport.Strategy;
