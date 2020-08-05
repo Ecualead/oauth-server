@@ -97,5 +97,6 @@ clusterServer.run({
   "/v1/domain": DomainRouter,
   "/v1/project": [ProjectRouter, ProjectSettingsRouter],
   "/v1/application": ApplicationRouter,
-  "/v1/oauth": [AccountRouter, AccountSocialRouter, OAuth2Router],
+  "/v1/oauth/social": AccountSocialRouter,
+  "/v1/oauth": [AccountRouter, OAuth2Router],
 });
