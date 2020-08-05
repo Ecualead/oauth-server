@@ -20,6 +20,7 @@ import {
 import { BaseModel, Arrays } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
 import { EMAIL_STATUS, RECOVER_TOKEN_STATUS } from "./accounts.enum";
+import { SOCIAL_NETWORK_TYPES } from "@/packages/Projects/models/projects.enum";
 
 @index({ token: 1 })
 @index({ status: 1 })
@@ -50,10 +51,15 @@ export class AccountEmail {
   confirm!: AccountToken;
 }
 
-@modelOptions({
-  schemaOptions: { collection: "accounts", timestamps: true },
-  options: { automaticName: false },
-})
+@index({ type: 1 })
+export class AccountSocial {
+  @prop({ required: true, enum: SOCIAL_NETWORK_TYPES })
+  type!: SOCIAL_NETWORK_TYPES;
+
+  @prop()
+  profile?: any;
+}
+
 @pre<Account>("save", function (next) {
   if (!this.isModified("password")) {
     return next();
@@ -87,6 +93,7 @@ export class AccountEmail {
   );
 })
 @index({ email: 1 }, { unique: true })
+@index({ _id: 1, "social.type": 1 }, { unique: true })
 @index({ code: 1 })
 export class Account extends BaseModel {
   @prop()
@@ -131,13 +138,16 @@ export class Account extends BaseModel {
   @prop()
   recover?: AccountToken;
 
+  @prop({ type: AccountSocial })
+  social?: AccountSocial[];
+
   /**
    * Get the mongoose data model
    */
   static get shared() {
     return getModelForClass(Account, {
       schemaOptions: {
-        collection: "accounts.users",
+        collection: "accounts",
         timestamps: true,
         toJSON: {
           virtuals: true,
