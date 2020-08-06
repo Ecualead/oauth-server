@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { Joi } from "@ikoabo/core_srv";
-import { PROJECT_LIFETIME_TYPES, PROJECT_RECOVER_TYPE, PROJECT_EMAIL_CONFIRMATION, SOCIAL_NETWORK_TYPES, NOTIFICATION_TYPES } from "./projects.enum";
+import { PROJECT_LIFETIME_TYPES, PROJECT_RECOVER_TYPE, PROJECT_EMAIL_CONFIRMATION, SOCIAL_NETWORK_TYPES, NOTIFICATION_TYPES } from "@/Projects/models/projects.enum";
 
 const ProjectLinks = Joi.object()
   .optional()

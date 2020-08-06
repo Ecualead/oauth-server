@@ -13,10 +13,10 @@ import {
   Application,
   ApplicationDocument,
   ApplicationModel,
-} from "../models/applications.model";
+} from "@/Applications/models/applications.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
-import { ProjectCtrl } from "@/packages/Projects/controllers/projects.controller";
-import { ProjectDocument } from "@/packages/Projects/models/projects.model";
+import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
+import { ProjectDocument } from "@/Projects/models/projects.model";
 
 export class Applications extends DataScoped<Application, ApplicationDocument> {
   private static _instance: Applications;

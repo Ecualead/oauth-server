@@ -16,10 +16,10 @@ import {
   Ref,
 } from "@typegoose/typegoose";
 import { BaseModel, Objects } from "@ikoabo/core_srv";
-import { ProjectLink } from "./projects.links.model";
-import { ProjectSetting } from "./projects.settings.model";
-import { Domain } from "@/packages/Domains/models/domains.model";
-import { Module } from "@/packages/Modules/models/modules.model";
+import { ProjectLink } from "@/Projects/models/projects.links.model";
+import { ProjectSetting } from "@/Projects/models/projects.settings.model";
+import { Domain } from "@/Domains/models/domains.model";
+import { Module } from "@/Modules/models/modules.model";
 
 @index({ domain: 1 })
 @index({ canonical: 1 }, { unique: true })

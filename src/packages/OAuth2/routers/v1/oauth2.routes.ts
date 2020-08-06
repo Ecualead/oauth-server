@@ -16,8 +16,8 @@ import {
 } from "oauth2-server";
 import { ResponseHandler, Objects, ERRORS } from "@ikoabo/core_srv";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
-import { ApplicationAccessPolicyCtrl } from "@/packages/Applications/controllers/application.access.policy.controller";
-import { OAUTH2_TOKEN_TYPE } from "../../models/oauth2.enum";
+import { ApplicationAccessPolicyCtrl } from "@/Applications/controllers/application.access.policy.controller";
+import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 
 const router = Router();
 

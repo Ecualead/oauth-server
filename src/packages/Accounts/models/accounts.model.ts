@@ -19,8 +19,8 @@ import {
 } from "@typegoose/typegoose";
 import { BaseModel, Arrays } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
-import { EMAIL_STATUS, RECOVER_TOKEN_STATUS } from "./accounts.enum";
-import { SOCIAL_NETWORK_TYPES } from "@/packages/Projects/models/projects.enum";
+import { EMAIL_STATUS, RECOVER_TOKEN_STATUS } from "@/Accounts/models/accounts.enum";
+import { SOCIAL_NETWORK_TYPES } from "@/Projects/models/projects.enum";
 
 @index({ token: 1 })
 @index({ status: 1 })

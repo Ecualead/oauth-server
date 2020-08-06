@@ -18,7 +18,7 @@ import { DomainDocument } from "@/Domains/models/domains.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
 import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
-import { ModuleDocument } from "@/packages/Modules/models/modules.model";
+import { ModuleDocument } from "@/Modules/models/modules.model";
 
 class Projects extends DataScoped<Project, ProjectDocument> {
   private static _instance: Projects;

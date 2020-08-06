@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { Joi } from '@ikoabo/core_srv';
-import { APPLICATION_TYPES } from './applications.enum';
+import { APPLICATION_TYPES } from '@/Applications/models/applications.enum';
 
 export const ApplicationCreateValidation = Joi.object().keys({
   name: Joi.string().required(),

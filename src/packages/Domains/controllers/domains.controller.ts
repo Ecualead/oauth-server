@@ -15,7 +15,7 @@ import {
 } from "@/Domains/models/domains.model";
 import { BASE_STATUS, ERRORS, HTTP_STATUS } from "@ikoabo/core_srv";
 import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
-import { ModuleDocument } from "@/packages/Modules/models/modules.model";
+import { ModuleDocument } from "@/Modules/models/modules.model";
 
 class Domains extends DataScoped<Domain, DomainDocument> {
   private static _instance: Domains;

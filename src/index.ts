@@ -13,7 +13,7 @@ import { ClusterServer, Logger } from "@ikoabo/core_srv";
 import { Authenticator } from "@ikoabo/auth_srv";
 import { Mail } from "@ikoabo/comm_srv";
 import AsyncLock from "async-lock";
-import { AccountCodeCtrl } from "./packages/Accounts/controllers/accounts.code.controller";
+import { AccountCodeCtrl } from "@/Accounts/controllers/accounts.code.controller";
 
 /* Initialize cluster server */
 const clusterServer = ClusterServer.setup(
@@ -35,7 +35,7 @@ import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
 import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
 import AccountSocialRouter from "@/Accounts/routers/v1/accounts.social.networks.routes";
 import OAuth2Router from "@/OAuth2/routers/v1/oauth2.routes";
-import { DomainModel } from "./packages/Domains/models/domains.model";
+import { DomainModel } from "@/Domains/models/domains.model";
 
 /**
  * Authenticate agains auth service

@@ -40,11 +40,11 @@ import {
   AccountTreeDocument,
 } from "@/Accounts/models/accounts.tree.model";
 import { AccountIconCtrl } from "@/Accounts/controllers/account.icon.controller";
-import { AccountAccessPolicy } from "./account.access.policy.controller";
+import { AccountAccessPolicy } from "@/Accounts/controllers/account.access.policy.controller";
 import {
   socialNetworkToInt,
   AccountSocialCredential,
-} from "../models/accounts.social.model";
+} from "@/Accounts/models/accounts.social.model";
 
 const MAX_ATTEMPTS = 5;
 

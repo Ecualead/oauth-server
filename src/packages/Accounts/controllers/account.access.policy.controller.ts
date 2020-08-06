@@ -14,7 +14,7 @@ import { ProjectDocument } from "@//Projects/models/projects.model";
 import { ACCOUNT_STATUS, EMAIL_STATUS } from "@/Accounts/models/accounts.enum";
 import { PROJECT_EMAIL_CONFIRMATION } from "@/Projects/models/projects.enum";
 import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
-import { AccountCtrl } from "./accounts.controller";
+import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
 
 export class AccountAccessPolicy {
   /**
@@ -76,7 +76,7 @@ export class AccountAccessPolicy {
         case EMAIL_STATUS.ES_REGISTERED:
           if (
             confirmationPolicy ===
-              PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED ||
+            PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED ||
             (confirmationPolicy ===
               PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME &&
               confirmationExpires < Date.now())

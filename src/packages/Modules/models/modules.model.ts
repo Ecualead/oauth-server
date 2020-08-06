@@ -17,7 +17,7 @@ import mongoose from "mongoose";
 import { BaseModel } from "@ikoabo/core_srv";
 import { Client } from "oauth2-server";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
-import { APPLICATION_TYPES } from "@/packages/Applications/models/applications.enum";
+import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
 
 @index({ name: 1 }, { unique: true })
 @index({ secret: 1 })

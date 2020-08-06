@@ -19,7 +19,7 @@ import {
 } from "@typegoose/typegoose";
 import { Application } from "@/Applications/models/applications.model";
 import { Account } from "@/Accounts/models/accounts.model";
-import { OAUTH2_TOKEN_TYPE } from "./oauth2.enum";
+import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 
 @index({ accessToken: 1 })
 @index({ accessTokenExpiresAt: 1 })

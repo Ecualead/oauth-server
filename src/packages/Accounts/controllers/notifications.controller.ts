@@ -7,13 +7,13 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AccountProjectProfileDocument } from "../models/accounts.projects.model";
+import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
 import { Objects, Logger } from "@ikoabo/core_srv";
 import async from "async";
-import { ProjectNotification } from "@/packages/Projects/models/projects.notifications.model";
-import { NOTIFICATION_TYPES } from "@/packages/Projects/models/projects.enum";
-import { MailNotifications } from "./mail.notifications.controller";
-import { NOTIFICATIONS_EVENTS_TYPES } from "../models/accounts.enum";
+import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
+import { NOTIFICATION_TYPES } from "@/Projects/models/projects.enum";
+import { MailNotifications } from "@/Accounts/controllers/mail.notifications.controller";
+import { NOTIFICATIONS_EVENTS_TYPES } from "@/Accounts/models/accounts.enum";
 
 export class Notifications {
   private static _instance: Notifications;
