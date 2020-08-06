@@ -21,7 +21,7 @@ import {
   OAuth2Strategy as GoogleStrategy,
   Profile as GoogleProfile,
 } from "passport-google-oauth";
-import { Request, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { Logger, Objects, ERRORS, HTTP_STATUS } from "@ikoabo/core_srv";
 import { ERRORS as AUTH_ERRORS } from "@ikoabo/auth_srv";
 import {
@@ -41,8 +41,10 @@ import {
   AccountProjectProfileDocument,
   AccountProjectProfileModel,
 } from "@/Accounts/models/accounts.projects.model";
-import { Response } from "oauth2-server";
 import { Settings } from "@/config/Settings";
+import { Token } from "oauth2-server";
+import { OAuth2ModelCtrl } from "@/OAuth2/controllers/oauth2.model.controller";
+import { OAuth2Code } from "@/OAuth2/models/oauth2.code.model";
 
 class SocialNetworksStrategy {
   private static _instance: SocialNetworksStrategy;
@@ -155,7 +157,7 @@ class SocialNetworksStrategy {
    *
    * @param stateId
    */
-  private _clearStrategy(request: string) {
+  public clearStrategy(request: string) {
     AccountSocialRequestModel.findOneAndRemove({ _id: request }).then(
       (value: AccountSocialRequestDocument) => {
         if (value) {
@@ -419,7 +421,7 @@ class SocialNetworksStrategy {
           });
 
           /* Remove the passport strategy */
-          self._clearStrategy(request.id);
+          self.clearStrategy(request.id);
           /* Check for oauth errors */
           if (err["oauthError"] || !err.code || !Number.isInteger(err.code)) {
             return next({
@@ -437,7 +439,7 @@ class SocialNetworksStrategy {
         /* When no user is given there is an unknown error */
         if (!user) {
           /* Remove the passport strategy */
-          self._clearStrategy(request.id);
+          self.clearStrategy(request.id);
           return next({
             boError: AUTH_ERRORS.INVALID_CREDENTIALS,
             boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
@@ -449,6 +451,47 @@ class SocialNetworksStrategy {
         next();
       })(req, res, next);
     };
+  }
+
+   /**
+     * Perform manual social account authentication
+     *
+     * @param {ClientDocument} client
+     * @param {AccountDocument} user
+     * @returns {Promise<OAuth2Server.Token>}
+     */
+    public authenticateSocialAccount(request: AccountSocialRequestDocument): Promise<Token> {
+      return new Promise<Token>((resolve, reject) => {
+
+        AccountCtrl.getProfile(Objects.get(request, 'user.id', request.user).toString(),Objects.get(request, 'application.project.id','').toString())
+        .then((profile: AccountProjectProfileDocument)=>{
+          const client: any = Objects.get(request, 'application');
+          const user: any = Objects.get(request, 'user');
+          /* Generate the access token */
+          OAuth2ModelCtrl.generateAccessToken(client, user, [])
+              .then((accessToken: string) => {
+                  /* Generate the refresh token */
+                  OAuth2ModelCtrl.generateRefreshToken(client, user, [])
+                      .then((refreshToken: string) => {
+                          /* Prepare the authentication token */
+                          let token: Token = {
+                              accessToken: accessToken,
+                              accessTokenExpiresAt: new Date(Date.now() + ((client.accessTokenLifetime) ? client.accessTokenLifetime : 3600) * 1000),
+                              refreshToken: refreshToken,
+                              refreshTokenExpiresAt: new Date(Date.now() + ((client.accessTokenLifetime) ? client.refreshTokenLifetime : 604800) * 1000),
+                              scope: [],
+                              client: client,
+                              user: user
+                          };
+                          /* Save the generated token */
+                          OAuth2ModelCtrl.saveToken(token, client, user)
+                              .then((token: Token) => {
+                                  resolve(token);
+                              }).catch(reject);
+                      }).catch(reject);
+              }).catch(reject);
+        })
+      });
   }
 }
 
