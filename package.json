@@ -12,14 +12,14 @@
     "deploy": "gulp release"
   },
   "_moduleAliases": {
-    "@": "dist/",
     "@/Modules": "dist/packages/Modules/",
     "@/Domains": "dist/packages/Domains/",
     "@/Projects": "dist/packages/Projects/",
     "@/Applications": "dist/packages/Applications/",
     "@/Accounts": "dist/packages/Accounts/",
     "@/OAuth2": "dist/packages/OAuth2/",
-    "@/KYC": "dist/packages/KYC/"
+    "@/KYC": "dist/packages/KYC/",
+    "@": "dist/"
   },
   "keywords": [
     "auth",
