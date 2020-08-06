@@ -15,6 +15,7 @@ import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialn
 import {
   SocialNetworkParamsValidation,
   SocialNetworkValidation,
+  SocialNetworkStateValidation
 } from "@/Accounts/models/accounts.social.joi";
 import {
   AccountSocialRequestModel,
@@ -23,6 +24,9 @@ import {
 import { socialNetworkToInt } from "@/Accounts/models/accounts.social.model";
 import { SOCIAL_NETWORK_TYPES } from "@/Projects/models/projects.enum";
 import { SocialNetworksStrategyCtrl } from "@/Accounts/controllers/social.networks.strategy.controller";
+import { Settings } from "@/config/Settings";
+import { Token } from "oauth2-server";
+import { ApplicationAccessPolicyCtrl } from "@/Applications/controllers/application.access.policy.controller";
 
 const router = Router();
 
@@ -105,13 +109,183 @@ router.get(
         state: Objects.get(res, "locals.request.id"),
         scope: Objects.get(res, "locals.socialNetwork.scope"),
       }
-    )(req, <any>res, next);
+    )(req, res, next);
   },
   (err: any, req: Request, res: Response, next: NextFunction) => {
     console.log(err);
+    console.log(req.query)
     next(err);
   },
   ResponseHandler.error
 );
+
+/**
+ * @api {get} /v1/auth/social/:social/callback Social network callback
+ * @apiVersion 2.0.0
+ * @apiName AuthSocialCallback
+ * @apiGroup Social Network Authentication
+ *
+ */
+router.get(
+  "/:social/callback",
+  Validators.joi(SocialNetworkValidation, "params"),
+  Validators.joi(SocialNetworkStateValidation, "query"),
+  (req: Request, res: Response, next: NextFunction) => {
+    const state: string = Objects.get(req, 'query.state', '').toString();
+    const social: string = req.params["social"];
+
+    /* Find the authentication state */
+    AccountSocialRequestModel.findById(state)
+      .populate({ path: 'application', populate: { path: "project" } })
+      .populate('user')
+      .then((request: AccountSocialRequestDocument) => {
+        if (!request) {
+          return next({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
+        }
+
+        /* Check that social network match */
+        if (request.social !== social) {
+          return next({ boError: AUTH_ERRORS.INVALID_APPLICATION, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
+        }
+
+        /* Store reuqest status for next middleware */
+        res.locals["request"] = request;
+
+        /* Calling social network authentication with callback reference */
+        const cbFailure = `${Settings.AUTH.SERVER}/v1/oauth/social/${social}/callback/failure`;
+        SocialNetworksStrategyCtrl.doAuthenticate(request, {
+          state: request.id,
+          failureRedirect: cbFailure,
+        })(req, res, next);
+      })
+      .catch(next);
+  },
+  (req: Request, res: Response, next: NextFunction) => {
+    const social: string = req.params["social"];
+    const request: AccountSocialRequestDocument = Objects.get(res, 'locals.request');
+
+    if (!request) {
+      return next({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
+    }
+
+    /* Clear the authentication strategy */
+    SocialNetworksStrategyCtrl.clearStrategy(request.id);
+
+    /* Authenticate the user account with the OAuth2 server */
+    SocialNetworksStrategyCtrl.authenticateSocialAccount(request)
+      .then((token: Token) => {
+        /* Validate application restrictions */
+        ApplicationAccessPolicyCtrl.canAccess(req, token.client.toString())
+          .then(() => {
+            /* Return the access token */
+            res.locals["token"] = token;
+            res.locals["response"] = {
+              tokenType: "Bearer",
+              accessToken: token.accessToken,
+              refreshToken: token.refreshToken,
+              accessTokenExpiresAt: token.accessTokenExpiresAt
+                ? token.accessTokenExpiresAt.getTime()
+                : null,
+              refreshTokenExpiresAt: token.refreshTokenExpiresAt
+                ? token.refreshTokenExpiresAt.getTime()
+                : null,
+              createdAt: token.createdAt.getTime(),
+              scope: token.scope,
+            };
+            next();
+          })
+          .catch(next);
+      }).catch(next);
+  },
+  (err: any, req: Request, res: Response, next: NextFunction) => {
+    console.log(err);
+    console.log(req.query)
+    next(err);
+  },
+  ResponseHandler.error,
+  ResponseHandler.success
+);
+
+/**
+ * @api {get} /v1auth/social/:social/callback/failure Social network failure callback
+ * @apiVersion 2.0.0
+ * @apiName AuthSocialCallbackState
+ * @apiGroup Social Network Authentication
+ *
+ */
+router.get(
+  "/:social/callback/failure",
+  Validators.joi(SocialNetworkValidation, "params"),
+  Validators.joi(SocialNetworkStateValidation, "query"),
+  (req: Request, res: Response, next: NextFunction) => {
+    const state: string = Objects.get(req, 'query.state', '').toString();
+    const social: string = req.params["social"];
+
+    /* Find the authentication state */
+    AccountSocialRequestModel.findById(state)
+      .populate({ path: 'application', populate: { path: "project" } })
+      .populate('user')
+      .then((request: AccountSocialRequestDocument) => {
+        if (!request) {
+          return next({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
+        }
+
+        /* Check that social network match */
+        if (request.social !== social) {
+          return next({ boError: AUTH_ERRORS.INVALID_APPLICATION, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
+        }
+
+        /* Store reuqest status for next middleware */
+        res.locals["request"] = request;
+
+        /* Clear the authentication strategy */
+        SocialNetworksStrategyCtrl.clearStrategy(request.id);
+        next({ boError: AUTH_ERRORS.AUTHENTICATION_REQUIRED, boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED });
+      })
+      .catch(next);
+  },
+  (err: any, req: Request, res: Response, next: NextFunction) => {
+    console.log(err);
+    console.log(req.query)
+    next(err);
+  },
+  ResponseHandler.error,
+  ResponseHandler.success
+);
+
+
+
+
+
+/**
+ * Send social authentication token response to native applications
+ *
+ * @param req
+ * @param res
+ * @param social
+ * @param token
+ * @returns {HttpResponse}
+ */
+/*function sendToken(req, res, social, token) {
+  return HttpResponse.fromOK("Access token generated", {
+    clientId: token.client.clientId,
+    userId: token.user.userId,
+    appId: token.client.app.appId,
+    isNew: req["isNew"] || false,
+    accessToken: token.accessToken,
+    refreshToken: token.refreshToken,
+    tokenType: "Bearer",
+    accessTokenExpiresAt: token.accessTokenExpiresAt
+      ? token.accessTokenExpiresAt.getTime()
+      : null,
+    refreshTokenExpiresAt: token.refreshTokenExpiresAt
+      ? token.refreshTokenExpiresAt.getTime()
+      : null,
+    createdAt: token.createdAt.getTime(),
+    scope: token.scope,
+    profile: Objects.getPath(req["user"], `auth.profiles.${social}`, {}),
+  });
+}*/
+
 
 export default router;
