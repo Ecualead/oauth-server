@@ -30,7 +30,7 @@ import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
 import {
   OAuth2CodeDocument,
   OAuth2CodeModel,
-} from "../models/oauth2.code.model";
+} from "@/OAuth2/models/oauth2.code.model";
 import {
   AccountDocument,
   AccountModel,
@@ -48,20 +48,31 @@ import { ProjectDocument } from "@/Projects/models/projects.model";
 import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
-import { ModuleCtrl } from "@/packages/Modules/controllers/modules.controller";
-import { ApplicationCtrl } from "@/packages/Applications/controllers/applications.controller";
-import { APPLICATION_TYPES } from "@/packages/Applications/models/applications.enum";
+import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
+import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
+import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
 
-export class OAuth2Model
+class OAuth2Model
   implements
-    PasswordModel,
-    ClientCredentialsModel,
-    AuthorizationCodeModel,
-    RefreshTokenModel {
+  PasswordModel,
+  ClientCredentialsModel,
+  AuthorizationCodeModel,
+  RefreshTokenModel {
+  private static _instance: OAuth2Model;
   private _logger: Logger;
-  constructor() {
+  private constructor() {
     this._logger = new Logger("OAuth2");
     this._logger.debug("Initializing OAuth2 data model");
+  }
+
+  /**
+   * Get the singleton class instance
+   */
+  public static get shared(): OAuth2Model {
+    if (!OAuth2Model._instance) {
+      OAuth2Model._instance = new OAuth2Model();
+    }
+    return OAuth2Model._instance;
   }
 
   /**
@@ -438,7 +449,7 @@ export class OAuth2Model
       /* Check if client token don't expire and there is no user involved */
       if (
         application.accessTokenLifetime ===
-          PROJECT_LIFETIME_TYPES.LT_INFINITE &&
+        PROJECT_LIFETIME_TYPES.LT_INFINITE &&
         user.id !== application.id
       ) {
         reject({
@@ -561,7 +572,7 @@ export class OAuth2Model
                   token.keep &&
                   token.user &&
                   (<AccountDocument>token.user).id !==
-                    (<ApplicationDocument>token.application).id
+                  (<ApplicationDocument>token.application).id
                 ) {
                   reject({
                     boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
@@ -739,3 +750,5 @@ export class OAuth2Model
     });
   }
 }
+
+export const OAuth2ModelCtrl = OAuth2Model.shared;

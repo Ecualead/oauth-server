@@ -17,16 +17,14 @@ import {
 } from "oauth2-server";
 import { HTTP_STATUS, Objects } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
-import { OAuth2Model } from "@/OAuth2/controllers/oauth2.model.controller";
+import { OAuth2ModelCtrl } from "@/OAuth2/controllers/oauth2.model.controller";
 
 class OAuth2 {
   private static _instance: OAuth2;
-  private _model: OAuth2Model;
   private _server: any;
 
   private constructor() {
-    this._model = new OAuth2Model();
-    this._server = new OAuth2Server({ model: this._model });
+    this._server = new OAuth2Server({ model: OAuth2ModelCtrl });
   }
 
   public static get shared(): OAuth2 {
@@ -34,10 +32,6 @@ class OAuth2 {
       OAuth2._instance = new OAuth2();
     }
     return OAuth2._instance;
-  }
-
-  public get model(): OAuth2Model {
-    return this._model;
   }
 
   public get server(): any {

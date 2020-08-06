@@ -36,6 +36,7 @@ import {
 } from "oauth2-server";
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import { ApplicationDocument } from "@/Applications/models/applications.model";
+import { OAuth2ModelCtrl } from "@/OAuth2/controllers/oauth2.model.controller";
 
 const router = Router();
 
@@ -271,7 +272,7 @@ router.post(
   OAuth2Ctrl.authenticate(),
   (_req: Request, res: Response, next: NextFunction) => {
     /* Revoke the access token */
-    OAuth2Ctrl.model
+    OAuth2ModelCtrl
       .revokeToken(res.locals["token"])
       .then(() => {
         res.locals["response"] = {};
