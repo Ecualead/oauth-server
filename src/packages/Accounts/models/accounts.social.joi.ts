@@ -13,6 +13,10 @@ export const SocialNetworkValidation = Joi.object().keys({
   social: Joi.string().valid("facebook", "google", "twitter").required(),
 });
 
+export const SocialNetworkStateValidation = Joi.object().keys({
+  state: Joi.objectId().required(),
+});
+
 export const SocialNetworkParamsValidation = Joi.object().keys({
   token: Joi.string().required(),
   redirect: Joi.string().required(),
