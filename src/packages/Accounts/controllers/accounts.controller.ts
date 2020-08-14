@@ -20,7 +20,6 @@ import {
   PROJECT_EMAIL_CONFIRMATION,
   PROJECT_RECOVER_TYPE,
   PROJECT_LIFETIME_TYPES,
-  SOCIAL_NETWORK_TYPES,
 } from "@/Projects/models/projects.enum";
 import {
   ACCOUNT_STATUS,
@@ -41,10 +40,8 @@ import {
 } from "@/Accounts/models/accounts.tree.model";
 import { AccountIconCtrl } from "@/Accounts/controllers/account.icon.controller";
 import { AccountAccessPolicy } from "@/Accounts/controllers/account.access.policy.controller";
-import {
-  socialNetworkToInt,
-  AccountSocialCredential,
-} from "@/Accounts/models/accounts.social.model";
+import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.enum";
+import { SocialNetworkCredential } from "@/SocialNetworks/models/social.networks.model";
 
 const MAX_ATTEMPTS = 5;
 
@@ -284,7 +281,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
   public createSocialProfile(
     account: AccountDocument,
     project: string,
-    credentials: AccountSocialCredential,
+    credentials: SocialNetworkCredential,
     referral?: string
   ): Promise<AccountProjectProfileDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {

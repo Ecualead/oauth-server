@@ -17,7 +17,7 @@ import {
   DocumentType,
 } from "@typegoose/typegoose";
 import { Project } from "@/Projects/models/projects.model";
-import { AccountSocialCredential } from "@/Accounts/models/accounts.social.model";
+import { SocialNetworkCredential } from "@/SocialNetworks/models/social.networks.model";
 import { Account } from "@/Accounts/models/accounts.model";
 
 @index({ account: 1 })
@@ -33,8 +33,8 @@ export class AccountProjectProfile extends BaseModel {
   @prop({ type: String })
   scope?: string[];
 
-  @prop({ type: AccountSocialCredential })
-  social?: AccountSocialCredential[];
+  @prop({ type: SocialNetworkCredential })
+  social?: SocialNetworkCredential[];
 
   @prop()
   referral?: string;

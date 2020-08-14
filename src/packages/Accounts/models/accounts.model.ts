@@ -13,14 +13,13 @@ import {
   prop,
   pre,
   index,
-  modelOptions,
   getModelForClass,
   DocumentType,
 } from "@typegoose/typegoose";
 import { BaseModel, Arrays } from "@ikoabo/core_srv";
 import { ERRORS } from "@ikoabo/auth_srv";
 import { EMAIL_STATUS, RECOVER_TOKEN_STATUS } from "@/Accounts/models/accounts.enum";
-import { SOCIAL_NETWORK_TYPES } from "@/Projects/models/projects.enum";
+import { SocialNetworkProfile } from "@/SocialNetworks/models/social.networks.model";
 
 @index({ token: 1 })
 @index({ status: 1 })
@@ -49,15 +48,6 @@ export class AccountEmail {
 
   @prop({ required: true })
   confirm!: AccountToken;
-}
-
-@index({ type: 1 })
-export class AccountSocial {
-  @prop({ required: true, enum: SOCIAL_NETWORK_TYPES })
-  type!: SOCIAL_NETWORK_TYPES;
-
-  @prop()
-  profile?: any;
 }
 
 @pre<Account>("save", function (next) {
@@ -138,8 +128,8 @@ export class Account extends BaseModel {
   @prop()
   recover?: AccountToken;
 
-  @prop({ type: AccountSocial })
-  social?: AccountSocial[];
+  @prop({ type: SocialNetworkProfile })
+  social?: SocialNetworkProfile[];
 
   /**
    * Get the mongoose data model
