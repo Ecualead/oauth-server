@@ -135,6 +135,7 @@ router.get(
         const cbFailure = `${Settings.AUTH.SERVER}/v1/oauth/social/${social}/callback/failure`;
         SocialNetworkCtrl.doAuthenticate(request, {
           state: request.id,
+          code: Objects.get(req, 'query.state', '').toString(),
           failureRedirect: cbFailure,
         })(req, res, next);
       })
