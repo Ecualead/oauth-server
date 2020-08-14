@@ -104,7 +104,7 @@ export class Account extends BaseModel {
   @prop({ required: true })
   code?: string;
 
-  @prop({ required: true, unique: true })
+  @prop()
   email?: string;
 
   @prop({ type: AccountEmail })
@@ -113,7 +113,7 @@ export class Account extends BaseModel {
   @prop()
   phone?: string;
 
-  @prop({ required: true })
+  @prop()
   password?: string;
 
   @prop()
