@@ -401,7 +401,7 @@ class SocialNetwork {
 			/* Initialize the social network strategy */
 			self._setupSocialStrategy(socialNetwork);
 
-			passport.authenticate(socialNetwork.id, options, function (err, user, info) {
+			passport.authenticate(socialNetwork.id, options, (err, user, info) => {
 				/* Check if there were some errors */
 				if (err) {
 					self._logger.error("Error authenticating social network", {
