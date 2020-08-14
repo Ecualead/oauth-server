@@ -404,7 +404,7 @@ class SocialNetwork {
 			passport.authenticate(socialNetwork.id, options, function (err, user, info) {
 				/* Check if there were some errors */
 				if (err) {
-					this._logger.error("Error authenticating social network", {
+					self._logger.error("Error authenticating social network", {
 						error: err,
 					});
 
