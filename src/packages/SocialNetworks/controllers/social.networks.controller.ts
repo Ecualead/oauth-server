@@ -26,7 +26,7 @@ import { OAuth2ModelCtrl } from "@/OAuth2/controllers/oauth2.model.controller";
 import { SocialNetworkRequestDocument, SocialNetworkRequestModel } from "@/SocialNetworks/models/social.networks.request.model";
 import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.enum";
 import { socialNetworkToStr, SocialNetworkCredential, SocialNetworkProfile } from "@/SocialNetworks/models/social.networks.model";
-import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
+import { SocialNetworkStrategyFactory } from "./strategies/strategy.factory.controller";
 
 class SocialNetwork {
   private static _instance: SocialNetwork;
@@ -75,7 +75,7 @@ class SocialNetwork {
     const callbackURI = `${Settings.AUTH.SERVER}/v1/oauth/social/${socialNetworkToStr(socialNetwork.social.type)}/callback`;
 
     /* Initialize the passport strategy for the given network type */
-    let strategy: passport.Strategy = SocialNetworkStrategy.getByType(socialNetwork.social.type).setup(socialNetwork, callbackURI, fnSocialStrategy);
+    let strategy: passport.Strategy = SocialNetworkStrategyFactory.getByType(socialNetwork.social.type).setup(socialNetwork, callbackURI, fnSocialStrategy);
 
     /* Use the passport strategy */
     passport.use(socialNetwork.id, strategy);
