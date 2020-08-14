@@ -18,6 +18,7 @@
     "@/Applications": "dist/packages/Applications/",
     "@/Accounts": "dist/packages/Accounts/",
     "@/OAuth2": "dist/packages/OAuth2/",
+    "@/SocialNetworks": "dist/packages/SocialNetworks/",
     "@/KYC": "dist/packages/KYC/",
     "@": "dist/"
   },

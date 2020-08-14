@@ -33,6 +33,9 @@
       "@/OAuth2/*": [
         "src/packages/OAuth2/*"
       ],
+      "@/SocialNetworks/*": [
+        "src/packages/SocialNetworks/*"
+      ],
       "@/KYC/*": [
         "src/packages/KYC/*"
       ],

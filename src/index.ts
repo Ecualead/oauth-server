@@ -33,7 +33,7 @@ import ProjectRouter from "@/Projects/routers/v1/projects.routes";
 import ProjectSettingsRouter from "@/Projects/routers/v1/projects.settings.routes";
 import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
 import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
-import AccountSocialRouter from "@/Accounts/routers/v1/accounts.social.networks.routes";
+import SocialNetworkRouter from "@/SocialNetworks/routers/v1/social.networks.router";
 import OAuth2Router from "@/OAuth2/routers/v1/oauth2.routes";
 import { DomainModel } from "@/Domains/models/domains.model";
 
@@ -97,6 +97,6 @@ clusterServer.run({
   "/v1/domain": DomainRouter,
   "/v1/project": [ProjectRouter, ProjectSettingsRouter],
   "/v1/application": ApplicationRouter,
-  "/v1/oauth/social": AccountSocialRouter,
+  "/v1/oauth/social": SocialNetworkRouter,
   "/v1/oauth": [AccountRouter, OAuth2Router],
 });
