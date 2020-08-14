@@ -77,7 +77,7 @@ class SocialNetwork {
     /* Initialize the passport strategy for the given network type */
     let strategy: passport.Strategy = SocialNetworkStrategyFactory.getByType(socialNetwork.social.type).setup(socialNetwork, callbackURI, fnSocialStrategy);
 
-    /* Use the passport strategy */
+    /* Register the passport strategy */
     passport.use(socialNetwork.id, strategy);
   }
 
@@ -87,10 +87,22 @@ class SocialNetwork {
 	 * @param stateId
 	 */
   public clearStrategy(request: string) {
+    this._logger.debug("Clear social network strategy", {
+      request: request
+    });
+
+    /* Remove the social network request */
     SocialNetworkRequestModel.findOneAndRemove({ _id: request }).then(
       (value: SocialNetworkRequestDocument) => {
         if (value) {
-          passport.unuse(request);
+          try {
+            passport.unuse(request);
+          } catch (err) {
+            this._logger.error("Unknown error removing startegy", {
+              request: value,
+              error: err
+            });
+          }
         }
       }
     );
@@ -117,6 +129,13 @@ class SocialNetwork {
     profile: any
   ): Promise<any> {
     return new Promise((resolve, reject) => {
+      this._logger.debug("Store social network credentials", {
+        account: account,
+        social: socialNetworkToStr(socialType),
+        referral: referral,
+        profile: profile
+      });
+
       /* Update or set social network profile */
       const update: any = {
         $set: {
@@ -130,13 +149,24 @@ class SocialNetwork {
         {
           new: true,
           upsert: true,
-          arrayFilters: [{ "element.type": socialType }],
+          arrayFilters: [{ "element.type": socialType, "element.profile.id": profile.id }],
         }
       )
-        .then((account: AccountDocument) => {
+        .then((user: AccountDocument) => {
+          /* Ensure that account exists */
+          if (!user) {
+            this._logger.error("User account not found when updating social profile", {
+              social: socialType,
+              account: account,
+              profile: profile,
+            });
+            return reject({ boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED, boStatus: HTTP_STATUS.HTTP_FORBIDDEN });
+          }
+
+
           /* Check if the user has registered the application */
           AccountProjectProfileModel.findOne({
-            account: account.id,
+            account: user.id,
             project: project,
           })
             .then((accountProfile: AccountProjectProfileDocument) => {
@@ -158,6 +188,7 @@ class SocialNetwork {
                   referral
                 )
                   .then((value: AccountProjectProfileDocument) => {
+                    this._logger.debug("Registered new user profile", value);
                     resolve(value);
                   })
                   .catch(reject);
@@ -166,6 +197,12 @@ class SocialNetwork {
               /* Check for user id match */
               let tmp = accountProfile.social.filter(value => value.type = socialType);
               if (tmp.length > 0 && tmp[0].socialId !== credentials.socialId) {
+                this._logger.error("Social network don't match", {
+                  socialId: credentials.socialId,
+                  type: socialType,
+                  socialNetworks: accountProfile.social
+                });
+
                 /* User mismatch */
                 return reject({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED });
               }
@@ -191,6 +228,7 @@ class SocialNetwork {
                 .populate("account")
                 .populate("project")
                 .then((value: AccountProjectProfileDocument) => {
+                  this._logger.debug("User profile updated", value);
                   resolve(value);
                 }).catch(reject);
             }).catch(reject);
@@ -221,35 +259,41 @@ class SocialNetwork {
     profile: any,
     done: (error: any, user?: any) => void
   ) {
-    const user = Objects.get(req, "token.user.id");
-
-    /* Attach the social profile into user account */
-    const socialAccount: SocialNetworkProfile = {
+    this._logger.debug("Attaching social network account", {
+      user: Objects.get(req, "token.user"),
       type: socialType,
       profile: profile,
-    };
-    const update: any = {
-      $push: { social: socialAccount },
-    };
+    });
+
+    /* Look for the target user account */
+    const user = Objects.get(req, "token.user.id");
     AccountModel.findOne({ _id: user })
       .then((account: AccountDocument) => {
         if (!account) {
-          done({
+          this._logger.error("User account not found", {
+            user: Objects.get(req, "token.user"),
+            type: socialType,
+          });
+
+          return done({
             boError: ERRORS.OBJECT_NOT_FOUND,
             boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
           });
-          return;
         }
 
         /* Check for user id match */
         let tmp = account.social.filter(value => value.type = socialType);
         if (tmp.length > 0) {
+          this._logger.error("Social network don't match", {
+            type: socialType,
+            socialNetworks: account.social
+          });
+
           /* User mismatch */
           return done({ boError: AUTH_ERRORS.INVALID_AUTHORIZATION_CODE, boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED });
         }
 
         /* Store the social network credentials */
-        this._logger.debug("Attaching social network account");
         this._storeCredentials(
           account,
           project,
@@ -280,11 +324,16 @@ class SocialNetwork {
     profile: any,
     done: (error: any, user?: any) => void
   ) {
+    this._logger.debug("Registering new user account", {
+      type: socialType,
+      profile: profile,
+    });
+
     /* Register the new user account */
     AccountCtrl.registerSocial(
       {
-        name: profile.name.familyName,
-        lastname: profile.name.givenName + " " + profile.name.middleName,
+        name: (profile.name.familyName || "Unknown"),
+        lastname: (profile.name.givenName || "Unknown") + " " + (profile.name.middleName || "Unknown"),
       },
       socialType,
       profile
@@ -332,7 +381,7 @@ class SocialNetwork {
     done: (error: any, user?: any) => void
   ) {
     /* Look for an user with the same social network id */
-    let userQuery = { "soial.type": socialType, "social.profile.id": profile.id };
+    let userQuery = { "social.type": socialType, "social.profile.id": profile.id };
     AccountModel.findOne(userQuery)
       .then((account: AccountDocument) => {
         /* Check if the user is not refistered */
@@ -391,6 +440,7 @@ class SocialNetwork {
       /* Initialize the social network strategy */
       self._setupSocialStrategy(socialNetwork);
 
+      /* Authenticate against social network */
       passport.authenticate(socialNetwork.id, options, (err, user, info) => {
         /* Check if there were some errors */
         if (err) {
@@ -404,13 +454,13 @@ class SocialNetwork {
           if (err["oauthError"] || !err.code || !Number.isInteger(err.code)) {
             return next({
               boError: AUTH_ERRORS.UNKNOWN_AUTH_SERVER_ERROR,
-              boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE,
+              boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
             });
           }
 
           return next({
-            boError: AUTH_ERRORS.NOT_ALLOWED_SIGNIN,
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+            boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
           });
         }
 
@@ -419,8 +469,8 @@ class SocialNetwork {
           /* Remove the passport strategy */
           self.clearStrategy(socialNetwork.id);
           return next({
-            boError: AUTH_ERRORS.INVALID_CREDENTIALS,
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
+            boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
           });
         }
 
