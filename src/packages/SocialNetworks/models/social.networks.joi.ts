@@ -24,6 +24,7 @@ export const SocialNetworkValidation = Joi.object().keys({
 
 export const SocialNetworkStateValidation = Joi.object().keys({
   state: Joi.objectId().required(),
+  code: Joi.string().allow("").optional(),
 });
 
 export const SocialNetworkParamsValidation = Joi.object().keys({
