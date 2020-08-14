@@ -16,9 +16,9 @@ import {
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { DomainDocument } from "@/Domains/models/domains.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
-import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
 import { ModuleDocument } from "@/Modules/models/modules.model";
+import { SocialNetworkSetting } from "@/SocialNetworks/models/social.networks.model";
 
 class Projects extends DataScoped<Project, ProjectDocument> {
   private static _instance: Projects;
@@ -182,7 +182,7 @@ class Projects extends DataScoped<Project, ProjectDocument> {
 
   public addSocialNetwork(
     id: string,
-    socialNetwork: ProjectSocialNetworkSettings
+    socialNetwork: SocialNetworkSetting
   ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding social network", {
@@ -208,7 +208,7 @@ class Projects extends DataScoped<Project, ProjectDocument> {
   public updateSocialNetwork(
     id: string,
     socialType: number,
-    socialNetwork: ProjectSocialNetworkSettings
+    socialNetwork: SocialNetworkSetting
   ): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Updating social network", {
@@ -223,10 +223,6 @@ class Projects extends DataScoped<Project, ProjectDocument> {
             socialNetwork.clientSecret,
           "settings.socialNetworks.$[elem].scope": socialNetwork.scope,
           "settings.socialNetworks.$[elem].profile": socialNetwork.profile,
-          "settings.socialNetworks.$[elem].profileMap":
-            socialNetwork.profileMap,
-          "settings.socialNetworks.$[elem].description":
-            socialNetwork.description,
         },
       };
       ProjectModel.findOneAndUpdate(query, update, {

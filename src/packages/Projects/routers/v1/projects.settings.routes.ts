@@ -20,12 +20,12 @@ import {
   RestrictIpValidation,
   EmailConfirmationValidation,
   PasswordPolicyValidation,
-  SocialNetworkSettingValidation,
   NotificationsSettingsValidation,
   TypeSettingParamsValidation,
 } from "@/Projects/models/projects.joi";
 import { ProjectDocument } from "@/Projects/models/projects.model";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
+import { SocialNetworkSettingValidation } from "@/SocialNetworks/models/social.networks.joi";
 
 const router = Router();
 

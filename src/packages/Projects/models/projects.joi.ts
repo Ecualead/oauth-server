@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { Joi } from "@ikoabo/core_srv";
-import { PROJECT_LIFETIME_TYPES, PROJECT_RECOVER_TYPE, PROJECT_EMAIL_CONFIRMATION, SOCIAL_NETWORK_TYPES, NOTIFICATION_TYPES } from "@/Projects/models/projects.enum";
+import { PROJECT_LIFETIME_TYPES, PROJECT_RECOVER_TYPE, PROJECT_EMAIL_CONFIRMATION, NOTIFICATION_TYPES } from "@/Projects/models/projects.enum";
 
 const ProjectLinks = Joi.object()
   .optional()
@@ -45,19 +45,6 @@ export const ProjectUpdateValidation = Joi.object().keys({
 export const TypeSettingParamsValidation = Joi.object().keys({
   id: Joi.objectId().required(),
   type: Joi.number().required(),
-});
-
-export const SocialNetworkSettingValidation = Joi.object().keys({
-  type: Joi.number().default(SOCIAL_NETWORK_TYPES.SN_UNKNOWN).required(),
-  clientId: Joi.string().required(),
-  clientSecret: Joi.string().required(),
-  scope: Joi.string().allow("").optional(),
-  profile: Joi.array().items(Joi.string()).optional(),
-  profileMap: Joi.array().items(Joi.object().keys({
-    key: Joi.string().required(),
-    fields: Joi.array().items(Joi.string()).required()
-  })).optional(),
-  description: Joi.string().required(),
 });
 
 export const TokenLifetimeValidation = Joi.object().keys({

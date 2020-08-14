@@ -8,13 +8,13 @@
  * permission of the author.
  */
 import { prop } from "@typegoose/typegoose";
-import { ProjectSocialNetworkSettings } from "@/Projects/models/projects.socialnetworks.model";
 import {
   PROJECT_RECOVER_TYPE,
   PROJECT_LIFETIME_TYPES,
   PROJECT_EMAIL_CONFIRMATION,
 } from "@/Projects/models/projects.enum";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
+import { SocialNetworkSetting } from "@/SocialNetworks/models/social.networks.model";
 
 class ProjectPasswordPolicy {
   @prop({ required: true, default: 5 })
@@ -63,8 +63,8 @@ class ProjectEmailConfirmation {
 }
 
 export class ProjectSetting {
-  @prop({ type: ProjectSocialNetworkSettings })
-  socialNetworks?: ProjectSocialNetworkSettings[];
+  @prop({ type: SocialNetworkSetting })
+  socialNetworks?: SocialNetworkSetting[];
 
   @prop()
   tokenLifetime!: ProjectTokenLifetime;

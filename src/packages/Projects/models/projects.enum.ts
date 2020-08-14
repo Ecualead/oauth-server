@@ -7,15 +7,6 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-export enum SOCIAL_NETWORK_TYPES {
-  SN_UNKNOWN = 0,
-  SN_FACEBOOK = 1,
-  SN_GOOGLE = 2,
-  SN_TWITTER = 3,
-  SN_INSTAGRAM = 4,
-  SN_YAHOO = 5,
-  SN_LINKEDIN = 6,
-}
 
 export enum NOTIFICATION_TYPES {
   NT_UNKNOWN = 0,
