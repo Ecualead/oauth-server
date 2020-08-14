@@ -13,7 +13,7 @@ import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.net
 
 export abstract class SocialNetworkStrategy {
   private _name: string;
-  private _logger: Logger;
+  protected _logger: Logger;
 
   constructor(name: string) {
     this._name = name;

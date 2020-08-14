@@ -48,6 +48,8 @@ class SocialNetworkFacebook extends SocialNetworkStrategy {
    * @param fn 
    */
   public setup(socialNetwork: SocialNetworkRequestDocument, cbUri: string, fn: any): passport.Strategy {
+    this._logger.debug("Initialize new passport strategy", socialNetwork);
+    
     return new FacebookStrategy(
       {
         clientID: socialNetwork.social.clientId,
