@@ -185,10 +185,24 @@ class Accounts extends CRUD<Account, AccountDocument> {
         .then((code: string) => {
           /* Set the user code */
           data.code = code;
+          
           /* Set the new user status */
           data.status = ACCOUNT_STATUS.AS_REGISTERED;
+          
           /* Set the registration email information */
           data.emails = [];
+
+          /* If mail is set then add to account */
+          if (data.email) {
+            data.emails.push({
+              email: data.email,
+              status: EMAIL_STATUS.ES_REGISTERED,
+              confirm: {
+                status: RECOVER_TOKEN_STATUS.RTS_DISABLED
+              }
+            });
+          }
+
           /* Set social network profile information */
           data.social = [
             {
@@ -724,7 +738,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
               if (
                 accountEmail.confirm.token !== token ||
                 accountEmail.confirm.status !==
-                  RECOVER_TOKEN_STATUS.RTS_CONFIRMED
+                RECOVER_TOKEN_STATUS.RTS_CONFIRMED
               ) {
                 return reject({
                   boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
