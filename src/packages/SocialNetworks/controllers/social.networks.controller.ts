@@ -29,6 +29,7 @@ import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.en
 import { socialNetworkToStr, SocialNetworkCredential, SocialNetworkProfile } from "@/SocialNetworks/models/social.networks.model";
 import { SocialNetworkStrategyFactory } from "./strategies/strategy.factory.controller";
 import { SocialNetworkStrategy } from "./strategies/base.strategy.controller";
+import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 
 class SocialNetwork {
   private static _instance: SocialNetwork;
@@ -116,9 +117,7 @@ class SocialNetwork {
         .then((profile: AccountProjectProfileDocument) => {
           const client: any = Objects.get(request, 'application');
           const user: any = Objects.get(request, 'user');
-
-          console.log(client);
-          console.log(user);
+          user["isSocial"] = true;
 
           /* Generate the access token */
           OAuth2ModelCtrl.generateAccessToken(client, user, [])
@@ -130,10 +129,6 @@ class SocialNetwork {
               /* Generate the refresh token */
               OAuth2ModelCtrl.generateRefreshToken(client, user, [])
                 .then((refreshToken: string) => {
-
-                  console.log("Refresh token");
-                  console.log(refreshToken);
-
                   /* Prepare the authentication token */
                   let token: Token = {
                     accessToken: accessToken,
@@ -142,13 +137,12 @@ class SocialNetwork {
                     refreshTokenExpiresAt: new Date(Date.now() + ((client.accessTokenLifetime) ? client.refreshTokenLifetime : 604800) * 1000),
                     scope: [],
                     client: client,
-                    user: user
+                    user: user,
+                    type: OAUTH2_TOKEN_TYPE.TT_USER_SOCIAL
                   };
                   /* Save the generated token */
                   OAuth2ModelCtrl.saveToken(token, client, user)
                     .then((token: Token) => {
-                      console.log("Save token");
-                      console.log(token);
                       resolve(token);
 
                       /* Remove the passport strategy */
