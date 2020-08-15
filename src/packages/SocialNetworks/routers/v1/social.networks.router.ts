@@ -148,9 +148,6 @@ router.get(
       return next({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
     }
 
-    /* Clear the authentication strategy */
-    SocialNetworkCtrl.clearStrategy(request.id);
-
     /* Authenticate the user account with the OAuth2 server */
     SocialNetworkCtrl.authenticateSocialAccount(request)
       .then((token: Token) => {
