@@ -90,10 +90,14 @@ router.get(
       }
     )(req, res, next);
   },
-  (err: any, req: Request, res: Response, next: NextFunction) => {
-    console.log(err);
-    console.log(req.query)
-    next(err);
+  (err: any, _req: Request, res: Response, next: NextFunction) => {
+    /* Get the social network request */
+    const request: SocialNetworkRequestDocument = Objects.get(res, 'locals.socialNetwork');
+    if (!request) {
+      return next({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
+    }
+
+    res.redirect(`${request.redirect}?status=${err.boStatus || HTTP_STATUS.HTTP_BAD_REQUEST}&error=${err.boError}`);
   },
   ResponseHandler.error
 );
@@ -141,46 +145,39 @@ router.get(
       .catch(next);
   },
   (req: Request, res: Response, next: NextFunction) => {
-    const social: string = req.params["social"];
+    /* Get the social network request */
     const request: SocialNetworkRequestDocument = Objects.get(res, 'locals.socialNetwork');
-
     if (!request) {
       return next({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
+    }
+
+    /* Check if the social request was account attach */
+    if (request.user !== null) {
+      return res.redirect(`${request.redirect}?status=${HTTP_STATUS.HTTP_OK}`);
     }
 
     /* Authenticate the user account with the OAuth2 server */
     SocialNetworkCtrl.authenticateSocialAccount(request)
       .then((token: Token) => {
         /* Validate application restrictions */
-        ApplicationAccessPolicyCtrl.canAccess(req, token.client.toString())
+        ApplicationAccessPolicyCtrl.canAccess(req, token.client.id)
           .then(() => {
             /* Return the access token */
-            res.locals["token"] = token;
-            res.locals["response"] = {
-              tokenType: "Bearer",
-              accessToken: token.accessToken,
-              refreshToken: token.refreshToken,
-              accessTokenExpiresAt: token.accessTokenExpiresAt
-                ? token.accessTokenExpiresAt.getTime()
-                : null,
-              refreshTokenExpiresAt: token.refreshTokenExpiresAt
-                ? token.refreshTokenExpiresAt.getTime()
-                : null,
-              createdAt: token.createdAt.getTime(),
-              scope: token.scope,
-            };
-            next();
+            return res.redirect(`${request.redirect}?status=${HTTP_STATUS.HTTP_CREATED}&at=${token.accessToken}&rt=${token.refreshToken}`);
           })
           .catch(next);
       }).catch(next);
   },
-  (err: any, req: Request, res: Response, next: NextFunction) => {
-    console.log(err);
-    console.log(req.query)
-    next(err);
+  (err: any, _req: Request, res: Response, next: NextFunction) => {
+    /* Get the social network request */
+    const request: SocialNetworkRequestDocument = Objects.get(res, 'locals.socialNetwork');
+    if (!request) {
+      return next({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE });
+    }
+
+    res.redirect(`${request.redirect}?status=${err.boStatus || HTTP_STATUS.HTTP_BAD_REQUEST}&error=${err.boError}`);
   },
   ResponseHandler.error,
-  ResponseHandler.success
 );
 
 /**
@@ -229,40 +226,4 @@ router.get(
   ResponseHandler.success
 );
 
-
-
-
-
-/**
- * Send social authentication token response to native applications
- *
- * @param req
- * @param res
- * @param social
- * @param token
- * @returns {HttpResponse}
- */
-/*function sendToken(req, res, social, token) {
-  return HttpResponse.fromOK("Access token generated", {
-    clientId: token.client.clientId,
-    userId: token.user.userId,
-    appId: token.client.app.appId,
-    isNew: req["isNew"] || false,
-    accessToken: token.accessToken,
-    refreshToken: token.refreshToken,
-    tokenType: "Bearer",
-    accessTokenExpiresAt: token.accessTokenExpiresAt
-      ? token.accessTokenExpiresAt.getTime()
-      : null,
-    refreshTokenExpiresAt: token.refreshTokenExpiresAt
-      ? token.refreshTokenExpiresAt.getTime()
-      : null,
-    createdAt: token.createdAt.getTime(),
-    scope: token.scope,
-    profile: Objects.getPath(req["user"], `auth.profiles.${social}`, {}),
-  });
-}*/
-
-
 export default router;
-
