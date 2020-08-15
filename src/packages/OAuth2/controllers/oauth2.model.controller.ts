@@ -276,6 +276,7 @@ class OAuth2Model
           <AccountDocument>user,
           <ProjectDocument>(<ApplicationDocument>application).project,
           user["username"],
+          user["isSocial"],
           true
         )
           .then(() => {
@@ -476,7 +477,7 @@ class OAuth2Model
         case APPLICATION_TYPES.APP_WEB_SERVER_SIDE:
           tokenType =
             "id" in user && user.id !== application.id
-              ? OAUTH2_TOKEN_TYPE.TT_USER
+              ? (token.type && token.type > OAUTH2_TOKEN_TYPE.TT_USER ? token.type : OAUTH2_TOKEN_TYPE.TT_USER)
               : OAUTH2_TOKEN_TYPE.TT_APPLICATION;
           break;
 
@@ -606,6 +607,7 @@ class OAuth2Model
                       (<ApplicationDocument>token.application).project
                     ),
                     token.username,
+                    token.type === OAUTH2_TOKEN_TYPE.TT_USER_SOCIAL,
                     true
                   )
                     .then(() => {

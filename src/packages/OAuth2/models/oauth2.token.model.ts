@@ -85,10 +85,12 @@ export class OAuth2Token extends BaseModel {
         token.scope.push("non_user");
         token.scope.push("application");
         break;
+      case OAUTH2_TOKEN_TYPE.TT_USER_SOCIAL:
+        token.scope.push("social");
       case OAUTH2_TOKEN_TYPE.TT_USER:
         /* Get application parameters */
-        const applicationOwner = Objects.get(token.client, 'owner','').toString();
-        const projectOwner = Objects.get(token.client, 'project.owner','').toString();
+        const applicationOwner = Objects.get(token.client, 'owner', '').toString();
+        const projectOwner = Objects.get(token.client, 'project.owner', '').toString();
         const user = Objects.get(token.user, 'id', this.user).toString();
 
         /* Check if the user is the application owner */

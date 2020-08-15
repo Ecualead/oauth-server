@@ -8,8 +8,9 @@
  * permission of the author.
  */
 export enum OAUTH2_TOKEN_TYPE {
-  TT_UNKNOWN,
+  TT_UNKNOWN = 0,
   TT_MODULE = 1,
   TT_APPLICATION = 2,
-  TT_USER
+  TT_USER = 3,
+  TT_USER_SOCIAL = 4,
 }
