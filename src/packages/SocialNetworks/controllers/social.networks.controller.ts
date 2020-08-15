@@ -343,103 +343,127 @@ class SocialNetwork {
         profile: profile
       });
 
+      /* Check for user id match */
+      let tmp = account.social.filter(value => value.type = socialType);
+      if (tmp.length > 0 && Objects.get(tmp[0], 'profile.id') !== profile.id) {
+        this._logger.error("Social network don't match", {
+          socialId: profile.id,
+          type: socialType,
+          account: account
+        });
+
+        /* User mismatch */
+        return reject({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED });
+      }
+
+
       /* Update or set social network profile */
-      const update: any = {
+      const update: any = tmp.length > 0 ? {
         $set: {
           "social.$[element].type": socialType,
           "social.$[element].profile": profile,
         },
-      };
+      } : {
+          $push: {
+            social: {
+              type: socialType,
+              profile: profile
+            }
+          },
+        };
+
+      /* Query update options */
+      const options: any = tmp.length > 0 ? {
+        new: true,
+        upsert: true,
+        arrayFilters: [{ "element.type": socialType }],
+      } : {
+          new: true,
+          upsert: true,
+        };
+
+      /* Look for the account and update */
       AccountModel.findOneAndUpdate(
         { _id: account.id },
         update,
-        {
-          new: true,
-          upsert: true,
-          arrayFilters: [{ "element.type": socialType, "element.profile.id": profile.id }],
+        options
+      ).then((user: AccountDocument) => {
+        /* Ensure that account exists */
+        if (!user) {
+          this._logger.error("User account not found when updating social profile", {
+            social: socialType,
+            account: account,
+            profile: profile,
+          });
+          return reject({ boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED, boStatus: HTTP_STATUS.HTTP_FORBIDDEN });
         }
-      )
-        .then((user: AccountDocument) => {
-          /* Ensure that account exists */
-          if (!user) {
-            this._logger.error("User account not found when updating social profile", {
-              social: socialType,
-              account: account,
-              profile: profile,
-            });
-            return reject({ boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED, boStatus: HTTP_STATUS.HTTP_FORBIDDEN });
+
+
+        /* Check if the user has registered the application */
+        AccountProjectProfileModel.findOne({
+          account: user.id,
+          project: project,
+        }).then((accountProfile: AccountProjectProfileDocument) => {
+          /* Prepare social network crdentials to be stored */
+          const credentials: SocialNetworkCredential = {
+            type: socialType,
+            socialId: profile.id,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+          };
+
+          /* Check if the user account profile is not registered */
+          if (!accountProfile) {
+            /* Register the user profile using social network credentials */
+            return AccountCtrl.createSocialProfile(
+              account,
+              project,
+              credentials,
+              referral
+            ).then((value: AccountProjectProfileDocument) => {
+              this._logger.debug("Registered new user profile", value);
+              resolve(value);
+            }).catch(reject);
           }
 
+          /* Check for user id match */
+          let tmp = accountProfile.social.filter(value => value.type = socialType);
+          if (tmp.length > 0 && tmp[0].socialId !== credentials.socialId) {
+            this._logger.error("Social network don't match", {
+              socialId: credentials.socialId,
+              type: socialType,
+              socialNetworks: accountProfile.social
+            });
 
-          /* Check if the user has registered the application */
-          AccountProjectProfileModel.findOne({
-            account: user.id,
-            project: project,
-          })
-            .then((accountProfile: AccountProjectProfileDocument) => {
-              /* Prepare social network crdentials to be stored */
-              const credentials: SocialNetworkCredential = {
-                type: socialType,
-                socialId: profile.id,
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-              };
+            /* User mismatch */
+            return reject({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED });
+          }
 
-              /* Check if the user account profile is not registered */
-              if (!accountProfile) {
-                /* Register the user profile using social network credentials */
-                return AccountCtrl.createSocialProfile(
-                  account,
-                  project,
-                  credentials,
-                  referral
-                )
-                  .then((value: AccountProjectProfileDocument) => {
-                    this._logger.debug("Registered new user profile", value);
-                    resolve(value);
-                  })
-                  .catch(reject);
-              }
-
-              /* Check for user id match */
-              let tmp = accountProfile.social.filter(value => value.type = socialType);
-              if (tmp.length > 0 && tmp[0].socialId !== credentials.socialId) {
-                this._logger.error("Social network don't match", {
-                  socialId: credentials.socialId,
-                  type: socialType,
-                  socialNetworks: accountProfile.social
-                });
-
-                /* User mismatch */
-                return reject({ boError: AUTH_ERRORS.INVALID_CREDENTIALS, boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED });
-              }
-
-              /* Update the user account information */
-              const update: any = {
-                $set: {
-                  "social.$[element].type": socialType,
-                  "social.$[element].socialId": credentials.socialId,
-                  "social.$[element].accessToken": credentials.accessToken,
-                  "social.$[element].refreshToken": credentials.refreshToken,
-                },
-              };
-              AccountProjectProfileModel.findOneAndUpdate(
-                { account: account.id, project: project },
-                update,
-                {
-                  new: true,
-                  upsert: true,
-                  arrayFilters: [{ "element.type": socialType }],
-                }
-              )
-                .populate("account")
-                .populate("project")
-                .then((value: AccountProjectProfileDocument) => {
-                  this._logger.debug("User profile updated", value);
-                  resolve(value);
-                }).catch(reject);
+          /* Update the user account information */
+          const update: any = {
+            $set: {
+              "social.$[element].type": socialType,
+              "social.$[element].socialId": credentials.socialId,
+              "social.$[element].accessToken": credentials.accessToken,
+              "social.$[element].refreshToken": credentials.refreshToken,
+            },
+          };
+          AccountProjectProfileModel.findOneAndUpdate(
+            { account: account.id, project: project },
+            update,
+            {
+              new: true,
+              upsert: true,
+              arrayFilters: [{ "element.type": socialType }],
+            }
+          ).populate("account")
+            .populate("project")
+            .then((value: AccountProjectProfileDocument) => {
+              this._logger.debug("User profile updated", value);
+              resolve(value);
             }).catch(reject);
         }).catch(reject);
+      }).catch(reject);
     });
   }
 
