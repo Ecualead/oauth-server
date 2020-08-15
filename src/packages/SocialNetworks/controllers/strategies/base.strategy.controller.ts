@@ -21,4 +21,8 @@ export abstract class SocialNetworkStrategy {
   }
 
   public abstract setup(socialNetwork: SocialNetworkRequestDocument, cbUri: string, fn: any): passport.Strategy;
+  public abstract name(profile: any): string;
+  public abstract lastname(profile: any): string;
+  public abstract email(profile: any): string;
+  public abstract phone(profile: any): string;
 }

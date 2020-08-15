@@ -49,7 +49,7 @@ class SocialNetworkFacebook extends SocialNetworkStrategy {
    */
   public setup(socialNetwork: SocialNetworkRequestDocument, cbUri: string, fn: any): passport.Strategy {
     this._logger.debug("Initialize new passport strategy", socialNetwork);
-    
+
     return new FacebookStrategy(
       {
         clientID: socialNetwork.social.clientId,
@@ -62,6 +62,49 @@ class SocialNetworkFacebook extends SocialNetworkStrategy {
       fn
     );
   }
+
+  /**
+   * Get social profile first name
+   * 
+   * @param profile 
+   */
+  public name(profile: any): string {
+    const names: string[] = profile.displayName ? profile.displayName.split(" ") : [];
+    return names.length > 0 ? names[0] : 'Unknown';
+  }
+
+  /**
+   * Get social profile last name
+   * 
+   * @param profile 
+   */
+  public lastname(profile: any): string {
+    const names: string[] = profile.displayName ? profile.displayName.split(" ") : [];
+    let response = "Unknown";
+    if (names.length > 1) {
+      names.splice(0, 1);
+      response = names.join(" ");
+    }
+    return response;
+  }
+
+  /**
+   * Get social profile email
+   * 
+   * @param profile 
+   */
+  public email(_profile: any): string {
+    return null;
+  }
+
+  /**
+   * Get social profile phone
+   * @param profile 
+   */
+  public phone(_profile: any): string {
+    return null
+  }
+
 }
 
 export const SocialNetworkFacebookCtrl = SocialNetworkFacebook.shared;
