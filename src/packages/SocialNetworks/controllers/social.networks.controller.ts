@@ -440,22 +440,39 @@ class SocialNetwork {
           }
 
           /* Update the user account information */
-          const update: any = {
+          const update: any = tmp.length > 0 ? {
             $set: {
               "social.$[element].type": socialType,
               "social.$[element].socialId": credentials.socialId,
               "social.$[element].accessToken": credentials.accessToken,
               "social.$[element].refreshToken": credentials.refreshToken,
             },
-          };
+          } : {
+              $push: {
+                social: {
+                  type: socialType,
+                  socialId: credentials.socialId,
+                  accessToken: credentials.accessToken,
+                  refreshToken: credentials.refreshToken,
+                }
+              },
+            };
+
+          /* Query update options */
+          const options: any = tmp.length > 0 ? {
+            new: true,
+            upsert: true,
+            arrayFilters: [{ "element.type": socialType }],
+          } : {
+              new: true,
+              upsert: true,
+            };
+
+          /* Find and update the account profile */
           AccountProjectProfileModel.findOneAndUpdate(
             { account: account.id, project: project },
             update,
-            {
-              new: true,
-              upsert: true,
-              arrayFilters: [{ "element.type": socialType }],
-            }
+            options
           ).populate("account")
             .populate("project")
             .then((value: AccountProjectProfileDocument) => {
