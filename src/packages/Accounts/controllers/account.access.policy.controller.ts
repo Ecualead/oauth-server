@@ -28,6 +28,7 @@ export class AccountAccessPolicy {
     user: AccountDocument,
     project: ProjectDocument,
     email: string,
+    social?: boolean,
     checkLocal?: boolean
   ): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -60,62 +61,65 @@ export class AccountAccessPolicy {
           });
       }
 
-      /* Ensure the used email to authenticate is valid */
-      if (!email) {
-        return reject({
-          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-          boError: ERRORS.NOT_ALLOWED_SIGNIN,
-        });
-      }
+      /* Check email address if its not a social account */
+      if (!social) {
+        /* Ensure the used email to authenticate is valid */
+        if (!email) {
+          return reject({
+            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: ERRORS.NOT_ALLOWED_SIGNIN,
+          });
+        }
 
-      /* Get the email setting from the account */
-      const accountEmail = user.locateEmail(email);
+        /* Get the email setting from the account */
+        const accountEmail = user.locateEmail(email);
 
-      /* Check the current user email state */
-      switch (accountEmail.status) {
-        case EMAIL_STATUS.ES_REGISTERED:
-          if (
-            confirmationPolicy ===
-            PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED ||
-            (confirmationPolicy ===
-              PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME &&
-              confirmationExpires < Date.now())
-          ) {
+        /* Check the current user email state */
+        switch (accountEmail.status) {
+          case EMAIL_STATUS.ES_REGISTERED:
+            if (
+              confirmationPolicy ===
+              PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED ||
+              (confirmationPolicy ===
+                PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME &&
+                confirmationExpires < Date.now())
+            ) {
+              return reject({
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.EMAIL_NOT_CONFIRMED,
+              });
+            }
+            break;
+          case EMAIL_STATUS.ES_TEMPORALLY_BLOCKED:
+            return reject({
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_BLOCKED,
+            });
+
+          case EMAIL_STATUS.ES_CANCELLED:
+            return reject({
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_CANCELLED,
+            });
+          case EMAIL_STATUS.ES_DISABLED_BY_ADMIN:
+            return reject({
+              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: ERRORS.ACCOUNT_DISABLED,
+            });
+
+          case EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH:
             return reject({
               boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
               boError: ERRORS.EMAIL_NOT_CONFIRMED,
             });
-          }
-          break;
-        case EMAIL_STATUS.ES_TEMPORALLY_BLOCKED:
-          return reject({
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-            boError: ERRORS.ACCOUNT_BLOCKED,
-          });
-
-        case EMAIL_STATUS.ES_CANCELLED:
-          return reject({
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-            boError: ERRORS.ACCOUNT_CANCELLED,
-          });
-        case EMAIL_STATUS.ES_DISABLED_BY_ADMIN:
-          return reject({
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-            boError: ERRORS.ACCOUNT_DISABLED,
-          });
-
-        case EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH:
-          return reject({
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-            boError: ERRORS.EMAIL_NOT_CONFIRMED,
-          });
-        case EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH:
-          if (confirmationExpires < Date.now()) {
-            return reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.EMAIL_NOT_CONFIRMED,
-            });
-          }
+          case EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH:
+            if (confirmationExpires < Date.now()) {
+              return reject({
+                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+                boError: ERRORS.EMAIL_NOT_CONFIRMED,
+              });
+            }
+        }
       }
 
       if (!checkLocal) {
