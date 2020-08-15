@@ -185,10 +185,10 @@ class Accounts extends CRUD<Account, AccountDocument> {
         .then((code: string) => {
           /* Set the user code */
           data.code = code;
-          
+
           /* Set the new user status */
           data.status = ACCOUNT_STATUS.AS_REGISTERED;
-          
+
           /* Set the registration email information */
           data.emails = [];
 
@@ -521,7 +521,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
           }
 
           /* Check if the user can authenticate using the user policy */
-          AccountAccessPolicy.canSignin(account, project, email, true)
+          AccountAccessPolicy.canSignin(account, project, email, false, true)
             .then(() => {
               /* Get the current user email */
               const accountEmail = account.locateEmail(email);
@@ -597,7 +597,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
           }
 
           /* Check if the user has allowed to signin */
-          AccountAccessPolicy.canSignin(account, project, email, true)
+          AccountAccessPolicy.canSignin(account, project, email, false, true)
             .then(() => {
               /* Prepare the recover token */
               const token =
@@ -706,7 +706,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
           }
 
           /* Check for user account policy */
-          AccountAccessPolicy.canSignin(account, project, email, true)
+          AccountAccessPolicy.canSignin(account, project, email, false, true)
             .then(() => {
               /* Validate max attempts */
               if (account.recover.attempts > MAX_ATTEMPTS) {
@@ -884,7 +884,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
           }
 
           /* Check if the user can authenticate using the user policy */
-          AccountAccessPolicy.canSignin(account, project, email, true)
+          AccountAccessPolicy.canSignin(account, project, email, false, true)
             .then(() => {
               /* Get the current user email */
               const accountEmail = account.locateEmail(email);
