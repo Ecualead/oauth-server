@@ -490,17 +490,31 @@ class SocialNetwork {
 		*/
   public authenticateSocialAccount(request: SocialNetworkRequestDocument): Promise<Token> {
     return new Promise<Token>((resolve, reject) => {
+      this._logger.debug("Authenticating user account", request);
 
+      /* Look for the user account profile */      
       AccountCtrl.getProfile(Objects.get(request, 'user.id', request.user).toString(), Objects.get(request, 'application.project.id', '').toString())
         .then((profile: AccountProjectProfileDocument) => {
           const client: any = Objects.get(request, 'application');
           const user: any = Objects.get(request, 'user');
+
+          console.log(client);
+          console.log(user);
+
           /* Generate the access token */
           OAuth2ModelCtrl.generateAccessToken(client, user, [])
             .then((accessToken: string) => {
+
+              console.log("Access token");
+              console.log(accessToken);
+
               /* Generate the refresh token */
               OAuth2ModelCtrl.generateRefreshToken(client, user, [])
                 .then((refreshToken: string) => {
+
+                  console.log("Refresh token");
+                console.log(refreshToken);
+              
                   /* Prepare the authentication token */
                   let token: Token = {
                     accessToken: accessToken,
@@ -514,6 +528,8 @@ class SocialNetwork {
                   /* Save the generated token */
                   OAuth2ModelCtrl.saveToken(token, client, user)
                     .then((token: Token) => {
+                      console.log("Save token");
+                      console.log(token);
                       resolve(token);
                     }).catch(reject);
                 }).catch(reject);
