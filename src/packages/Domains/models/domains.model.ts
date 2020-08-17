@@ -3,19 +3,14 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import {
-  Ref,
-  prop,
-  getModelForClass,
-  DocumentType,
-  index,
-} from "@typegoose/typegoose";
+import { BaseModel } from "@ikoabo/server";
+import { Ref, prop, getModelForClass, DocumentType, index } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { BaseModel, Arrays } from "@ikoabo/core_srv";
 import { Module } from "@/Modules/models/modules.model";
 
 @index({ canonical: 1 }, { unique: true })
@@ -57,12 +52,12 @@ export class Domain extends BaseModel {
               description: ret.description,
               status: ret.status,
               createdAt: ret.createdAt,
-              updatedAt: ret.updatedAt,
+              updatedAt: ret.updatedAt
             };
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false }
     });
   }
 }
