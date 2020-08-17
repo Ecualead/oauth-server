@@ -42,7 +42,7 @@
   },
   "homepage": "https://gitlab.com/ikoabo/services/ims#readme",
   "dependencies": {
-    "@ikoabo/auth": "^1.0.11",
+    "@ikoabo/auth": "^1.0.13",
     "@ikoabo/core": "^1.0.3",
     "@ikoabo/notifications": "^1.0.1",
     "@ikoabo/server": "^1.1.5",
