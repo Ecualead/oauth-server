@@ -3,35 +3,27 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import "module-alias/register";
-import { Settings } from "@/config/Settings";
-import { HttpServer, Token, Logger, LOG_LEVEL } from "@ikoabo/core_srv";
+import { Logger, LOG_LEVEL, Tokens } from "@ikoabo/core";
+import { HttpServer } from "@ikoabo/server";
 import async from "async";
-import { DomainModel, DomainDocument } from "@/Domains/models/domains.model";
-import {
-  Module,
-  ModuleModel,
-  ModuleDocument,
-} from "@/Modules/models/modules.model";
-import {
-  ProjectModel,
-  ProjectDocument,
-} from "@/Projects/models/projects.model";
-import {
-  ApplicationDocument,
-  ApplicationModel,
-} from "@/Applications/models/applications.model";
-import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
 import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
 import { AccountDocument } from "@/Accounts/models/accounts.model";
-import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
-import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
+import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
+import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
+import { ApplicationDocument, ApplicationModel } from "@/Applications/models/applications.model";
+import { Settings } from "@/configs/settings.config";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
+import { DomainModel, DomainDocument } from "@/Domains/models/domains.model";
+import { Module, ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
+import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
+import { ProjectModel, ProjectDocument } from "@/Projects/models/projects.model";
 
 Logger.setLogLevel(LOG_LEVEL.DEBUG);
 const modules: Module[] = [
@@ -47,117 +39,117 @@ const modules: Module[] = [
       "mod_ims_resend_confirm",
       "mod_ims_recover_validate",
       "mod_ims_recover_change",
-      "mod_ims_module_ctrl",
-    ],
+      "mod_ims_module_ctrl"
+    ]
   },
   {
     name: "BCS",
     description: "Blog Content Service",
     url: "https://bcs.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "EVT",
     description: "Event Service",
     url: "https://evt.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "FSS",
     description: "File Storage Service",
     url: "https://fss.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "NTS",
     description: "Notifications Service",
     url: "https://nts.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "RTE",
     description: "Real Time Event Service",
     url: "https://rte.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "TCS",
     description: "Taxonomy/Category Service",
     url: "https://tcs.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "ECS",
     description: "e-Commerce Service",
     url: "https://ecs.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "PSP",
     description: "Product/Service Portafolio",
     url: "https://psp.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "PVG",
     description: "Photo/Video Gallery Service",
     url: "https://pvg.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "UVC",
     description: "User v-Card Service",
     url: "https://uvs.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "ICS",
     description: "Instant Chat Service",
     url: "https://ics.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "UVS",
     description: "User VITAE Service",
     url: "https://uvs.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "VSS",
     description: "Video Streaming Service",
     url: "https://vss.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "CBS",
     description: "Chat Bot Service",
     url: "https://cbs.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "SNS",
     description: "Social Network Service",
     url: "https://sns.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "ELS",
     description: "e-Learning Service",
     url: "https://els.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "MMA",
     description: "Master Merchant Account Service",
     url: "https://mma.ikoabo.com",
-    restriction: [],
+    restriction: []
   },
   {
     name: "BRS",
     description: "Book Read Service",
     url: "https://brs.ikoabo.com",
-    restriction: [],
-  },
+    restriction: []
+  }
 ];
 
 HttpServer.setup(Settings);
@@ -166,18 +158,18 @@ HttpServer.shared.initMongo().then(() => {
   _logger.debug("*** DATA IMPORT STARTED ***");
 
   /* Registrate all initial modules */
-  let modulesData: any[] = [];
+  const modulesData: any[] = [];
   async.forEach(
     modules,
     (value: Module, cb: any) => {
-      value.secret = Token.longToken;
+      value.secret = Tokens.long;
       /* Register the module */
       ModuleModel.create(value)
         .then((value: ModuleDocument) => {
           modulesData.push({
             id: value.id,
             name: value.name,
-            secret: value.secret,
+            secret: value.secret
           });
           cb();
         })
@@ -204,8 +196,8 @@ HttpServer.shared.initMongo().then(() => {
           "mod_ims_resend_confirm",
           "mod_ims_recover_validate",
           "mod_ims_recover_change",
-          "mod_ims_module_ctrl",
-        ],
+          "mod_ims_module_ctrl"
+        ]
       })
         .then((domain: DomainDocument) => {
           _logger.debug("Domain created", { domain: domain });
@@ -223,8 +215,8 @@ HttpServer.shared.initMongo().then(() => {
               "mod_ims_resend_confirm",
               "mod_ims_recover_validate",
               "mod_ims_recover_change",
-              "mod_ims_module_ctrl",
-            ],
+              "mod_ims_module_ctrl"
+            ]
           })
             .then((project: ProjectDocument) => {
               _logger.debug("Project created", { project: project });
@@ -235,7 +227,7 @@ HttpServer.shared.initMongo().then(() => {
                 project: project.id,
                 canonical: "com.ikoabo.dev",
                 name: "IKOA Business Opportunity",
-                secret: Token.longToken,
+                secret: Tokens.long,
                 grants: ["client_credentials", "password"],
                 scope: [
                   "mod_ims_register_user",
@@ -243,16 +235,16 @@ HttpServer.shared.initMongo().then(() => {
                   "mod_ims_recover_account",
                   "mod_ims_resend_confirm",
                   "mod_ims_recover_validate",
-                  "mod_ims_recover_change",
+                  "mod_ims_recover_change"
                 ],
-                restriction: [],
+                restriction: []
               })
                 .then((application: ApplicationDocument) => {
                   /* Fetch application with project populated */
                   ApplicationCtrl.fetch(application.id, {}, {}, ["project"])
                     .then((application: ApplicationDocument) => {
                       _logger.debug("Application created", {
-                        application: application,
+                        application: application
                       });
 
                       /* Register the initial user */
@@ -262,7 +254,7 @@ HttpServer.shared.initMongo().then(() => {
                           lastname: "Millo Sánchez",
                           email: "reinier.millo88@gmail.com",
                           password: "cxpIkoa*03052019",
-                          phone: "+593998328746",
+                          phone: "+593998328746"
                         },
                         application
                       )
@@ -273,14 +265,11 @@ HttpServer.shared.initMongo().then(() => {
                           AccountCtrl.createUserProfile(user, project.id, null)
                             .then((profile: AccountProjectProfileDocument) => {
                               _logger.debug("User profile registered", {
-                                profile: profile,
+                                profile: profile
                               });
 
                               /* Update modules owner */
-                              ModuleModel.updateMany(
-                                {},
-                                { $set: { owner: user._id } }
-                              )
+                              ModuleModel.updateMany({}, { $set: { owner: user._id } })
                                 .then(() => {
                                   /* Update domain owner */
                                   DomainModel.findOneAndUpdate(
@@ -300,9 +289,7 @@ HttpServer.shared.initMongo().then(() => {
                                             { $set: { owner: user._id } }
                                           )
                                             .then(() => {
-                                              _logger.debug(
-                                                "*** DONE INITIAL DATA IMPORT ***"
-                                              );
+                                              _logger.debug("*** DONE INITIAL DATA IMPORT ***");
                                               process.exit(0);
                                             })
                                             .catch((err) => {
@@ -314,34 +301,22 @@ HttpServer.shared.initMongo().then(() => {
                                             });
                                         })
                                         .catch((err) => {
-                                          _logger.error(
-                                            "Error registering project owner",
-                                            err
-                                          );
+                                          _logger.error("Error registering project owner", err);
                                           process.exit(-1);
                                         });
                                     })
                                     .catch((err) => {
-                                      _logger.error(
-                                        "Error registering domain owner",
-                                        err
-                                      );
+                                      _logger.error("Error registering domain owner", err);
                                       process.exit(-1);
                                     });
                                 })
                                 .catch((err) => {
-                                  _logger.error(
-                                    "Error registering modules owner",
-                                    err
-                                  );
+                                  _logger.error("Error registering modules owner", err);
                                   process.exit(-1);
                                 });
                             })
                             .catch((err) => {
-                              _logger.error(
-                                "Error registering user profile",
-                                err
-                              );
+                              _logger.error("Error registering user profile", err);
                               process.exit(-1);
                             });
                         })
