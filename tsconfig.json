@@ -11,9 +11,6 @@
     "emitDecoratorMetadata": true,
     "outDir": "./dist",
     "baseUrl": ".",
-    "lib": [
-      "ES2018"
-    ],
     "paths": {
       "@/Modules/*": [
         "src/packages/Modules/*"
