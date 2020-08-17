@@ -3,17 +3,15 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import passport from "passport";
-import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
+import { Profile as TwitterProfile, Strategy as TwitterStrategy } from "passport-twitter";
 import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
-import {
-  Profile as TwitterProfile,
-  Strategy as TwitterStrategy,
-} from "passport-twitter";
+import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
 
 /**
  * Twitter social network startegy handler
@@ -40,12 +38,16 @@ class SocialNetworkTwitter extends SocialNetworkStrategy {
 
   /**
    * Setup the passport strategy
-   * 
-   * @param socialNetwork 
-   * @param cbUri 
-   * @param fn 
+   *
+   * @param socialNetwork
+   * @param cbUri
+   * @param fn
    */
-  public setup(socialNetwork: SocialNetworkRequestDocument, cbUri: string, fn: any): passport.Strategy {
+  public setup(
+    socialNetwork: SocialNetworkRequestDocument,
+    cbUri: string,
+    fn: any
+  ): passport.Strategy {
     this._logger.debug("Initialize new passport strategy", socialNetwork);
 
     return new TwitterStrategy(
@@ -53,7 +55,7 @@ class SocialNetworkTwitter extends SocialNetworkStrategy {
         consumerKey: socialNetwork.social.clientId,
         consumerSecret: socialNetwork.social.clientSecret,
         callbackURL: cbUri,
-        passReqToCallback: true,
+        passReqToCallback: true
       },
       fn
     );
@@ -61,26 +63,26 @@ class SocialNetworkTwitter extends SocialNetworkStrategy {
 
   /**
    * Get social profile first name
-   * 
-   * @param profile 
+   *
+   * @param profile
    */
   public name(_profile: any): string {
-    return 'Unknown';
+    return "Unknown";
   }
 
   /**
    * Get social profile last name
-   * 
-   * @param profile 
+   *
+   * @param profile
    */
   public lastname(_profile: any): string {
-    return 'Unknown';
+    return "Unknown";
   }
 
   /**
    * Get social profile email
-   * 
-   * @param profile 
+   *
+   * @param profile
    */
   public email(_profile: any): string {
     return null;
@@ -88,10 +90,10 @@ class SocialNetworkTwitter extends SocialNetworkStrategy {
 
   /**
    * Get social profile phone
-   * @param profile 
+   * @param profile
    */
   public phone(_profile: any): string {
-    return null
+    return null;
   }
 }
 

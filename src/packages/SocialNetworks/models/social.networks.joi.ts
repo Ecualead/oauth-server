@@ -3,11 +3,12 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Joi } from "@ikoabo/core_srv";
+import { Joi } from "@ikoabo/server";
 import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.enum";
 
 export const SocialNetworkSettingValidation = Joi.object().keys({
@@ -15,19 +16,19 @@ export const SocialNetworkSettingValidation = Joi.object().keys({
   clientId: Joi.string().required(),
   clientSecret: Joi.string().required(),
   scope: Joi.string().allow("").optional(),
-  profile: Joi.array().items(Joi.string()).optional(),
+  profile: Joi.array().items(Joi.string()).optional()
 });
 
 export const SocialNetworkValidation = Joi.object().keys({
-  social: Joi.string().valid("facebook", "google", "twitter").required(),
+  social: Joi.string().valid("facebook", "google", "twitter").required()
 });
 
 export const SocialNetworkStateValidation = Joi.object().keys({
   state: Joi.objectId().required(),
-  code: Joi.string().allow("").optional(),
+  code: Joi.string().allow("").optional()
 });
 
 export const SocialNetworkParamsValidation = Joi.object().keys({
   token: Joi.string().required(),
-  redirect: Joi.string().required(),
+  redirect: Joi.string().required()
 });

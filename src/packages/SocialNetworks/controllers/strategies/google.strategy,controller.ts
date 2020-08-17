@@ -3,18 +3,15 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import passport from "passport";
-import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
+import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from "passport-google-oauth";
 import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
-import {
-  OAuth2Strategy as GoogleStrategy,
-  Profile as GoogleProfile,
-} from "passport-google-oauth";
-
+import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
 
 /**
  * Google social network startegy handler
@@ -41,12 +38,16 @@ class SocialNetworkGoogle extends SocialNetworkStrategy {
 
   /**
    * Setup the passport strategy
-   * 
-   * @param socialNetwork 
-   * @param cbUri 
-   * @param fn 
+   *
+   * @param socialNetwork
+   * @param cbUri
+   * @param fn
    */
-  public setup(socialNetwork: SocialNetworkRequestDocument, cbUri: string, fn: any): passport.Strategy {
+  public setup(
+    socialNetwork: SocialNetworkRequestDocument,
+    cbUri: string,
+    fn: any
+  ): passport.Strategy {
     this._logger.debug("Initialize new passport strategy", socialNetwork);
 
     return new GoogleStrategy(
@@ -55,7 +56,7 @@ class SocialNetworkGoogle extends SocialNetworkStrategy {
         clientSecret: socialNetwork.social.clientSecret,
         callbackURL: cbUri,
         userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
-        passReqToCallback: true,
+        passReqToCallback: true
       },
       fn
     );
@@ -63,26 +64,26 @@ class SocialNetworkGoogle extends SocialNetworkStrategy {
 
   /**
    * Get social profile first name
-   * 
-   * @param profile 
+   *
+   * @param profile
    */
   public name(_profile: any): string {
-    return 'Unknown';
+    return "Unknown";
   }
 
   /**
    * Get social profile last name
-   * 
-   * @param profile 
+   *
+   * @param profile
    */
   public lastname(_profile: any): string {
-    return 'Unknown';
+    return "Unknown";
   }
 
   /**
    * Get social profile email
-   * 
-   * @param profile 
+   *
+   * @param profile
    */
   public email(_profile: any): string {
     return null;
@@ -90,10 +91,10 @@ class SocialNetworkGoogle extends SocialNetworkStrategy {
 
   /**
    * Get social profile phone
-   * @param profile 
+   * @param profile
    */
   public phone(_profile: any): string {
-    return null
+    return null;
   }
 }
 

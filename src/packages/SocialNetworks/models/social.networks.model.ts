@@ -3,7 +3,8 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -18,7 +19,7 @@ export class SocialNetworkSetting {
   @prop({
     enum: SOCIAL_NETWORK_TYPES,
     required: true,
-    default: SOCIAL_NETWORK_TYPES.SN_UNKNOWN,
+    default: SOCIAL_NETWORK_TYPES.SN_UNKNOWN
   })
   type!: SOCIAL_NETWORK_TYPES;
 

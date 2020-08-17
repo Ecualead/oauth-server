@@ -3,21 +3,16 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { BaseModel } from "@ikoabo/server";
+import { prop, Ref, index, getModelForClass, DocumentType } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import {
-  prop,
-  Ref,
-  index,
-  getModelForClass,
-  DocumentType,
-} from "@typegoose/typegoose";
-import { BaseModel } from "@ikoabo/core_srv";
-import { Application } from "@/Applications/models/applications.model";
 import { Account } from "@/Accounts/models/accounts.model";
+import { Application } from "@/Applications/models/applications.model";
 import { SocialNetworkSetting } from "@/SocialNetworks/models/social.networks.model";
 
 @index({ application: 1 })
@@ -61,12 +56,12 @@ export class SocialNetworkRequest extends BaseModel {
               redirect: ret.redirect,
               status: ret.status,
               createdAt: ret.createdAt,
-              updatedAt: ret.updatedAt,
+              updatedAt: ret.updatedAt
             };
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false }
     });
   }
 }
