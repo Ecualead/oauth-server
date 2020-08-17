@@ -3,40 +3,30 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { Objects } from "@ikoabo/core";
+import { Validator, ValidateObjectId, ResponseHandler } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
-import {
-  ResponseHandler,
-  Validators,
-  ValidateObjectId,
-  Objects,
-} from "@ikoabo/core_srv";
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import {
   ApplicationCreateValidation,
   ApplicationUpdateValidation,
-  ApplicationGrantValidation,
+  ApplicationGrantValidation
 } from "@/Applications/models/applications.joi";
-import {
-  Application,
-  ApplicationDocument,
-} from "@/Applications/models/applications.model";
-import {
-  StatusValidation,
-  ScopeValidation,
-  RestrictionValidation,
-} from "@/models/base.joi";
+import { ApplicationDocument } from "@/Applications/models/applications.model";
+import { StatusValidation, ScopeValidation, RestrictionValidation } from "@/models/base.joi";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 
 const router = Router();
 
 router.post(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ApplicationCreateValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ApplicationCreateValidation),
   OAuth2Ctrl.authenticate(["user"]),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.create({
@@ -48,14 +38,14 @@ router.post(
       type: req.body["type"],
       owner: Objects.get(res.locals, "token.user._id"),
       scope: req.body["scope"],
-      grants: req.body["grants"],
+      grants: req.body["grants"]
     })
       .then((value: ApplicationDocument) => {
         res.locals["response"] = {
           id: value.id,
           clientId: value.id,
           clientSecret: value.secret,
-          base64: value.getBase64Secret(),
+          base64: value.getBase64Secret()
         };
         next();
       })
@@ -67,8 +57,8 @@ router.post(
 
 router.put(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ApplicationUpdateValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ApplicationUpdateValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -76,7 +66,7 @@ router.put(
       name: req.body["name"],
       description: req.body["description"],
       image: req.body["image"],
-      type: req.body["type"],
+      type: req.body["type"]
     })
       .then((value: ApplicationDocument) => {
         res.locals["response"] = { id: value.id };
@@ -90,7 +80,7 @@ router.put(
 
 router.get(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
+  Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -107,7 +97,7 @@ router.get(
           domain: value.domain,
           status: value.status,
           createdAt: value.createdAt,
-          updatedAt: value.updatedAt,
+          updatedAt: value.updatedAt
         };
         next();
       })
@@ -119,7 +109,7 @@ router.get(
 
 router.delete(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
+  Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -136,7 +126,7 @@ router.delete(
 
 router.put(
   "/:id/:action",
-  Validators.joi(StatusValidation, "params"),
+  Validator.joi(StatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -157,8 +147,8 @@ router.put(
 
 router.post(
   "/:id/scope",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ScopeValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -175,8 +165,8 @@ router.post(
 
 router.delete(
   "/:id/scope",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ScopeValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -193,8 +183,8 @@ router.delete(
 
 router.post(
   "/:id/grant",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ApplicationGrantValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ApplicationGrantValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -211,8 +201,8 @@ router.post(
 
 router.delete(
   "/:id/grant",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ApplicationGrantValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ApplicationGrantValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -229,8 +219,8 @@ router.delete(
 
 router.put(
   "/:id/restriction",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(RestrictionValidation, "body"),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(RestrictionValidation, "body"),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -247,8 +237,8 @@ router.put(
 
 router.delete(
   "/:id/restriction",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(RestrictionValidation, "body"),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(RestrictionValidation, "body"),
   OAuth2Ctrl.authenticate(["user"]),
   ApplicationCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {

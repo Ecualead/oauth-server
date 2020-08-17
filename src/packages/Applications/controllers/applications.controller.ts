@@ -3,16 +3,17 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Arrays, Token, BASE_STATUS, HTTP_STATUS } from "@ikoabo/core_srv";
-import { ERRORS } from "@ikoabo/core_srv";
+import { AUTH_ERRORS } from "@ikoabo/auth";
+import { Arrays, Tokens, SERVER_STATUS, SERVER_ERRORS, HTTP_STATUS } from "@ikoabo/core";
 import {
   Application,
   ApplicationDocument,
-  ApplicationModel,
+  ApplicationModel
 } from "@/Applications/models/applications.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
 import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
@@ -50,7 +51,7 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
           data.scope = Arrays.intersect(data.scope, project.scope);
 
           /* Generate application secret */
-          data.secret = Token.longToken;
+          data.secret = Tokens.long;
 
           super.create(data).then(resolve).catch(reject);
         })
@@ -65,14 +66,14 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
     return new Promise<ApplicationDocument>((resolve, reject) => {
       this._logger.debug("Adding grant type", {
         application: id,
-        grant: grant,
+        grant: grant
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $addToSet: { grants: grant } };
       ApplicationModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ApplicationDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -88,14 +89,14 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
     return new Promise<ApplicationDocument>((resolve, reject) => {
       this._logger.debug("Removing grant type", {
         project: id,
-        grant: grant,
+        grant: grant
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $pull: { grants: grant } };
       ApplicationModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ApplicationDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -107,23 +108,20 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
   /**
    * Add new access restriction to the application
    */
-  public addRestriction(
-    id: string,
-    restriction: string
-  ): Promise<ApplicationDocument> {
+  public addRestriction(id: string, restriction: string): Promise<ApplicationDocument> {
     return new Promise<ApplicationDocument>((resolve, reject) => {
       this._logger.debug("Adding restriction", {
         application: id,
-        restriction: restriction,
+        restriction: restriction
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $addToSet: { restriction: restriction } };
       ApplicationModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ApplicationDocument) => {
           if (!value) {
             reject({
-              boError: ERRORS.OBJECT_NOT_FOUND,
-              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
+              boError: SERVER_ERRORS.OBJECT_NOT_FOUND,
+              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
             });
             return;
           }
@@ -136,23 +134,20 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
   /**
    * Delete an access restriction from the application
    */
-  public deleteRestriction(
-    id: string,
-    restriction: string
-  ): Promise<ApplicationDocument> {
+  public deleteRestriction(id: string, restriction: string): Promise<ApplicationDocument> {
     return new Promise<ApplicationDocument>((resolve, reject) => {
       this._logger.debug("Removing restriction", {
         application: id,
-        restriction: restriction,
+        restriction: restriction
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $pull: { restriction: restriction } };
       ApplicationModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ApplicationDocument) => {
           if (!value) {
             reject({
-              boError: ERRORS.OBJECT_NOT_FOUND,
-              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
+              boError: SERVER_ERRORS.OBJECT_NOT_FOUND,
+              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
             });
             return;
           }

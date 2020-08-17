@@ -3,30 +3,24 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { Tokens, Objects } from "@ikoabo/core";
+import { BaseModel } from "@ikoabo/server";
+import { getModelForClass, prop, pre, DocumentType, index, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { Token, BaseModel, Objects } from "@ikoabo/core_srv";
-import {
-  getModelForClass,
-  prop,
-  pre,
-  DocumentType,
-  index,
-  Ref,
-} from "@typegoose/typegoose";
-import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
-import { Project } from "@/Projects/models/projects.model";
 import { Client } from "oauth2-server";
+import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
-import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
+import { Project } from "@/Projects/models/projects.model";
 
 @pre<Application>("save", function (next) {
   const obj: any = this;
   if (obj.isNew) {
-    obj.secret = Token.longToken;
+    obj.secret = Tokens.long;
   }
   next();
 })
@@ -49,7 +43,7 @@ export class Application extends BaseModel {
   @prop({
     enum: APPLICATION_TYPES,
     required: true,
-    default: APPLICATION_TYPES.APP_UNKNOWN,
+    default: APPLICATION_TYPES.APP_UNKNOWN
   })
   type?: APPLICATION_TYPES;
 
@@ -92,24 +86,23 @@ export class Application extends BaseModel {
               type: ret.type,
               status: ret.status,
               createdAt: ret.createdAt,
-              updatedAt: ret.updatedAt,
+              updatedAt: ret.updatedAt
             };
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false }
     });
   }
 
   public getBase64Secret?(): string {
-    return Buffer.from([(<any>this).id, this.secret].join(":")).toString(
-      "base64"
-    );
+    const tmp: any = this;
+    return Buffer.from([tmp.id, tmp.secret].join(":")).toString("base64");
   }
 
   public toClient?(): Client {
     const obj: any = this;
-    let client = {
+    const client = {
       id: obj._id.toString(),
       type: this.type,
       grants: obj.grants,
@@ -128,12 +121,11 @@ export class Application extends BaseModel {
       ),
       scope: obj.scope,
       project: obj.project,
-      restriction: obj.restriction,
+      restriction: obj.restriction
     };
     return client;
   }
 }
 
 export type ApplicationDocument = DocumentType<Application>;
-export const ApplicationModel: mongoose.Model<ApplicationDocument> =
-  Application.shared;
+export const ApplicationModel: mongoose.Model<ApplicationDocument> = Application.shared;

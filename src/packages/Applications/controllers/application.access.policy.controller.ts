@@ -3,19 +3,20 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Logger, ERRORS, HTTP_STATUS } from "@ikoabo/core_srv";
-import { ERRORS as AUTH_ERRORS } from "@ikoabo/auth_srv";
+import URL from "url";
+import { AUTH_ERRORS } from "@ikoabo/auth";
+import { Logger, HTTP_STATUS, SERVER_ERRORS } from "@ikoabo/core";
 import { Request } from "express";
-import { ApplicationDocument } from "@/Applications/models/applications.model";
-import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
+import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
+import { ApplicationDocument } from "@/Applications/models/applications.model";
 import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import { ModuleDocument } from "@/Modules/models/modules.model";
-import URL from "url";
 
 class ApplicationAccessPolicy {
   private static _instance: ApplicationAccessPolicy;
@@ -35,13 +36,7 @@ class ApplicationAccessPolicy {
     return ApplicationAccessPolicy._instance;
   }
 
-  private _validate(
-    req: Request,
-    type: number,
-    restriction: string[],
-    resolve: any,
-    reject: any
-  ) {
+  private _validate(req: Request, type: number, restriction: string[], resolve: any, reject: any) {
     switch (type) {
       /* Validate request origin */
       case APPLICATION_TYPES.APP_WEB_CLIENT_SIDE:
@@ -50,11 +45,11 @@ class ApplicationAccessPolicy {
           this._logger.error("Application access restricted", {
             origin: req.headers["origin"],
             hostname: url.hostname,
-            restriction: restriction,
+            restriction: restriction
           });
           return reject({
             boError: AUTH_ERRORS.APPLICATION_RESTRICTED,
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
           });
         }
         resolve(true);
@@ -70,11 +65,11 @@ class ApplicationAccessPolicy {
             ipAddress: ipAddress,
             expressIp: req.ip,
             expressIps: req.ips,
-            restriction: restriction,
+            restriction: restriction
           });
           return reject({
             boError: AUTH_ERRORS.APPLICATION_RESTRICTED,
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
           });
         }
         resolve(true);
@@ -89,11 +84,11 @@ class ApplicationAccessPolicy {
       /* Reject on any other item */
       default:
         this._logger.error("Invalid application access", {
-          type: type,
+          type: type
         });
         reject({
-          boError: ERRORS.INVALID_OPERATION,
-          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+          boError: AUTH_ERRORS.INVALID_APPLICATION,
+          boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
         });
     }
   }
@@ -114,26 +109,14 @@ class ApplicationAccessPolicy {
       /* Fetch the application information */
       ApplicationCtrl.fetch(application)
         .then((application: ApplicationDocument) => {
-          this._validate(
-            req,
-            application.type,
-            application.restriction,
-            resolve,
-            reject
-          );
+          this._validate(req, application.type, application.restriction, resolve, reject);
         })
         .catch((err: any) => {
           /* If the application is not found, try to fetch a module */
-          if (err.boError === ERRORS.OBJECT_NOT_FOUND) {
+          if (err.boError === SERVER_ERRORS.OBJECT_NOT_FOUND) {
             return ModuleCtrl.fetch(application)
               .then((module: ModuleDocument) => {
-                this._validate(
-                  req,
-                  module.type,
-                  module.restriction,
-                  resolve,
-                  reject
-                );
+                this._validate(req, module.type, module.restriction, resolve, reject);
               })
               .catch(reject);
           }
