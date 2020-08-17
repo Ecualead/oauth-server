@@ -3,12 +3,14 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { SERVER_STATUS, SERVER_ERRORS } from "@ikoabo/core";
+import { CRUD } from "@ikoabo/server";
 import mongoose from "mongoose";
-import { CRUD, BASE_STATUS, ERRORS } from "@ikoabo/core_srv";
 
 export abstract class DataScoped<T, D extends mongoose.Document> extends CRUD<T, D> {
   constructor(logger: string, model: mongoose.Model<D>, modelname: string) {
@@ -21,13 +23,13 @@ export abstract class DataScoped<T, D extends mongoose.Document> extends CRUD<T,
   public addScope(id: string, scope: string): Promise<D> {
     return new Promise<D>((resolve, reject) => {
       this._logger.debug("Adding new scope", { id: id, scope: scope });
-      const query: any = { _id: id, status: { $gt: BASE_STATUS.BS_UNKNOWN } };
+      const query: any = { _id: id, status: { $gt: SERVER_STATUS.UNKNOWN } };
       const update: any = { $addToSet: { scope: scope } };
       this._model
         .findOneAndUpdate(query, update, { new: true })
         .then((value: D) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -42,13 +44,13 @@ export abstract class DataScoped<T, D extends mongoose.Document> extends CRUD<T,
   public deleteScope(id: string, scope: string): Promise<D> {
     return new Promise<D>((resolve, reject) => {
       this._logger.debug("Adding new scope", { id: id, scope: scope });
-      const query: any = { _id: id, status: { $gt: BASE_STATUS.BS_UNKNOWN } };
+      const query: any = { _id: id, status: { $gt: SERVER_STATUS.UNKNOWN } };
       const update: any = { $pull: { scope: scope } };
       this._model
         .findOneAndUpdate(query, update, { new: true })
         .then((value: D) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -60,13 +62,13 @@ export abstract class DataScoped<T, D extends mongoose.Document> extends CRUD<T,
   public enable(id: string): Promise<D> {
     return new Promise<D>((resolve, reject) => {
       this._logger.debug("Enabling component", { id: id });
-      const query: any = { _id: id, status: BASE_STATUS.BS_DISABLED };
-      const update: any = { $set: { status: BASE_STATUS.BS_ENABLED } };
+      const query: any = { _id: id, status: SERVER_STATUS.DISABLED };
+      const update: any = { $set: { status: SERVER_STATUS.ENABLED } };
       this._model
         .findOneAndUpdate(query, update, { new: true })
         .then((value: D) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -78,13 +80,13 @@ export abstract class DataScoped<T, D extends mongoose.Document> extends CRUD<T,
   public disable(id: string): Promise<D> {
     return new Promise<D>((resolve, reject) => {
       this._logger.debug("Disabling component", { id: id });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
-      const update: any = { $set: { status: BASE_STATUS.BS_DISABLED } };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
+      const update: any = { $set: { status: SERVER_STATUS.DISABLED } };
       this._model
         .findOneAndUpdate(query, update, { new: true })
         .then((value: D) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
