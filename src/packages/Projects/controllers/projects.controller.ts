@@ -3,21 +3,18 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Arrays, BASE_STATUS, ERRORS } from "@ikoabo/core_srv";
-import {
-  Project,
-  ProjectDocument,
-  ProjectModel,
-} from "@/Projects/models/projects.model";
+import { Arrays, SERVER_STATUS, SERVER_ERRORS } from "@ikoabo/core";
+import { DataScoped } from "@/controllers/data.scoped.controller";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { DomainDocument } from "@/Domains/models/domains.model";
-import { DataScoped } from "@/controllers/data.scoped.controller";
-import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
 import { ModuleDocument } from "@/Modules/models/modules.model";
+import { Project, ProjectDocument, ProjectModel } from "@/Projects/models/projects.model";
+import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
 import { SocialNetworkSetting } from "@/SocialNetworks/models/social.networks.model";
 
 class Projects extends DataScoped<Project, ProjectDocument> {
@@ -27,7 +24,7 @@ class Projects extends DataScoped<Project, ProjectDocument> {
    * Private constructor
    */
   private constructor() {
-    super("Projects", ProjectModel, 'project');
+    super("Projects", ProjectModel, "project");
   }
 
   /**
@@ -46,7 +43,7 @@ class Projects extends DataScoped<Project, ProjectDocument> {
       DomainCtrl.fetch(data.domain.toString())
         .then((value: DomainDocument) => {
           /* Intersect scope with domain scope */
-          data.scope = Arrays.intersect(data.scope, value.scope);
+          data.scope = Arrays.intersect<string>(data.scope, value.scope);
 
           /* Create the new project */
           super.create(data).then(resolve).catch(reject);
@@ -58,11 +55,11 @@ class Projects extends DataScoped<Project, ProjectDocument> {
   public clearModule(module: ModuleDocument): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this._logger.debug("Cleaning module", {
-        module: module,
+        module: module
       });
       const update: any = {
         $pull: { modules: module.id },
-        $pullAll: { scope: module.scope },
+        $pullAll: { scope: module.scope }
       };
       ProjectModel.updateMany({}, update)
         .then(() => {
@@ -75,23 +72,20 @@ class Projects extends DataScoped<Project, ProjectDocument> {
   /**
    * Add new module to the domain
    */
-  public addModule(
-    id: string,
-    module: ModuleDocument
-  ): Promise<ProjectDocument> {
+  public addModule(id: string, module: ModuleDocument): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding module", {
         project: id,
-        module: module,
+        module: module
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = {
-        $addToSet: { modules: module.id, scope: module.scope },
+        $addToSet: { modules: module.id, scope: module.scope }
       };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
 
@@ -114,24 +108,21 @@ class Projects extends DataScoped<Project, ProjectDocument> {
   /**
    * Delete a module from the domain
    */
-  public deleteModule(
-    id: string,
-    module: ModuleDocument
-  ): Promise<ProjectDocument> {
+  public deleteModule(id: string, module: ModuleDocument): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing module", {
         project: id,
-        module: module,
+        module: module
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = {
         $pull: { modules: module },
-        $pullAll: { scope: module.scope },
+        $pullAll: { scope: module.scope }
       };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -144,14 +135,14 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding ip restriction", {
         project: id,
-        ip: ip,
+        ip: ip
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $addToSet: { "settings.restrictIps": ip } };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -164,14 +155,14 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing ip restriction", {
         project: id,
-        ip: ip,
+        ip: ip
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $pull: { "settings.restrictIps": ip } };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -187,16 +178,16 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding social network", {
         project: id,
-        socialNetwork: socialNetwork,
+        socialNetwork: socialNetwork
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = {
-        $push: { "settings.socialNetworks": socialNetwork },
+        $push: { "settings.socialNetworks": socialNetwork }
       };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -213,25 +204,24 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Updating social network", {
         project: id,
-        socialNetwork: socialType,
+        socialNetwork: socialType
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = {
         $set: {
           "settings.socialNetworks.$[elem].clientId": socialNetwork.clientId,
-          "settings.socialNetworks.$[elem].clientSecret":
-            socialNetwork.clientSecret,
+          "settings.socialNetworks.$[elem].clientSecret": socialNetwork.clientSecret,
           "settings.socialNetworks.$[elem].scope": socialNetwork.scope,
-          "settings.socialNetworks.$[elem].profile": socialNetwork.profile,
-        },
+          "settings.socialNetworks.$[elem].profile": socialNetwork.profile
+        }
       };
       ProjectModel.findOneAndUpdate(query, update, {
         new: true,
-        arrayFilters: [{ "elem.type": socialType }],
+        arrayFilters: [{ "elem.type": socialType }]
       })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -240,23 +230,20 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public deleteSocialNetwork(
-    id: string,
-    socialType: number
-  ): Promise<ProjectDocument> {
+  public deleteSocialNetwork(id: string, socialType: number): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing social network", {
         project: id,
-        socialNetwork: socialType,
+        socialNetwork: socialType
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = {
-        $pull: { "settings.socialNetworks": { type: socialType } },
+        $pull: { "settings.socialNetworks": { type: socialType } }
       };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -265,21 +252,18 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public addNotification(
-    id: string,
-    notification: ProjectNotification
-  ): Promise<ProjectDocument> {
+  public addNotification(id: string, notification: ProjectNotification): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Adding notification", {
         project: id,
-        notification: notification,
+        notification: notification
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $push: { "settings.notifications": notification } };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -296,9 +280,9 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Updating notification", {
         project: id,
-        notification: notificationType,
+        notification: notificationType
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = {
         $set: {
           "settings.notifications.$[elem].signup": notification.signup,
@@ -306,16 +290,16 @@ class Projects extends DataScoped<Project, ProjectDocument> {
           "settings.notifications.$[elem].signin": notification.signin,
           "settings.notifications.$[elem].chPwd": notification.chPwd,
           "settings.notifications.$[elem].recover": notification.recover,
-          "settings.notifications.$[elem].urls": notification.urls,
-        },
+          "settings.notifications.$[elem].urls": notification.urls
+        }
       };
       ProjectModel.findOneAndUpdate(query, update, {
         new: true,
-        arrayFilters: [{ "elem.type": notificationType }],
+        arrayFilters: [{ "elem.type": notificationType }]
       })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);
@@ -324,23 +308,20 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     });
   }
 
-  public deleteNotification(
-    id: string,
-    notificationType: number
-  ): Promise<ProjectDocument> {
+  public deleteNotification(id: string, notificationType: number): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       this._logger.debug("Removing notification", {
         project: id,
-        notification: notificationType,
+        notification: notificationType
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = {
-        $pull: { "settings.notifications": { type: notificationType } },
+        $pull: { "settings.notifications": { type: notificationType } }
       };
       ProjectModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ProjectDocument) => {
           if (!value) {
-            reject({ boError: ERRORS.OBJECT_NOT_FOUND });
+            reject({ boError: SERVER_ERRORS.OBJECT_NOT_FOUND });
             return;
           }
           resolve(value);

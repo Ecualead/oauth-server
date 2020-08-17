@@ -3,32 +3,24 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import {
-  prop,
-  mongoose,
-  index,
-  DocumentType,
-  getModelForClass,
-  Ref,
-} from "@typegoose/typegoose";
-import { BaseModel, Objects } from "@ikoabo/core_srv";
-import { ProjectLink } from "@/Projects/models/projects.links.model";
-import { ProjectSetting } from "@/Projects/models/projects.settings.model";
+import { Objects } from "@ikoabo/core";
+import { BaseModel } from "@ikoabo/server";
+import { prop, mongoose, index, DocumentType, getModelForClass, Ref } from "@typegoose/typegoose";
 import { Domain } from "@/Domains/models/domains.model";
 import { Module } from "@/Modules/models/modules.model";
+import { ProjectLink } from "@/Projects/models/projects.links.model";
+import { ProjectSetting } from "@/Projects/models/projects.settings.model";
 
 @index({ domain: 1 })
 @index({ canonical: 1 }, { unique: true })
 @index({ name: 1 })
 @index({ canonical: 1, "settings.socialNetworks.type": 1 }, { unique: true })
-@index(
-  { canonical: 1, "settings.socialNetworks.clientId": 1 },
-  { unique: true }
-)
+@index({ canonical: 1, "settings.socialNetworks.clientId": 1 }, { unique: true })
 @index({ canonical: 1, "settings.notifications.type": 1 }, { unique: true })
 export class Project extends BaseModel {
   @prop({ required: true, ref: Domain })
@@ -85,16 +77,16 @@ export class Project extends BaseModel {
                 instagram: Objects.get(ret, "links.instagram"),
                 youtube: Objects.get(ret, "links.youtube"),
                 privacy: Objects.get(ret, "links.privacy"),
-                terms: Objects.get(ret, "links.terms"),
+                terms: Objects.get(ret, "links.terms")
               },
               status: ret.status,
               createdAt: ret.createdAt,
-              updatedAt: ret.updatedAt,
+              updatedAt: ret.updatedAt
             };
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false }
     });
   }
 }

@@ -3,35 +3,29 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { Objects } from "@ikoabo/core";
+import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
 import JSONStream from "jsonstream";
-import {
-  ResponseHandler,
-  Validators,
-  ValidateObjectId,
-  Objects,
-} from "@ikoabo/core_srv";
-import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
-import {
-  ProjectCreateValidation,
-  ProjectUpdateValidation,
-} from "@/Projects/models/projects.joi";
-import { ProjectDocument, Project } from "@/Projects/models/projects.model";
-import { ScopeValidation, StatusValidation } from "@/models/base.joi";
-import { SubModuleValidation } from "@/Modules/models/modules.joi";
-import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
+import { ScopeValidation, StatusValidation } from "@/models/base.joi";
+import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
+import { SubModuleValidation } from "@/Modules/models/modules.joi";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
+import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
+import { ProjectCreateValidation, ProjectUpdateValidation } from "@/Projects/models/projects.joi";
+import { ProjectDocument } from "@/Projects/models/projects.model";
 
 const router = Router();
 
 router.post(
   "/",
-  Validators.joi(ProjectCreateValidation),
+  Validator.joi(ProjectCreateValidation),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("body.domain", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -44,7 +38,7 @@ router.post(
       image: req.body["image"],
       links: req.body["links"],
       scope: req.body["scope"],
-      owner: Objects.get(res.locals, "token.user._id"),
+      owner: Objects.get(res.locals, "token.user._id")
     })
       .then((value: ProjectDocument) => {
         res.locals["response"] = { id: value.id };
@@ -58,8 +52,8 @@ router.post(
 
 router.put(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ProjectUpdateValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ProjectUpdateValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -68,7 +62,7 @@ router.put(
       name: req.body["name"],
       description: req.body["description"],
       image: req.body["image"],
-      links: req.body["links"],
+      links: req.body["links"]
     })
       .then((value: ProjectDocument) => {
         res.locals["response"] = { id: value.id };
@@ -82,7 +76,7 @@ router.put(
 
 router.get(
   "/domain/:id",
-  Validators.joi(ValidateObjectId, "params"),
+  Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -96,7 +90,7 @@ router.get(
 
 router.get(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
+  Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
   (_req: Request, res: Response, next: NextFunction) => {
@@ -114,14 +108,14 @@ router.get(
         instagram: Objects.get(res.locals["project"], "links.instagram"),
         youtube: Objects.get(res.locals["project"], "links.youtube"),
         privacy: Objects.get(res.locals["project"], "links.privacy"),
-        terms: Objects.get(res.locals["project"], "links.terms"),
+        terms: Objects.get(res.locals["project"], "links.terms")
       },
       scope: res.locals["project"].scope,
       modules: res.locals["project"].modules,
       settings: res.locals["project"].settings,
       status: res.locals["project"].status,
       createdAt: res.locals["project"].createdAt,
-      updatedAt: res.locals["project"].updatedAt,
+      updatedAt: res.locals["project"].updatedAt
     };
     next();
   },
@@ -131,7 +125,7 @@ router.get(
 
 router.delete(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
+  Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -148,7 +142,7 @@ router.delete(
 
 router.put(
   "/:id/:action",
-  Validators.joi(StatusValidation, "params"),
+  Validator.joi(StatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -169,12 +163,12 @@ router.put(
 
 router.post(
   "/:id/scope",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ScopeValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ProjectCtrl.addScope(req.params.id, req.body['scope'])
+    ProjectCtrl.addScope(req.params.id, req.body["scope"])
       .then((value: ProjectDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -187,12 +181,12 @@ router.post(
 
 router.delete(
   "/:id/scope",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ScopeValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ProjectCtrl.deleteScope(req.params.id, req.body['scope'])
+    ProjectCtrl.deleteScope(req.params.id, req.body["scope"])
       .then((value: ProjectDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -205,8 +199,8 @@ router.delete(
 
 router.post(
   "/:id/module",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(SubModuleValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(SubModuleValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
   ModuleCtrl.validate("body.module"),
@@ -224,8 +218,8 @@ router.post(
 
 router.delete(
   "/:id/module",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ScopeValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
   ProjectCtrl.validate("params.id", "token.user._id"),
   ModuleCtrl.validate("body.module"),

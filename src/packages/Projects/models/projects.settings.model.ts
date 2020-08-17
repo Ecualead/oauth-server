@@ -3,7 +3,8 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -11,7 +12,7 @@ import { prop } from "@typegoose/typegoose";
 import {
   PROJECT_RECOVER_TYPE,
   PROJECT_LIFETIME_TYPES,
-  PROJECT_EMAIL_CONFIRMATION,
+  PROJECT_EMAIL_CONFIRMATION
 } from "@/Projects/models/projects.enum";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
 import { SocialNetworkSetting } from "@/SocialNetworks/models/social.networks.model";
@@ -36,13 +37,13 @@ class ProjectPasswordPolicy {
 class ProjectTokenLifetime {
   @prop({
     required: true,
-    default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH,
+    default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH
   })
   accessToken!: number;
 
   @prop({
     required: true,
-    default: PROJECT_LIFETIME_TYPES.LT_ONE_YEAR,
+    default: PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
   })
   refreshToken!: number;
 }
@@ -51,13 +52,13 @@ class ProjectEmailConfirmation {
   @prop({
     enum: PROJECT_EMAIL_CONFIRMATION,
     required: true,
-    default: PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_NOT_REQUIRED,
+    default: PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_NOT_REQUIRED
   })
   type: PROJECT_EMAIL_CONFIRMATION;
 
   @prop({
     required: true,
-    default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH,
+    default: PROJECT_LIFETIME_TYPES.LT_ONE_MONTH
   })
   time: number;
 }
@@ -72,7 +73,7 @@ export class ProjectSetting {
   @prop({
     enum: PROJECT_RECOVER_TYPE,
     required: true,
-    default: PROJECT_RECOVER_TYPE.RT_DISABLED,
+    default: PROJECT_RECOVER_TYPE.RT_DISABLED
   })
   recover?: PROJECT_RECOVER_TYPE;
 

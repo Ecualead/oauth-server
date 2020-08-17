@@ -3,12 +3,18 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Joi } from "@ikoabo/core_srv";
-import { PROJECT_LIFETIME_TYPES, PROJECT_RECOVER_TYPE, PROJECT_EMAIL_CONFIRMATION, NOTIFICATION_TYPES } from "@/Projects/models/projects.enum";
+import { Joi } from "@ikoabo/server";
+import {
+  PROJECT_LIFETIME_TYPES,
+  PROJECT_RECOVER_TYPE,
+  PROJECT_EMAIL_CONFIRMATION,
+  NOTIFICATION_TYPES
+} from "@/Projects/models/projects.enum";
 
 const ProjectLinks = Joi.object()
   .optional()
@@ -20,49 +26,47 @@ const ProjectLinks = Joi.object()
     youtube: Joi.string().allow("").optional(),
     instagram: Joi.string().allow("").optional(),
     privacy: Joi.string().allow("").optional(),
-    terms: Joi.string().allow("").optional(),
+    terms: Joi.string().allow("").optional()
   });
 
 export const ProjectCreateValidation = Joi.object().keys({
   domain: Joi.objectId().required(),
-  canonical: Joi.string()
-    .pattern(new RegExp("^[a-zA-Z0-9][a-zA-Z0-9.]+[a-zA-Z0-9]$"))
-    .required(),
+  canonical: Joi.string().pattern(new RegExp("^[a-zA-Z0-9][a-zA-Z0-9.]+[a-zA-Z0-9]$")).required(),
   name: Joi.string().required(),
   description: Joi.string().allow("").optional(),
   image: Joi.string().allow("").optional(),
   links: ProjectLinks,
-  scope: Joi.array().items(Joi.string()).optional(),
+  scope: Joi.array().items(Joi.string()).optional()
 });
 
 export const ProjectUpdateValidation = Joi.object().keys({
   name: Joi.string().required(),
   description: Joi.string().allow("").optional(),
   image: Joi.string().allow("").optional(),
-  links: ProjectLinks,
+  links: ProjectLinks
 });
 
 export const TypeSettingParamsValidation = Joi.object().keys({
   id: Joi.objectId().required(),
-  type: Joi.number().required(),
+  type: Joi.number().required()
 });
 
 export const TokenLifetimeValidation = Joi.object().keys({
   accessToken: Joi.number().default(PROJECT_LIFETIME_TYPES.LT_ONE_MONTH).required(),
-  refreshToken: Joi.number().default(PROJECT_LIFETIME_TYPES.LT_ONE_YEAR).required(),
+  refreshToken: Joi.number().default(PROJECT_LIFETIME_TYPES.LT_ONE_YEAR).required()
 });
 
 export const RecoverTypeValidation = Joi.object().keys({
-  recover: Joi.number().default(PROJECT_RECOVER_TYPE.RT_DISABLED).required(),
+  recover: Joi.number().default(PROJECT_RECOVER_TYPE.RT_DISABLED).required()
 });
 
 export const RestrictIpValidation = Joi.object().keys({
-  ipAddress: Joi.string().required(),
+  ipAddress: Joi.string().required()
 });
 
 export const EmailConfirmationValidation = Joi.object().keys({
   type: Joi.number().default(PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_NOT_REQUIRED).required(),
-  time: Joi.number().default(PROJECT_LIFETIME_TYPES.LT_ONE_MONTH).required(),
+  time: Joi.number().default(PROJECT_LIFETIME_TYPES.LT_ONE_MONTH).required()
 });
 
 export const PasswordPolicyValidation = Joi.object().keys({
@@ -70,7 +74,7 @@ export const PasswordPolicyValidation = Joi.object().keys({
   upperCase: Joi.boolean().default(true).required(),
   lowerCase: Joi.boolean().default(true).required(),
   specialChars: Joi.boolean().default(false).required(),
-  numbers: Joi.boolean().default(true).required(),
+  numbers: Joi.boolean().default(true).required()
 });
 
 export const NotificationsSettingsValidation = Joi.object().keys({
@@ -80,8 +84,10 @@ export const NotificationsSettingsValidation = Joi.object().keys({
   signin: Joi.boolean().default(false).required(),
   chPwd: Joi.boolean().default(false).required(),
   recover: Joi.boolean().default(false).required(),
-  urls: Joi.object().keys({
-    confirm: Joi.string().allow("").optional(),
-    recover: Joi.string().allow("").optional()
-  }).optional()
+  urls: Joi.object()
+    .keys({
+      confirm: Joi.string().allow("").optional(),
+      recover: Joi.string().allow("").optional()
+    })
+    .optional()
 });
