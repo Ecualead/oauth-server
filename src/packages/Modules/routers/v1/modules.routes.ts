@@ -3,38 +3,26 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { Objects, Tokens, SERVER_STATUS } from "@ikoabo/core";
+import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
 import JSONStream from "jsonstream";
-import {
-  ResponseHandler,
-  Token,
-  Validators,
-  ValidateObjectId,
-  BASE_STATUS,
-  Objects,
-} from "@ikoabo/core_srv";
-import { Module, ModuleDocument } from "@/Modules/models/modules.model";
+import { ScopeValidation, StatusValidation, RestrictionValidation } from "@/models/base.joi";
 import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
-import {
-  ModuleCreateValidation,
-  ModuleUpdateValidation,
-} from "@/Modules/models/modules.joi";
-import {
-  ScopeValidation,
-  StatusValidation,
-  RestrictionValidation,
-} from "@/models/base.joi";
+import { ModuleCreateValidation, ModuleUpdateValidation } from "@/Modules/models/modules.joi";
+import { ModuleDocument } from "@/Modules/models/modules.model";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 
 const router = Router();
 
 router.post(
   "/",
-  Validators.joi(ModuleCreateValidation),
+  Validator.joi(ModuleCreateValidation),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Create the new module */
@@ -46,14 +34,14 @@ router.post(
       scope: req.body["scope"],
       url: req.body["url"],
       terms: req.body["terms"],
-      secret: Token.longToken,
+      secret: Tokens.long,
       restriction: req.body["restriction"],
-      status: BASE_STATUS.BS_ENABLED,
+      status: SERVER_STATUS.ENABLED
     })
       .then((value: ModuleDocument) => {
         res.locals["response"] = {
           id: value.id,
-          secret: value.secret,
+          secret: value.secret
         };
         next();
       })
@@ -65,8 +53,8 @@ router.post(
 
 router.put(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ModuleUpdateValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ModuleUpdateValidation),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -75,7 +63,7 @@ router.put(
       description: req.body["description"],
       image: req.body["image"],
       url: req.body["url"],
-      terms: req.body["terms"],
+      terms: req.body["terms"]
     })
       .then((value: ModuleDocument) => {
         res.locals["response"] = { id: value.id };
@@ -91,7 +79,7 @@ router.get(
   "/",
   OAuth2Ctrl.authenticate(["user"]),
   (_req: Request, res: Response, _next: NextFunction) => {
-    ModuleCtrl.fetchAll({ status: BASE_STATUS.BS_ENABLED })
+    ModuleCtrl.fetchAll({ status: SERVER_STATUS.ENABLED })
       .pipe(JSONStream.stringify())
       .pipe(res.type("json"));
   },
@@ -101,7 +89,7 @@ router.get(
 
 router.get(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
+  Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   (req: Request, res: Response, next: NextFunction) => {
     ModuleCtrl.fetch(req.params.id)
@@ -116,7 +104,7 @@ router.get(
           terms: value.terms,
           status: value.status,
           createdAt: value.createdAt,
-          updatedAt: value.updatedAt,
+          updatedAt: value.updatedAt
         };
         next();
       })
@@ -128,7 +116,7 @@ router.get(
 
 router.delete(
   "/:id",
-  Validators.joi(ValidateObjectId, "params"),
+  Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   (req: Request, res: Response, next: NextFunction) => {
     ModuleCtrl.delete(req.params.id)
@@ -144,7 +132,7 @@ router.delete(
 
 router.put(
   "/:id/:action",
-  Validators.joi(StatusValidation, "params"),
+  Validator.joi(StatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -165,8 +153,8 @@ router.put(
 
 router.put(
   "/:id/scope",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ScopeValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -183,8 +171,8 @@ router.put(
 
 router.delete(
   "/:id/scope",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(ScopeValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -201,8 +189,8 @@ router.delete(
 
 router.put(
   "/:id/restriction",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(RestrictionValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(RestrictionValidation),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -219,8 +207,8 @@ router.put(
 
 router.delete(
   "/:id/restriction",
-  Validators.joi(ValidateObjectId, "params"),
-  Validators.joi(RestrictionValidation),
+  Validator.joi(ValidateObjectId, "params"),
+  Validator.joi(RestrictionValidation),
   OAuth2Ctrl.authenticate(["user", "mod_ims_module_ctrl"]),
   ModuleCtrl.validate("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {

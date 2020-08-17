@@ -3,17 +3,14 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { SERVER_STATUS, HTTP_STATUS, SERVER_ERRORS } from "@ikoabo/core";
 import { DataScoped } from "@/controllers/data.scoped.controller";
-import {
-  Module,
-  ModuleModel,
-  ModuleDocument,
-} from "@/Modules/models/modules.model";
-import { BASE_STATUS, HTTP_STATUS, ERRORS } from "@ikoabo/core_srv";
+import { Module, ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
 
 /**
  * Module controller
@@ -38,23 +35,20 @@ class Modules extends DataScoped<Module, ModuleDocument> {
   /**
    * Add new access restriction to the module
    */
-  public addRestriction(
-    id: string,
-    restriction: string
-  ): Promise<ModuleDocument> {
+  public addRestriction(id: string, restriction: string): Promise<ModuleDocument> {
     return new Promise<ModuleDocument>((resolve, reject) => {
       this._logger.debug("Adding restriction", {
         module: id,
-        restriction: restriction,
+        restriction: restriction
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $addToSet: { restriction: restriction } };
       ModuleModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ModuleDocument) => {
           if (!value) {
             reject({
-              boError: ERRORS.OBJECT_NOT_FOUND,
-              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
+              boError: SERVER_ERRORS.OBJECT_NOT_FOUND,
+              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
             });
             return;
           }
@@ -67,23 +61,20 @@ class Modules extends DataScoped<Module, ModuleDocument> {
   /**
    * Delete an access restriction from the module
    */
-  public deleteRestriction(
-    id: string,
-    restriction: string
-  ): Promise<ModuleDocument> {
+  public deleteRestriction(id: string, restriction: string): Promise<ModuleDocument> {
     return new Promise<ModuleDocument>((resolve, reject) => {
       this._logger.debug("Removing restriction", {
         module: id,
-        restriction: restriction,
+        restriction: restriction
       });
-      const query: any = { _id: id, status: BASE_STATUS.BS_ENABLED };
+      const query: any = { _id: id, status: SERVER_STATUS.ENABLED };
       const update: any = { $pull: { restriction: restriction } };
       ModuleModel.findOneAndUpdate(query, update, { new: true })
         .then((value: ModuleDocument) => {
           if (!value) {
             reject({
-              boError: ERRORS.OBJECT_NOT_FOUND,
-              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
+              boError: SERVER_ERRORS.OBJECT_NOT_FOUND,
+              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
             });
             return;
           }

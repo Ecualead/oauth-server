@@ -3,21 +3,17 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import {
-  prop,
-  getModelForClass,
-  DocumentType,
-  index,
-} from "@typegoose/typegoose";
+import { BaseModel } from "@ikoabo/server";
+import { prop, getModelForClass, DocumentType, index } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { BaseModel } from "@ikoabo/core_srv";
 import { Client } from "oauth2-server";
-import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
 import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
+import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
 
 @index({ name: 1 }, { unique: true })
 @index({ secret: 1 })
@@ -70,25 +66,25 @@ export class Module extends BaseModel {
               terms: ret.terms,
               status: ret.status,
               createdAt: ret.createdAt,
-              updatedAt: ret.updatedAt,
+              updatedAt: ret.updatedAt
             };
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false }
     });
   }
 
   public toClient?(): Client {
     const obj: any = this;
-    let client = {
+    const client = {
       id: obj._id.toString(),
       type: APPLICATION_TYPES.APP_MODULE,
       grants: ["client_credentials"],
       accessTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
       refreshTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
       scope: obj.scope,
-      restriction: this.restriction,
+      restriction: this.restriction
     };
     return client;
   }
