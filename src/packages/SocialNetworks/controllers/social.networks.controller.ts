@@ -13,27 +13,17 @@ import { Logger, HTTP_STATUS, Objects } from "@ikoabo/core";
 import { Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 import passport from "passport";
-import { SocialNetworkStrategy } from "./strategies/base.strategy.controller";
-import { SocialNetworkStrategyFactory } from "./strategies/strategy.factory.controller";
+import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
+import { SocialNetworkStrategyFactory } from "@/SocialNetworks/controllers/strategies/strategy.factory.controller";
 import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
 import { AccountModel, AccountDocument } from "@/Accounts/models/accounts.model";
-import {
-  AccountProjectProfileDocument,
-  AccountProjectProfileModel
-} from "@/Accounts/models/accounts.projects.model";
+import { AccountProjectProfileDocument, AccountProjectProfileModel} from "@/Accounts/models/accounts.projects.model";
 import { Settings } from "@/configs/settings.config";
 import { OAuth2ModelCtrl } from "@/OAuth2/controllers/oauth2.model.controller";
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.enum";
-import {
-  socialNetworkToStr,
-  SocialNetworkCredential,
-  SocialNetworkProfile
-} from "@/SocialNetworks/models/social.networks.model";
-import {
-  SocialNetworkRequestDocument,
-  SocialNetworkRequestModel
-} from "@/SocialNetworks/models/social.networks.request.model";
+import { socialNetworkToStr, SocialNetworkCredential } from "@/SocialNetworks/models/social.networks.model";
+import { SocialNetworkRequestDocument, SocialNetworkRequestModel } from "@/SocialNetworks/models/social.networks.request.model";
 
 class SocialNetwork {
   private static _instance: SocialNetwork;
@@ -261,7 +251,7 @@ class SocialNetwork {
       .then((request: SocialNetworkRequestDocument) => {
         if (!request) {
           return done({
-            boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+            boError: AUTH_ERRORS.INVALID_SOCIAL_REQUEST,
             boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
           });
         }
@@ -307,7 +297,7 @@ class SocialNetwork {
               });
 
               return done({
-                boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+                boError: AUTH_ERRORS.USER_ACCOUNT_MISMATCH,
                 boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
               });
             }
@@ -371,7 +361,7 @@ class SocialNetwork {
 
         /* User mismatch */
         return reject({
-          boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+          boError: AUTH_ERRORS.USER_SOCIAL_MISMATCH,
           boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
         });
       }
@@ -418,7 +408,7 @@ class SocialNetwork {
               profile: profile
             });
             return reject({
-              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
+              boError: AUTH_ERRORS.ACCOUNT_PROFILE_NOT_FOUND,
               boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
             });
           }
@@ -459,7 +449,7 @@ class SocialNetwork {
 
                 /* User mismatch */
                 return reject({
-                  boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+                  boError: AUTH_ERRORS.USER_SOCIAL_MISMATCH,
                   boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
                 });
               }
@@ -558,8 +548,8 @@ class SocialNetwork {
 
       /* User mismatch */
       return done({
-        boError: AUTH_ERRORS.INVALID_AUTHORIZATION_CODE,
-        boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
+        boError: AUTH_ERRORS.CANT_REGISTER_ANOTHER_SOCIAL,
+        boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
       });
     }
 
