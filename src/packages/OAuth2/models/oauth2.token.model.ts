@@ -3,22 +3,18 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { Objects } from "@ikoabo/core";
+import { BaseModel } from "@ikoabo/server";
+import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { BaseModel, Objects } from "@ikoabo/core_srv";
 import { Token, RefreshToken } from "oauth2-server";
-import {
-  prop,
-  index,
-  getModelForClass,
-  DocumentType,
-  Ref,
-} from "@typegoose/typegoose";
-import { Application } from "@/Applications/models/applications.model";
 import { Account } from "@/Accounts/models/accounts.model";
+import { Application } from "@/Applications/models/applications.model";
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 
 @index({ accessToken: 1 })
@@ -62,7 +58,7 @@ export class OAuth2Token extends BaseModel {
    * Convert the document into Access Token
    */
   public toToken(): Token {
-    let token = {
+    const token = {
       accessToken: this.accessToken,
       accessTokenExpiresAt: this.accessTokenExpiresAt,
       refreshToken: this.refreshToken,
@@ -72,7 +68,7 @@ export class OAuth2Token extends BaseModel {
       user: <any>(this.user ? this.user : this.application),
       type: this.type,
       keep: this.keep,
-      createdAt: this.createdAt,
+      createdAt: this.createdAt
     };
 
     token.scope.push("default");
@@ -89,9 +85,9 @@ export class OAuth2Token extends BaseModel {
         token.scope.push("social");
       case OAUTH2_TOKEN_TYPE.TT_USER:
         /* Get application parameters */
-        const applicationOwner = Objects.get(token.client, 'owner', '').toString();
-        const projectOwner = Objects.get(token.client, 'project.owner', '').toString();
-        const user = Objects.get(token.user, 'id', this.user).toString();
+        const applicationOwner = Objects.get(token.client, "owner", "").toString();
+        const projectOwner = Objects.get(token.client, "project.owner", "").toString();
+        const user = Objects.get(token.user, "id", this.user).toString();
 
         /* Check if the user is the application owner */
         if (applicationOwner === user) {
@@ -113,16 +109,16 @@ export class OAuth2Token extends BaseModel {
    * Convert the document into Refresh Token
    */
   public toRefreshToken(): RefreshToken {
-    let token = {
+    const token = {
       refreshToken: this.refreshToken,
       refreshTokenExpiresAt: this.refreshTokenExpiresAt,
       scope: this.scope || [],
       client: <any>this.application,
       user: <any>(this.user ? this.user : this.application),
       keep: this.keep,
-      createdAt: this.createdAt,
+      createdAt: this.createdAt
     };
-    token.scope.push(token.client.id == token.user.id ? "application" : "user");
+    token.scope.push(token.client.id === token.user.id ? "application" : "user");
     token.scope.push("default");
     return token;
   }
@@ -139,7 +135,7 @@ export class OAuth2Token extends BaseModel {
           virtuals: true,
           versionKey: false,
           transform: (_doc: any, ret: any) => {
-            let token = {
+            const token = {
               accessToken: ret.accessToken,
               accessTokenExpiresAt: ret.accessTokenExpiresAt,
               refreshToken: ret.refreshToken,
@@ -148,21 +144,18 @@ export class OAuth2Token extends BaseModel {
               client: ret.application,
               user: ret.user ? ret.user : ret.application,
               keep: ret.keep,
-              createdAt: ret.createdAt,
+              createdAt: ret.createdAt
             };
-            token.scope.push(
-              token.client.id == token.user.id ? "application" : "user"
-            );
+            token.scope.push(token.client.id === token.user.id ? "application" : "user");
             token.scope.push("default");
             return token;
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false }
     });
   }
 }
 
 export type OAuth2TokenDocument = DocumentType<OAuth2Token>;
-export const OAuth2TokenModel: mongoose.Model<OAuth2TokenDocument> =
-  OAuth2Token.shared;
+export const OAuth2TokenModel: mongoose.Model<OAuth2TokenDocument> = OAuth2Token.shared;

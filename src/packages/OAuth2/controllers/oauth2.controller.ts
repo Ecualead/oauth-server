@@ -3,20 +3,20 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { AUTH_ERRORS } from "@ikoabo/auth";
+import { HTTP_STATUS, Objects } from "@ikoabo/core";
 import { Request, Response, NextFunction } from "express";
-import OAuth2Server from "oauth2-server";
-import {
+import OAuth2Server, {
   Token,
   Request as ORequest,
   Response as OResponse,
-  OAuthError,
+  OAuthError
 } from "oauth2-server";
-import { HTTP_STATUS, Objects } from "@ikoabo/core_srv";
-import { ERRORS } from "@ikoabo/auth_srv";
 import { OAuth2ModelCtrl } from "@/OAuth2/controllers/oauth2.model.controller";
 
 class OAuth2 {
@@ -40,8 +40,8 @@ class OAuth2 {
 
   public authenticate(scope?: string | string[]) {
     return (req: Request, res: Response, next: NextFunction) => {
-      let request = new ORequest(req);
-      let response = new OResponse(res);
+      const request = new ORequest(req);
+      const response = new OResponse(res);
       this._server
         .authenticate(request, response)
         .then((token: Token) => {
@@ -60,27 +60,24 @@ class OAuth2 {
               /* Scope is an string, assume one scope */
               if (tokenscope.indexOf(scope) < 0) {
                 next({
-                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                  boError: ERRORS.INVALID_SCOPE,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.INVALID_SCOPE
                 });
                 return;
               }
             } else if (Array.isArray(scope)) {
               /* Scope is an array with multiple scope */
-              if (
-                scope.filter((value) => tokenscope.indexOf(value) >= 0)
-                  .length !== scope.length
-              ) {
+              if (scope.filter((value) => tokenscope.indexOf(value) >= 0).length !== scope.length) {
                 next({
-                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                  boError: ERRORS.INVALID_SCOPE,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.INVALID_SCOPE
                 });
                 return;
               }
             } else {
               next({
-                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                boError: ERRORS.INVALID_SCOPE,
+                boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                boError: AUTH_ERRORS.INVALID_SCOPE
               });
               return;
             }
@@ -97,8 +94,8 @@ class OAuth2 {
     switch (error) {
       case "UnauthorizedClientError":
         next({
-          boError: ERRORS.INVALID_APPLICATION,
-          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+          boError: AUTH_ERRORS.INVALID_APPLICATION,
+          boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
         });
         break;
       case "ServerError":

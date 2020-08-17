@@ -3,20 +3,22 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { Objects } from "@ikoabo/core";
+import { ResponseHandler } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
 import {
   AuthorizationCode,
   Token,
   Request as ORequest,
-  Response as OResponse,
+  Response as OResponse
 } from "oauth2-server";
-import { ResponseHandler, Objects, ERRORS } from "@ikoabo/core_srv";
-import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 import { ApplicationAccessPolicyCtrl } from "@/Applications/controllers/application.access.policy.controller";
+import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 
 const router = Router();
@@ -26,15 +28,15 @@ const options = {
     handle: (/*req: Request*/) => {
       // Whatever you need to do to authorize / retrieve your user from post data here
       return {}; //{id: 1233}; // return client
-    },
-  },
+    }
+  }
 };
 
 router.post(
   "/authorize",
   (req: Request, res: Response, next: NextFunction) => {
-    let request = new ORequest(req);
-    let response = new OResponse(res);
+    const request = new ORequest(req);
+    const response = new OResponse(res);
     OAuth2Ctrl.server
       .authorize(request, response, options)
       .then((code: AuthorizationCode) => {
@@ -45,7 +47,7 @@ router.post(
               authorizationCode: code.authorizationCode,
               redirectUri: code.redirectUri,
               scope: code.scope,
-              expiresAt: code.expiresAt ? code.expiresAt.getTime() : null,
+              expiresAt: code.expiresAt ? code.expiresAt.getTime() : null
             };
 
             next();
@@ -62,8 +64,8 @@ router.post(
 router.post(
   "/signin",
   (req: Request, res: Response, next: NextFunction) => {
-    let request = new ORequest(req);
-    let response = new OResponse(res);
+    const request = new ORequest(req);
+    const response = new OResponse(res);
     OAuth2Ctrl.server
       .token(request, response)
       .then((token: Token) => {
@@ -83,7 +85,7 @@ router.post(
                 ? token.refreshTokenExpiresAt.getTime()
                 : null,
               createdAt: token.createdAt.getTime(),
-              scope: token.scope,
+              scope: token.scope
             };
 
             /* TODO XXX If the token is granted to an user then ensure user profile into application */
@@ -108,8 +110,8 @@ router.post(
 router.post(
   "/authenticate",
   (req: Request, res: Response, next: NextFunction) => {
-    let request = new ORequest(req);
-    let response = new OResponse(res);
+    const request = new ORequest(req);
+    const response = new OResponse(res);
     OAuth2Ctrl.server
       .authenticate(request, response)
       .then((token: Token) => {
@@ -117,31 +119,25 @@ router.post(
         /* Check for module authentication verification */
         if (token.type === OAUTH2_TOKEN_TYPE.TT_MODULE) {
           /* Validate module restriction */
-          ApplicationAccessPolicyCtrl.canAccess(
-            req,
-            Objects.get(token, "client", null)
-          )
+          ApplicationAccessPolicyCtrl.canAccess(req, Objects.get(token, "client", null))
             .then(() => {
               res.locals["response"] = {
                 module: Objects.get(token, "client", null),
-                scope: token.scope,
+                scope: token.scope
               };
               next();
             })
             .catch(next);
         } else {
           /* Validate application restrictions */
-          ApplicationAccessPolicyCtrl.canAccess(
-            req,
-            Objects.get(token, "client.id", null)
-          )
+          ApplicationAccessPolicyCtrl.canAccess(req, Objects.get(token, "client.id", null))
             .then(() => {
               /* Set basic application information into the response */
               res.locals["response"] = {
                 application: Objects.get(token, "client.id", null),
                 project: project,
                 domain: Objects.get(token, "client.project.domain", null),
-                scope: token.scope,
+                scope: token.scope
               };
 
               /* Add user information if the token belongs to an user */

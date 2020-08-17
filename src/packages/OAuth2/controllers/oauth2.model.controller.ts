@@ -3,10 +3,13 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { AUTH_ERRORS } from "@ikoabo/auth";
+import { Logger, Arrays, HTTP_STATUS, Tokens, Objects } from "@ikoabo/core";
 import {
   AuthorizationCode,
   AuthorizationCodeModel,
@@ -17,47 +20,24 @@ import {
   RefreshToken,
   RefreshTokenModel,
   Token,
-  User,
+  User
 } from "oauth2-server";
-import {
-  Logger,
-  Arrays,
-  Token as TokenUtility,
-  HTTP_STATUS,
-} from "@ikoabo/core_srv";
-import { ERRORS } from "@ikoabo/auth_srv";
-import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
-import {
-  OAuth2CodeDocument,
-  OAuth2CodeModel,
-} from "@/OAuth2/models/oauth2.code.model";
-import {
-  AccountDocument,
-  AccountModel,
-} from "@/Accounts/models/accounts.model";
 import { AccountAccessPolicy } from "@/Accounts/controllers/account.access.policy.controller";
-import {
-  ApplicationModel,
-  ApplicationDocument,
-} from "@/Applications/models/applications.model";
-import {
-  OAuth2TokenModel,
-  OAuth2TokenDocument,
-} from "@/OAuth2/models/oauth2.token.model";
-import { ProjectDocument } from "@/Projects/models/projects.model";
-import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
-import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
-import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
-import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
+import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
+import { AccountDocument, AccountModel } from "@/Accounts/models/accounts.model";
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
+import { ApplicationModel, ApplicationDocument } from "@/Applications/models/applications.model";
+import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
+import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
+import { OAuth2CodeDocument, OAuth2CodeModel } from "@/OAuth2/models/oauth2.code.model";
+import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
+import { OAuth2TokenModel, OAuth2TokenDocument } from "@/OAuth2/models/oauth2.token.model";
+import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
+import { ProjectDocument } from "@/Projects/models/projects.model";
 
 class OAuth2Model
-  implements
-  PasswordModel,
-  ClientCredentialsModel,
-  AuthorizationCodeModel,
-  RefreshTokenModel {
+  implements PasswordModel, ClientCredentialsModel, AuthorizationCodeModel, RefreshTokenModel {
   private static _instance: OAuth2Model;
   private _logger: Logger;
   private constructor() {
@@ -83,11 +63,7 @@ class OAuth2Model
    * @param {string | string[]} scope
    * @returns {string[]}
    */
-  private static matchScope(
-    application: Client,
-    user: User,
-    scope: string[]
-  ): Promise<string[]> {
+  private static matchScope(application: Client, user: User, scope: string[]): Promise<string[]> {
     return new Promise<string[]>((resolve, reject) => {
       if (user && user.id !== application.id) {
         /* Search for user project profile scope */
@@ -96,19 +72,16 @@ class OAuth2Model
             if (!scope || scope.length === 0) {
               scope = value.scope;
             }
-            resolve(
-              Arrays.intersect(application.scope, scope, value.scope || [])
-            );
+            resolve(Arrays.intersect(application.scope, scope, value.scope || []));
           })
           .catch(reject);
         return;
-      } else {
-        if (!scope || scope.length === 0) {
-          scope = application.scope;
-        }
-        resolve(Arrays.intersect(application.scope, scope));
-        return;
       }
+      if (!scope || scope.length === 0) {
+        scope = application.scope;
+      }
+      resolve(Arrays.intersect(application.scope, scope));
+      return;
     });
   }
 
@@ -128,8 +101,8 @@ class OAuth2Model
         .then((value: OAuth2CodeDocument) => {
           if (!value || !value.application) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.INVALID_AUTHORIZATION_CODE,
+              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+              boError: AUTH_ERRORS.INVALID_AUTHORIZATION_CODE
             });
             return;
           }
@@ -147,13 +120,11 @@ class OAuth2Model
    */
   revokeAuthorizationCode(code: AuthorizationCode): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      this._logger.debug(
-        `Revoking authorization code ${code.authorizationCode}`
-      );
+      this._logger.debug(`Revoking authorization code ${code.authorizationCode}`);
       OAuth2CodeModel.findOneAndRemove({
         code: code.authorizationCode,
         application: code.client.id,
-        expiresAt: code.expiresAt,
+        expiresAt: code.expiresAt
       })
         .then((value: OAuth2CodeDocument) => {
           resolve(value !== null);
@@ -178,10 +149,8 @@ class OAuth2Model
     return new Promise<string>((resolve) => {
       /* TODO XXX Check if user/application can generate authorization code */
       /* Generate the authorization code */
-      let code: string = TokenUtility.longToken;
-      this._logger.debug(
-        `Generated authorization code ${code} for client ${application.clientId}`
-      );
+      const code: string = Tokens.long;
+      this._logger.debug(`Generated authorization code ${code} for client ${application.clientId}`);
       resolve(code);
     });
   }
@@ -200,12 +169,10 @@ class OAuth2Model
     user: User
   ): Promise<AuthorizationCode> {
     return new Promise<AuthorizationCode>((resolve, reject) => {
-      this._logger.debug(
-        `Storing authorization code ${code.authorizationCode}`
-      );
+      this._logger.debug(`Storing authorization code ${code.authorizationCode}`);
 
       /* Get all valid scope from the match */
-      OAuth2Model.matchScope(application, user, Arrays.force(code.scope))
+      OAuth2Model.matchScope(application, user, Arrays.initialize<string>(code.scope as any))
         .then((validScope: string[]) => {
           /* Save the authorization code into database */
           OAuth2CodeModel.create({
@@ -214,7 +181,7 @@ class OAuth2Model
             redirectUri: code.redirectUri,
             scope: validScope,
             application: <any>application.id,
-            user: "id" in user && user.id !== application.id ? user.id : null,
+            user: "id" in user && user.id !== application.id ? user.id : null
           })
             .then((value: OAuth2CodeDocument) => {
               value.application = <any>application;
@@ -236,12 +203,12 @@ class OAuth2Model
   getUserFromClient(application: Client): Promise<User | Falsey> {
     return new Promise<User | Falsey>((resolve) => {
       this._logger.debug("Getting associated user from client", {
-        application: application.id,
+        application: application.id
       });
       const userObj = {
         id: application.id,
         clientId: application.clientId,
-        scope: application.scope,
+        scope: application.scope
       };
       resolve(userObj);
     });
@@ -255,18 +222,14 @@ class OAuth2Model
    * @param {string | string[]} scope  scope allowed to the token
    * @returns {Promise<string>}  Return the access token
    */
-  generateAccessToken(
-    application: Client,
-    user: User,
-    scope: string | string[]
-  ): Promise<string> {
+  generateAccessToken(application: Client, user: User, scope: string | string[]): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       /* Generate access token */
       this._logger.debug("Generating access token for application/module", {
         application: application.id,
-        user: user.id,
+        user: user.id
       });
-      const accessToken = TokenUtility.longToken;
+      const accessToken = Tokens.long;
 
       // TODO XXX Check for scope scope
       /* Check if the user is registered into the application */
@@ -274,7 +237,7 @@ class OAuth2Model
         /* Check user signin policy */
         AccountAccessPolicy.canSignin(
           <AccountDocument>user,
-          <ProjectDocument>(<ApplicationDocument>application).project,
+          Objects.get(application, "project"),
           user["username"],
           user["isSocial"],
           true
@@ -305,8 +268,8 @@ class OAuth2Model
         .then((user: AccountDocument) => {
           if (!user) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_NOT_FOUND,
-              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND,
+              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED
             });
             return;
           }
@@ -315,8 +278,9 @@ class OAuth2Model
           user
             .validPassword(password)
             .then(() => {
+              const tmpUser: any = user;
               /* Set the used username */
-              (<any>user)["username"] = username;
+              tmpUser["username"] = username;
               resolve(user);
             })
             .catch(reject);
@@ -342,7 +306,7 @@ class OAuth2Model
   ): Promise<string | string[] | Falsey> {
     return new Promise<string | string[] | Falsey>((resolve, reject) => {
       /* Get all valid scope from the match */
-      OAuth2Model.matchScope(application, user, Arrays.force(scope))
+      OAuth2Model.matchScope(application, user, Arrays.initialize<string>(scope as any))
         .then((validScope: string[]) => {
           /* Ensure virtual scope are present */
           validScope.push(application.id === user.id ? "application" : "user");
@@ -370,7 +334,7 @@ class OAuth2Model
       /* Prepare the client query */
       const clientQuery: any = {
         _id: clientId,
-        secret: clientSecret,
+        secret: clientSecret
       };
 
       /* Search for the client into database */
@@ -378,8 +342,8 @@ class OAuth2Model
         .then((value: ModuleDocument) => {
           if (!value) {
             reject({
-              boError: ERRORS.INVALID_APPLICATION,
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+              boError: AUTH_ERRORS.INVALID_APPLICATION,
+              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
             });
             return;
           }
@@ -398,12 +362,10 @@ class OAuth2Model
    */
   getClient(clientId: string, clientSecret: string): Promise<Client> {
     return new Promise<Client>((resolve, reject) => {
-      this._logger.debug(
-        `Retrieve client [clientId: ${clientId}, clientSecret: ${clientSecret}]`
-      );
+      this._logger.debug(`Retrieve client [clientId: ${clientId}, clientSecret: ${clientSecret}]`);
 
       /* Prepare the client query */
-      let clientQuery: any = { _id: clientId };
+      const clientQuery: any = { _id: clientId };
       if (clientSecret) {
         clientQuery.secret = clientSecret;
       }
@@ -443,19 +405,16 @@ class OAuth2Model
    */
   saveToken(token: Token, application: Client, user: User): Promise<Token> {
     return new Promise<Token>((resolve, reject) => {
-      this._logger.debug(
-        `Storing access token for client ${application.id} and user ${user.id}`
-      );
+      this._logger.debug(`Storing access token for client ${application.id} and user ${user.id}`);
 
       /* Check if client token don't expire and there is no user involved */
       if (
-        application.accessTokenLifetime ===
-        PROJECT_LIFETIME_TYPES.LT_INFINITE &&
+        application.accessTokenLifetime === PROJECT_LIFETIME_TYPES.LT_INFINITE &&
         user.id !== application.id
       ) {
         reject({
-          boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-          boError: ERRORS.NOT_ALLOWED_SIGNIN,
+          boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+          boError: AUTH_ERRORS.NOT_ALLOWED_SIGNIN
         });
         return;
       }
@@ -477,20 +436,22 @@ class OAuth2Model
         case APPLICATION_TYPES.APP_WEB_SERVER_SIDE:
           tokenType =
             "id" in user && user.id !== application.id
-              ? (token.type && token.type > OAUTH2_TOKEN_TYPE.TT_USER ? token.type : OAUTH2_TOKEN_TYPE.TT_USER)
+              ? token.type && token.type > OAUTH2_TOKEN_TYPE.TT_USER
+                ? token.type
+                : OAUTH2_TOKEN_TYPE.TT_USER
               : OAUTH2_TOKEN_TYPE.TT_APPLICATION;
           break;
 
         default:
           /* Invalid application value */
           return reject({
-            boError: ERRORS.INVALID_APPLICATION,
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
+            boError: AUTH_ERRORS.INVALID_APPLICATION,
+            boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
           });
       }
 
       /* Get all valid scope from the match */
-      OAuth2Model.matchScope(application, user, Arrays.force(token.scope))
+      OAuth2Model.matchScope(application, user, Arrays.initialize<string>(token.scope as any))
         .then((validScope: string[]) => {
           /* Save the authorization code into database */
           OAuth2TokenModel.create({
@@ -500,12 +461,10 @@ class OAuth2Model
             refreshTokenExpiresAt: token.refreshTokenExpiresAt,
             scope: validScope,
             application: <any>application.id,
-            keep:
-              application.accessTokenLifetime ===
-              PROJECT_LIFETIME_TYPES.LT_INFINITE,
+            keep: application.accessTokenLifetime === PROJECT_LIFETIME_TYPES.LT_INFINITE,
             type: tokenType,
             user: user.id !== application.id ? user.id : null,
-            username: user.id !== application.id ? user["username"] : null,
+            username: user.id !== application.id ? user["username"] : null
           })
             .then((accessToken: OAuth2TokenDocument) => {
               accessToken.application = <any>application;
@@ -536,14 +495,14 @@ class OAuth2Model
     return new Promise<Token>((resolve, reject) => {
       this._logger.debug(`Looking for token ${accessToken}`);
       OAuth2TokenModel.findOne({
-        accessToken: accessToken,
+        accessToken: accessToken
       })
         .populate("user")
         .then((token: OAuth2TokenDocument) => {
           if (!token) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
-              boError: ERRORS.INVALID_TOKEN,
+              boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED,
+              boError: AUTH_ERRORS.INVALID_TOKEN
             });
             return;
           }
@@ -562,9 +521,7 @@ class OAuth2Model
               .catch(reject);
           } else {
             /* Get the target application */
-            ApplicationCtrl.fetch(token.application.toString(), {}, {}, [
-              "project",
-            ])
+            ApplicationCtrl.fetch(token.application.toString(), {}, {}, ["project"])
               .then((application: ApplicationDocument) => {
                 token.application = application;
 
@@ -572,12 +529,12 @@ class OAuth2Model
                 if (
                   token.keep &&
                   token.user &&
-                  (<AccountDocument>token.user).id !==
-                  (<ApplicationDocument>token.application).id
+                  Objects.get(token, "user.id", "no-user-id") !==
+                    Objects.get(token, "application.id")
                 ) {
                   reject({
-                    boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                    boError: ERRORS.NOT_ALLOWED_SIGNIN,
+                    boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                    boError: AUTH_ERRORS.NOT_ALLOWED_SIGNIN
                   });
                   return;
                 }
@@ -592,8 +549,8 @@ class OAuth2Model
                 /* Check if the token is expired */
                 if (token.accessTokenExpiresAt.getTime() < Date.now()) {
                   reject({
-                    boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
-                    boError: ERRORS.TOKEN_EXPIRED,
+                    boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED,
+                    boError: AUTH_ERRORS.TOKEN_EXPIRED
                   });
                   return;
                 }
@@ -603,9 +560,7 @@ class OAuth2Model
                   /* Check user signin policy */
                   AccountAccessPolicy.canSignin(
                     <AccountDocument>token.user,
-                    <ProjectDocument>(
-                      (<ApplicationDocument>token.application).project
-                    ),
+                    Objects.get(token, "application.project"),
                     token.username,
                     token.type === OAUTH2_TOKEN_TYPE.TT_USER_SOCIAL,
                     true
@@ -635,12 +590,10 @@ class OAuth2Model
   verifyScope(token: Token, scope: string | string[]): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       /* Force scope to be an array */
-      scope = Arrays.force(scope);
-      token.scope = Arrays.force(token.scope);
+      scope = Arrays.initialize<string>(scope as any);
+      token.scope = Arrays.initialize<string>(token.scope as any);
 
-      let validScope = scope.every(
-        (tmpScope) => token.scope.indexOf(tmpScope) >= 0
-      );
+      const validScope = scope.every((tmpScope) => token.scope.indexOf(tmpScope) >= 0);
 
       resolve(validScope);
     });
@@ -654,18 +607,12 @@ class OAuth2Model
    * @param {string | string[]} scope  Target requested scope
    * @returns {Promise<string>}  Return the refresh token
    */
-  generateRefreshToken(
-    client: Client,
-    user: User,
-    scope: string | string[]
-  ): Promise<string> {
+  generateRefreshToken(client: Client, user: User, scope: string | string[]): Promise<string> {
     return new Promise<string>((resolve) => {
       // TODO XXX Check scope
       /* Generate refresh token */
-      this._logger.debug(
-        `Generating refresh token for client ${client.id} and user ${user.id}`
-      );
-      let refreshToken = TokenUtility.longToken;
+      this._logger.debug(`Generating refresh token for client ${client.id} and user ${user.id}`);
+      const refreshToken = Tokens.long;
       resolve(refreshToken);
     });
   }
@@ -684,7 +631,7 @@ class OAuth2Model
         OAuth2TokenModel.findOneAndRemove({
           accessToken: token.accessToken,
           application: token.client.id,
-          user: token.user.id,
+          user: token.user.id
         })
           .then((token) => {
             resolve(token !== null);
@@ -698,11 +645,11 @@ class OAuth2Model
           {
             refreshToken: token.refreshToken,
             application: token.client.id,
-            user: token.user.id,
+            user: token.user.id
           },
           {
             refreshToken: null,
-            refreshTokenExpiresAt: null,
+            refreshTokenExpiresAt: null
           }
         )
           .then((token) => {
@@ -724,15 +671,15 @@ class OAuth2Model
     return new Promise<RefreshToken>((resolve, reject) => {
       this._logger.debug(`Looking for token ${refreshToken}`);
       OAuth2TokenModel.findOne({
-        refreshToken: refreshToken,
+        refreshToken: refreshToken
       })
         .populate({ path: "application", populate: { path: "project" } })
         .populate("user")
         .then((token: OAuth2TokenDocument) => {
           if (!token) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.INVALID_TOKEN,
+              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+              boError: AUTH_ERRORS.INVALID_TOKEN
             });
             return;
           }
@@ -740,8 +687,8 @@ class OAuth2Model
           /* Check if the token is expired */
           if (token.accessTokenExpiresAt.getTime() < Date.now()) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_UNAUTHORIZED,
-              boError: ERRORS.TOKEN_EXPIRED,
+              boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED,
+              boError: AUTH_ERRORS.TOKEN_EXPIRED
             });
             return;
           }
