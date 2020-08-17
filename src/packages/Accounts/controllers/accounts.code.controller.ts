@@ -3,26 +3,19 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import fs from "fs";
 import path from "path";
-import { Logger } from "@ikoabo/core_srv";
+import { AUTH_ERRORS } from "@ikoabo/auth";
+import { Logger } from "@ikoabo/core";
 import AsyncLock from "async-lock";
 import RoaringBitmap32 from "roaring/RoaringBitmap32";
-import { ERRORS } from "@ikoabo/auth_srv";
 
-const USER_CODE_FILE = path.join(
-  __dirname,
-  "..",
-  "..",
-  "..",
-  "..",
-  "codes",
-  "map."
-);
+const USER_CODE_FILE = path.join(__dirname, "..", "..", "..", "..", "codes", "map.");
 const USER_CODE_SIZE = 8;
 
 const lock = new AsyncLock();
@@ -75,7 +68,7 @@ class AccountCode {
           /* Data is full. This never must happend (2251875390625) */
           if (topLeft === leftValue) {
             this._logger.error("User code data is full");
-            reject({ boError: ERRORS.INVALID_CODE_FULL });
+            reject({ boError: AUTH_ERRORS.INVALID_CODE_FULL });
             return;
           }
         }
@@ -86,14 +79,12 @@ class AccountCode {
         bitmap.runOptimize();
         bitmap.shrinkToFit();
         AccountCode._saveMap(filename, bitmap);
-        const code = `${AccountCode._toString(
-          leftValue
-        )}${AccountCode._toString(rightValue)}`;
+        const code = `${AccountCode._toString(leftValue)}${AccountCode._toString(rightValue)}`;
         this._logger.debug("Generated new user code", { code: code });
         resolve(code);
       } catch (err) {
         this._logger.error("Error generating code", err);
-        reject({ boError: ERRORS.INVALID_CODE_ERROR });
+        reject({ boError: AUTH_ERRORS.INVALID_CODE_ERROR });
         return;
       }
     });
@@ -140,11 +131,8 @@ class AccountCode {
   /**
    * Transform a number value to String to be used as code
    */
-  private static _toString(
-    value: number,
-    chars: number = USER_CODE_SIZE / 2
-  ): string {
-    let strValue: string = "";
+  private static _toString(value: number, chars: number = USER_CODE_SIZE / 2): string {
+    let strValue = "";
     let tmpValue: number;
 
     for (let itr = 0; itr < chars; ++itr) {
@@ -152,7 +140,7 @@ class AccountCode {
       value = Math.floor(value / 100);
 
       /* Check if the code is a digit or character */
-      let baseCode = tmpValue < 10 ? 48 : 55;
+      const baseCode = tmpValue < 10 ? 48 : 55;
       strValue = `${String.fromCharCode(baseCode + tmpValue)}${strValue}`;
     }
     return strValue.toLowerCase();
@@ -179,15 +167,12 @@ class AccountCode {
   /**
    * Increment code value taking into account value restrictions
    */
-  private static _inc(
-    value: number,
-    lenght: number = USER_CODE_SIZE / 2
-  ): number {
+  private static _inc(value: number, lenght: number = USER_CODE_SIZE / 2): number {
     let tmpValue: number;
-    let resultNumber: number = 0;
+    let resultNumber = 0;
     let multiplier = 1;
 
-    let inc: number = 1;
+    let inc = 1;
     for (let itr = 0; itr < lenght; ++itr) {
       tmpValue = value % 100;
       value = Math.floor(value / 100);

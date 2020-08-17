@@ -3,15 +3,16 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Logger } from "@ikoabo/core_srv";
-import randomColor from "randomcolor";
+import { Logger } from "@ikoabo/core";
 import random from "random";
-const nameInitials = require("name-initials");
+import randomColor from "randomcolor";
 const gender = require("gender-detection");
+const nameInitials = require("name-initials");
 
 const MALE_COLORS: any[] = ["red", "brown", "green", "blue"];
 const FEMALE_COLORS: any[] = ["orange", "yellow", "purple", "pink"];
@@ -41,9 +42,9 @@ class AccountIcon {
       luminosity: "dark",
       seed: name,
       hue:
-        strGender == "male"
+        strGender === "male"
           ? MALE_COLORS[random.int(0, MALE_COLORS.length - 1)]
-          : FEMALE_COLORS[random.int(0, FEMALE_COLORS.length - 1)],
+          : FEMALE_COLORS[random.int(0, FEMALE_COLORS.length - 1)]
     });
     return colorBase;
   }

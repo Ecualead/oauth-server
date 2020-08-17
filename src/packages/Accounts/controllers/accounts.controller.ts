@@ -3,43 +3,38 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Token, Objects, Arrays, HTTP_STATUS, CRUD } from "@ikoabo/core_srv";
-import { ERRORS } from "@ikoabo/auth_srv";
+import { AUTH_ERRORS } from "@ikoabo/auth";
+import { Objects, Tokens, Arrays, HTTP_STATUS } from "@ikoabo/core";
+import { CRUD } from "@ikoabo/server";
+import { AccountAccessPolicy } from "@/Accounts/controllers/account.access.policy.controller";
+import { AccountIconCtrl } from "@/Accounts/controllers/account.icon.controller";
 import { AccountCodeCtrl } from "@/Accounts/controllers/accounts.code.controller";
-import { ApplicationDocument } from "@/Applications/models/applications.model";
-import {
-  AccountDocument,
-  Account,
-  AccountModel,
-} from "@/Accounts/models/accounts.model";
-import {
-  PROJECT_EMAIL_CONFIRMATION,
-  PROJECT_RECOVER_TYPE,
-  PROJECT_LIFETIME_TYPES,
-} from "@/Projects/models/projects.enum";
 import {
   ACCOUNT_STATUS,
   RECOVER_TOKEN_STATUS,
   SCP_ACCOUNT_DEFAULT,
   SCP_PREVENT,
   SCP_NON_INHERITABLE,
-  EMAIL_STATUS,
+  EMAIL_STATUS
 } from "@/Accounts/models/accounts.enum";
+import { AccountDocument, Account, AccountModel } from "@/Accounts/models/accounts.model";
 import {
   AccountProjectProfileDocument,
-  AccountProjectProfileModel,
+  AccountProjectProfileModel
 } from "@/Accounts/models/accounts.projects.model";
-import { ProjectDocument } from "@/Projects/models/projects.model";
+import { AccountTreeModel, AccountTreeDocument } from "@/Accounts/models/accounts.tree.model";
+import { ApplicationDocument } from "@/Applications/models/applications.model";
 import {
-  AccountTreeModel,
-  AccountTreeDocument,
-} from "@/Accounts/models/accounts.tree.model";
-import { AccountIconCtrl } from "@/Accounts/controllers/account.icon.controller";
-import { AccountAccessPolicy } from "@/Accounts/controllers/account.access.policy.controller";
+  PROJECT_EMAIL_CONFIRMATION,
+  PROJECT_RECOVER_TYPE,
+  PROJECT_LIFETIME_TYPES
+} from "@/Projects/models/projects.enum";
+import { ProjectDocument } from "@/Projects/models/projects.model";
 import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.enum";
 import { SocialNetworkCredential } from "@/SocialNetworks/models/social.networks.model";
 
@@ -65,17 +60,14 @@ class Accounts extends CRUD<Account, AccountDocument> {
     return Accounts._instance;
   }
 
-  public register(
-    data: Account,
-    application: ApplicationDocument
-  ): Promise<AccountDocument> {
+  public register(data: Account, application: ApplicationDocument): Promise<AccountDocument> {
     return new Promise<AccountDocument>((resolve, reject) => {
       /* Find if there is an user registered with the email */
       AccountModel.findOne({ "emails.email": data.email })
         .then((user: AccountDocument) => {
           /* Check if user is already registered */
           if (user) {
-            reject({ boError: ERRORS.EMAIL_IN_USE });
+            reject({ boError: AUTH_ERRORS.EMAIL_IN_USE });
             return;
           }
 
@@ -91,15 +83,14 @@ class Accounts extends CRUD<Account, AccountDocument> {
                 "settings.emailConfirmation.type",
                 PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_NOT_REQUIRED
               );
-              let status = ACCOUNT_STATUS.AS_REGISTERED;
+              const status = ACCOUNT_STATUS.AS_REGISTERED;
               let emailStatus = EMAIL_STATUS.ES_REGISTERED;
               switch (confirmationPolicy) {
                 case PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED_BY_TIME:
                   emailStatus = EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH;
                   break;
                 case PROJECT_EMAIL_CONFIRMATION.EC_CONFIRMATION_REQUIRED:
-                  emailStatus =
-                    EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH;
+                  emailStatus = EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH;
                   break;
               }
 
@@ -107,16 +98,10 @@ class Accounts extends CRUD<Account, AccountDocument> {
               data.status = status;
 
               /* Set the confirmation expiration */
-              if (
-                emailStatus === EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH
-              ) {
+              if (emailStatus === EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH) {
                 data.confirmationExpires =
                   Date.now() +
-                  Objects.get(
-                    application.project,
-                    "settings.emailConfirmation.time",
-                    0
-                  );
+                  Objects.get(application.project, "settings.emailConfirmation.time", 0);
               }
 
               /* Set the confirmation token information if its necessary */
@@ -135,10 +120,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
                 emailStatus !== EMAIL_STATUS.ES_REGISTERED &&
                 recoverType !== PROJECT_RECOVER_TYPE.RT_DISABLED
               ) {
-                token =
-                  recoverType !== PROJECT_RECOVER_TYPE.RT_LINK
-                    ? Token.shortToken
-                    : Token.longToken;
+                token = recoverType !== PROJECT_RECOVER_TYPE.RT_LINK ? Tokens.short : Tokens.long;
                 tokenAttempts = 0;
                 tokenStatus = RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM;
                 tokenExpires = Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS;
@@ -153,9 +135,9 @@ class Accounts extends CRUD<Account, AccountDocument> {
                     token: token,
                     status: tokenStatus,
                     expires: tokenExpires,
-                    attempts: tokenAttempts,
-                  },
-                },
+                    attempts: tokenAttempts
+                  }
+                }
               ];
 
               /* Initialize avatar metadata */
@@ -207,18 +189,15 @@ class Accounts extends CRUD<Account, AccountDocument> {
           data.social = [
             {
               type: socialType,
-              profile: profile,
-            },
+              profile: profile
+            }
           ];
           /* Initialize avatar metadata */
           const fullname = `${data.name} ${data.lastname}`;
           data.initials = AccountIconCtrl.getInitials(fullname);
           data.color1 = AccountIconCtrl.getColor(fullname);
 
-          this._logger.debug(
-            "Registering new user account from social network",
-            data
-          );
+          this._logger.debug("Registering new user account from social network", data);
 
           /* Register the new user */
           AccountModel.create(data).then(resolve).catch(reject);
@@ -236,21 +215,21 @@ class Accounts extends CRUD<Account, AccountDocument> {
       /* Check if the user is currently registered into the project */
       AccountProjectProfileModel.findOne({
         account: account.id,
-        project: project,
+        project: project
       })
         .then((value: AccountProjectProfileDocument) => {
           if (value) {
-            reject({ boError: ERRORS.USER_DUPLICATED });
+            reject({ boError: AUTH_ERRORS.USER_DUPLICATED });
             return;
           }
 
           /* Initialize the profile */
-          let profile = {
+          const profile = {
             account: account._id,
             project: project as any,
             status: ACCOUNT_STATUS.AS_REGISTERED,
             referral: referral,
-            scope: Arrays.force(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE),
+            scope: Arrays.initialize(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE)
           };
 
           /* Set the new user scope using default values and application scope */
@@ -279,7 +258,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
                     project: project,
                     account: account._id,
                     code: account.code,
-                    tree: tree,
+                    tree: tree
                   }).finally(() => {
                     resolve(value);
                   });
@@ -302,22 +281,22 @@ class Accounts extends CRUD<Account, AccountDocument> {
       /* Check if the user is currently registered into the project */
       AccountProjectProfileModel.findOne({
         account: account.id,
-        project: project,
+        project: project
       })
         .then((value: AccountProjectProfileDocument) => {
           if (value) {
-            reject({ boError: ERRORS.USER_DUPLICATED });
+            reject({ boError: AUTH_ERRORS.USER_DUPLICATED });
             return;
           }
 
           /* Initialize the profile */
-          let profile = {
+          const profile = {
             account: account._id,
             project: project as any,
             status: ACCOUNT_STATUS.AS_REGISTERED,
             referral: referral,
-            scope: Arrays.force(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE),
-            social: [credentials],
+            scope: Arrays.initialize(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE),
+            social: [credentials]
           };
 
           /* Set the new user scope using default values and application scope */
@@ -346,7 +325,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
                     project: project,
                     account: account._id,
                     code: account.code,
-                    tree: tree,
+                    tree: tree
                   }).finally(() => {
                     resolve(value);
                   });
@@ -374,21 +353,21 @@ class Accounts extends CRUD<Account, AccountDocument> {
             { _id: account.id },
             {
               $set: {
-                password: newPassword,
-              },
+                password: newPassword
+              }
             },
             { new: true }
           )
             .then((value: AccountDocument) => {
               if (!value) {
                 reject({
-                  boError: ERRORS.ACCOUNT_NOT_REGISTERED,
-                  boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE,
+                  boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
                 });
                 return;
               }
               this._logger.debug("User password updated", {
-                email: value.email,
+                email: value.email
               });
               resolve(value);
             })
@@ -396,7 +375,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
         })
         .catch((err: any) => {
           this._logger.error("Invalid password validation", err);
-          reject({ boError: ERRORS.INVALID_CREDENTIALS });
+          reject({ boError: AUTH_ERRORS.INVALID_CREDENTIALS });
         });
     });
   }
@@ -412,8 +391,8 @@ class Accounts extends CRUD<Account, AccountDocument> {
     /* Validate recover/confirm max attempts */
     if (account.recover.attempts > MAX_ATTEMPTS) {
       return reject({
-        boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-        boError: ERRORS.MAX_ATTEMPTS,
+        boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+        boError: AUTH_ERRORS.MAX_ATTEMPTS
       });
     }
 
@@ -421,24 +400,24 @@ class Accounts extends CRUD<Account, AccountDocument> {
     const accountEmail = account.locateEmail(email);
     if (!accountEmail) {
       return reject({
-        boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-        boError: ERRORS.INVALID_TOKEN,
+        boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+        boError: AUTH_ERRORS.INVALID_TOKEN
       });
     }
 
     /* Validate expiration time */
     if (accountEmail.confirm.expires < Date.now()) {
       return reject({
-        boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-        boError: ERRORS.TOKEN_EXPIRED,
+        boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+        boError: AUTH_ERRORS.TOKEN_EXPIRED
       });
     }
 
     /* Validate the confirm token */
     if (accountEmail.confirm.token !== token) {
       return reject({
-        boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-        boError: ERRORS.INVALID_TOKEN,
+        boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+        boError: AUTH_ERRORS.INVALID_TOKEN
       });
     }
 
@@ -448,7 +427,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
         _id: account._id,
         "emails.email": email,
         "emails.confirm.token": token,
-        "emails.confirm.status": RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
+        "emails.confirm.status": RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM
       },
       {
         $set: {
@@ -456,21 +435,19 @@ class Accounts extends CRUD<Account, AccountDocument> {
           "emails.$[element].confirm.token": null,
           "emails.$[element].confirm.status": RECOVER_TOKEN_STATUS.RTS_DISABLED,
           "emails.$[element].confirm.expires": 0,
-          "emails.$[element].confirm.attempts": 0,
-        },
+          "emails.$[element].confirm.attempts": 0
+        }
       },
       {
         new: true,
-        arrayFilters: [
-          { "element.email": email, "element.confirm.token": token },
-        ],
+        arrayFilters: [{ "element.email": email, "element.confirm.token": token }]
       }
     )
       .then((account: AccountDocument) => {
         if (!account) {
           reject({
-            boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-            boError: ERRORS.INVALID_TOKEN,
+            boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+            boError: AUTH_ERRORS.INVALID_TOKEN
           });
           return;
         }
@@ -478,21 +455,21 @@ class Accounts extends CRUD<Account, AccountDocument> {
         /* Fetch the user account profile */
         AccountProjectProfileModel.findOne({
           project: project._id,
-          account: account._id,
+          account: account._id
         })
           .populate("account")
           .populate("project")
           .then((profile: AccountProjectProfileDocument) => {
             if (!profile) {
               reject({
-                boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                boError: ERRORS.INVALID_TOKEN,
+                boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                boError: AUTH_ERRORS.INVALID_TOKEN
               });
               return;
             }
 
             this._logger.debug("User account confirmed", {
-              email: email,
+              email: email
             });
             resolve(profile);
           })
@@ -509,13 +486,13 @@ class Accounts extends CRUD<Account, AccountDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
       const update: any = { $inc: { "recover.attempts": 1 } };
       AccountModel.findOneAndUpdate({ "emails.email": email }, update, {
-        new: true,
+        new: true
       })
         .then((account: AccountDocument) => {
           if (!account) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED
             });
             return;
           }
@@ -527,50 +504,30 @@ class Accounts extends CRUD<Account, AccountDocument> {
               const accountEmail = account.locateEmail(email);
 
               /* Check for the current email status */
-              if (
-                accountEmail.status !==
-                EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH
-              ) {
+              if (accountEmail.status !== EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH) {
                 /* Email address don't need to be confirmed */
                 return reject({
-                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                  boError: ERRORS.ACCOUNT_ALREADY_CONFIRMED,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.ACCOUNT_ALREADY_CONFIRMED
                 });
               }
 
-              this._doConfirmation(
-                email,
-                token,
-                account,
-                project,
-                resolve,
-                reject
-              );
+              this._doConfirmation(email, token, account, project, resolve, reject);
             })
             .catch((err: any) => {
               /* Reject the same error on errors diferente to email not confirmed */
-              if (!err.boError || err.boError !== ERRORS.EMAIL_NOT_CONFIRMED) {
+              if (!err.boError || err.boError !== AUTH_ERRORS.EMAIL_NOT_CONFIRMED) {
                 return reject(err);
               }
 
-              this._doConfirmation(
-                email,
-                token,
-                account,
-                project,
-                resolve,
-                reject
-              );
+              this._doConfirmation(email, token, account, project, resolve, reject);
             });
         })
         .catch(reject);
     });
   }
 
-  public requestRecover(
-    email: string,
-    project: ProjectDocument
-  ): Promise<AccountDocument> {
+  public requestRecover(email: string, project: ProjectDocument): Promise<AccountDocument> {
     return new Promise<AccountDocument>((resolve, reject) => {
       /* Check if the recover is enabled in the target project */
       const recoverType = Objects.get(
@@ -579,19 +536,19 @@ class Accounts extends CRUD<Account, AccountDocument> {
         PROJECT_RECOVER_TYPE.RT_DISABLED
       );
       if (recoverType === PROJECT_RECOVER_TYPE.RT_DISABLED) {
-        reject({ boError: ERRORS.RECOVER_NOT_ALLOWED });
+        reject({ boError: AUTH_ERRORS.RECOVER_NOT_ALLOWED });
         return;
       }
 
       /* Look for the user by email */
       AccountModel.findOne({
-        "emails.email": email,
+        "emails.email": email
       })
         .then((account: AccountDocument) => {
           if (!account) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED
             });
             return;
           }
@@ -601,30 +558,27 @@ class Accounts extends CRUD<Account, AccountDocument> {
             .then(() => {
               /* Prepare the recover token */
               const token =
-                recoverType === PROJECT_RECOVER_TYPE.RT_CODE
-                  ? Token.shortToken
-                  : Token.longToken;
+                recoverType === PROJECT_RECOVER_TYPE.RT_CODE ? Tokens.short : Tokens.long;
               const update: any = {
                 $set: {
                   "emails.$[element].confirm.token": token,
-                  "emails.$[element].confirm.status":
-                    RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
+                  "emails.$[element].confirm.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
                   "emails.$[element].confirm.expires":
                     Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS,
-                  "emails.$[element].confirm.attempts": 1,
-                },
+                  "emails.$[element].confirm.attempts": 1
+                }
               };
 
               /* Register the reset token */
               AccountModel.findOneAndUpdate({ _id: account._id }, update, {
                 new: true,
-                arrayFilters: [{ "element.email": email }],
+                arrayFilters: [{ "element.email": email }]
               })
                 .then((account: AccountDocument) => {
                   /* Look for the user project related profile */
                   AccountProjectProfileModel.findOne({
                     project: project,
-                    account: account.id,
+                    account: account.id
                   })
                     .populate("account")
                     .populate("project")
@@ -632,7 +586,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
                       this._logger.debug("Recovery account requested", {
                         id: account.id,
                         email: account.email,
-                        token: token,
+                        token: token
                       });
                       resolve(profile);
                     })
@@ -654,30 +608,29 @@ class Accounts extends CRUD<Account, AccountDocument> {
           "emails.confirm.token": token,
           "emails.confirm.status": RECOVER_TOKEN_STATUS.RTS_TO_RECOVER,
           "emails.confirm.expires": { $gt: Date.now() },
-          "emails.confirm.attempts": { $lt: MAX_ATTEMPTS },
+          "emails.confirm.attempts": { $lt: MAX_ATTEMPTS }
         },
         {
           $set: {
-            "emails.$[element].confirm.status":
-              RECOVER_TOKEN_STATUS.RTS_CONFIRMED,
-          },
+            "emails.$[element].confirm.status": RECOVER_TOKEN_STATUS.RTS_CONFIRMED
+          }
         },
         {
           new: true,
-          arrayFilters: [{ "element.email": email }],
+          arrayFilters: [{ "element.email": email }]
         }
       )
         .then((account: AccountDocument) => {
           if (!account) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.INVALID_CREDENTIALS,
+              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+              boError: AUTH_ERRORS.INVALID_CREDENTIALS
             });
             return;
           }
           this._logger.debug("Recover token confirmed", {
             email: email,
-            token: token,
+            token: token
           });
           resolve();
         })
@@ -694,13 +647,13 @@ class Accounts extends CRUD<Account, AccountDocument> {
     return new Promise<AccountProjectProfileDocument>((resolve, reject) => {
       const update: any = { $inc: { "recover.attempts": 1 } };
       AccountModel.findOneAndUpdate({ "emails.email": email }, update, {
-        new: true,
+        new: true
       })
         .then((account: AccountDocument) => {
           if (!account) {
             reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED
             });
             return;
           }
@@ -711,8 +664,8 @@ class Accounts extends CRUD<Account, AccountDocument> {
               /* Validate max attempts */
               if (account.recover.attempts > MAX_ATTEMPTS) {
                 reject({
-                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                  boError: ERRORS.MAX_ATTEMPTS,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.MAX_ATTEMPTS
                 });
                 return;
               }
@@ -721,72 +674,68 @@ class Accounts extends CRUD<Account, AccountDocument> {
               const accountEmail = account.locateEmail(email);
               if (!accountEmail) {
                 return reject({
-                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                  boError: ERRORS.INVALID_TOKEN,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.INVALID_TOKEN
                 });
               }
 
               /* Validate expiration time */
               if (accountEmail.confirm.expires < Date.now()) {
                 return reject({
-                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                  boError: ERRORS.TOKEN_EXPIRED,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.TOKEN_EXPIRED
                 });
               }
 
               /* Validate the confirm token */
               if (
                 accountEmail.confirm.token !== token ||
-                accountEmail.confirm.status !==
-                RECOVER_TOKEN_STATUS.RTS_CONFIRMED
+                accountEmail.confirm.status !== RECOVER_TOKEN_STATUS.RTS_CONFIRMED
               ) {
                 return reject({
-                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                  boError: ERRORS.INVALID_TOKEN,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.INVALID_TOKEN
                 });
               }
 
               /* Update the user account and set the new password */
               AccountModel.findOneAndUpdate(
                 {
-                  _id: account.id,
+                  _id: account.id
                 },
                 {
                   $set: {
                     "emails.$[element].confirm.token": null,
-                    "emails.$[element].confirm.status":
-                      RECOVER_TOKEN_STATUS.RTS_DISABLED,
+                    "emails.$[element].confirm.status": RECOVER_TOKEN_STATUS.RTS_DISABLED,
                     "emails.$[element].confirm.expires": 0,
                     "emails.$[element].confirm.attempts": 0,
-                    password: password,
-                  },
+                    password: password
+                  }
                 },
                 {
                   new: true,
-                  arrayFilters: [
-                    { "element.email": email, "element.confirm.token": token },
-                  ],
+                  arrayFilters: [{ "element.email": email, "element.confirm.token": token }]
                 }
               )
                 .then((account: AccountDocument) => {
                   if (!account) {
                     return reject({
-                      boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                      boError: ERRORS.INVALID_TOKEN,
+                      boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                      boError: AUTH_ERRORS.INVALID_TOKEN
                     });
                   }
 
                   /* Look for the user project profile */
                   AccountProjectProfileModel.findOne({
                     project: project._id,
-                    account: account._id,
+                    account: account._id
                   })
                     .populate("account")
                     .populate("project")
                     .then((profile: AccountProjectProfileDocument) => {
                       this._logger.debug("User account recovered", {
                         id: account.id,
-                        email: account.email,
+                        email: account.email
                       });
                       resolve(profile);
                     })
@@ -807,37 +756,29 @@ class Accounts extends CRUD<Account, AccountDocument> {
     resolve: any,
     reject: any
   ) {
-    const recoverType = Objects.get(
-      project,
-      "settings.recover",
-      PROJECT_RECOVER_TYPE.RT_DISABLED
-    );
+    const recoverType = Objects.get(project, "settings.recover", PROJECT_RECOVER_TYPE.RT_DISABLED);
 
     /* Prepare the account reconfirm token token */
-    const token =
-      recoverType === PROJECT_RECOVER_TYPE.RT_CODE
-        ? Token.shortToken
-        : Token.longToken;
+    const token = recoverType === PROJECT_RECOVER_TYPE.RT_CODE ? Tokens.short : Tokens.long;
     const update: any = {
       $set: {
         "emails.$[element].confirm.token": token,
         "emails.$[element].confirm.status": RECOVER_TOKEN_STATUS.RTS_TO_CONFIRM,
-        "emails.$[element].confirm.expires":
-          Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS,
-        "emails.$[element].confirm.attempts": 1,
-      },
+        "emails.$[element].confirm.expires": Date.now() + PROJECT_LIFETIME_TYPES.LT_24HOURS,
+        "emails.$[element].confirm.attempts": 1
+      }
     };
 
     /* Register the reset token */
     AccountModel.findOneAndUpdate({ _id: account._id }, update, {
       new: true,
-      arrayFilters: [{ "element.email": email }],
+      arrayFilters: [{ "element.email": email }]
     })
       .then((account: AccountDocument) => {
         /* Look for the user project related profile */
         AccountProjectProfileModel.findOne({
           project: project,
-          account: account.id,
+          account: account.id
         })
           .populate("account")
           .populate("project")
@@ -845,7 +786,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
             this._logger.debug("ReConfirm account email address requested", {
               id: account.id,
               email: account.email,
-              token: token,
+              token: token
             });
             resolve(profile);
           })
@@ -866,20 +807,20 @@ class Accounts extends CRUD<Account, AccountDocument> {
         PROJECT_RECOVER_TYPE.RT_DISABLED
       );
       if (recoverType === PROJECT_RECOVER_TYPE.RT_DISABLED) {
-        reject({ boError: ERRORS.RECOVER_NOT_ALLOWED });
+        reject({ boError: AUTH_ERRORS.RECOVER_NOT_ALLOWED });
         return;
       }
 
       /* Look for the user by email */
       AccountModel.findOne({
-        "emails.email": email,
+        "emails.email": email
       })
         .then((account: AccountDocument) => {
           if (!account) {
             /* User always exists, this error should never occurr */
             return reject({
-              boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-              boError: ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED
             });
           }
 
@@ -890,14 +831,11 @@ class Accounts extends CRUD<Account, AccountDocument> {
               const accountEmail = account.locateEmail(email);
 
               /* Check for the current email status */
-              if (
-                accountEmail.status !==
-                EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH
-              ) {
+              if (accountEmail.status !== EMAIL_STATUS.ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH) {
                 /* Email address don't need to be confirmed */
                 return reject({
-                  boStatus: HTTP_STATUS.HTTP_FORBIDDEN,
-                  boError: ERRORS.ACCOUNT_ALREADY_CONFIRMED,
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.ACCOUNT_ALREADY_CONFIRMED
                 });
               }
 
@@ -906,7 +844,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
             })
             .catch((err: any) => {
               /* Reject the same error on errors diferente to email not confirmed */
-              if (!err.boError || err.boError !== ERRORS.EMAIL_NOT_CONFIRMED) {
+              if (!err.boError || err.boError !== AUTH_ERRORS.EMAIL_NOT_CONFIRMED) {
                 return reject(err);
               }
 

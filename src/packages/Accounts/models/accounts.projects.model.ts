@@ -3,22 +3,17 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { BaseModel } from "@ikoabo/server";
+import { prop, index, Ref, getModelForClass, DocumentType, Severity } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { BaseModel } from "@ikoabo/core_srv";
-import {
-  prop,
-  index,
-  Ref,
-  getModelForClass,
-  DocumentType,
-} from "@typegoose/typegoose";
+import { Account } from "@/Accounts/models/accounts.model";
 import { Project } from "@/Projects/models/projects.model";
 import { SocialNetworkCredential } from "@/SocialNetworks/models/social.networks.model";
-import { Account } from "@/Accounts/models/accounts.model";
 
 @index({ account: 1 })
 @index({ project: 1 })
@@ -63,12 +58,12 @@ export class AccountProjectProfile extends BaseModel {
               type: ret.type,
               status: ret.status,
               createdAt: ret.createdAt,
-              updatedAt: ret.updatedAt,
+              updatedAt: ret.updatedAt
             };
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false, allowMixed: Severity.ALLOW }
     });
   }
 }

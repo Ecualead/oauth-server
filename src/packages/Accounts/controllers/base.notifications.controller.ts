@@ -3,37 +3,23 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
+import { Logger } from "@ikoabo/core";
 import { NOTIFICATIONS_EVENTS_TYPES } from "@/Accounts/models/accounts.enum";
-import { Logger } from "@ikoabo/core_srv";
+import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
 
 abstract class BaseNotificationsClass {
   protected _logger: Logger;
 
-  abstract doSignup(
-    profile: AccountProjectProfileDocument,
-    payload?: any
-  ): Promise<void>;
-  abstract doConfirm(
-    profile: AccountProjectProfileDocument,
-    payload?: any
-  ): Promise<void>;
-  abstract doSignin(
-    profile: AccountProjectProfileDocument,
-    payload?: any
-  ): Promise<void>;
-  abstract doChPwd(
-    profile: AccountProjectProfileDocument,
-    payload?: any
-  ): Promise<void>;
-  abstract doRecover(
-    profile: AccountProjectProfileDocument,
-    payload?: any
-  ): Promise<void>;
+  abstract doSignup(profile: AccountProjectProfileDocument, payload?: any): Promise<void>;
+  abstract doConfirm(profile: AccountProjectProfileDocument, payload?: any): Promise<void>;
+  abstract doSignin(profile: AccountProjectProfileDocument, payload?: any): Promise<void>;
+  abstract doChPwd(profile: AccountProjectProfileDocument, payload?: any): Promise<void>;
+  abstract doRecover(profile: AccountProjectProfileDocument, payload?: any): Promise<void>;
 
   public constructor(logger: string) {
     this._logger = new Logger(logger);
@@ -61,7 +47,7 @@ abstract class BaseNotificationsClass {
         this._logger.error("Sending invalid notification", {
           type: type,
           profile: profile,
-          payload: payload,
+          payload: payload
         });
         return new Promise<void>((resolve) => {
           resolve();

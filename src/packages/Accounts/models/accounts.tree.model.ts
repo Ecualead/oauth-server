@@ -3,19 +3,14 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { BaseModel } from "@ikoabo/server";
+import { prop, index, Ref, getModelForClass, DocumentType } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import {
-  prop,
-  index,
-  Ref,
-  getModelForClass,
-  DocumentType,
-} from "@typegoose/typegoose";
-import { BaseModel } from "@ikoabo/core_srv";
 import { Account } from "@/Accounts/models/accounts.model";
 import { Project } from "@/Projects/models/projects.model";
 
@@ -55,16 +50,15 @@ export class AccountTree extends BaseModel {
               tree: ret.tree,
               status: ret.status,
               createdAt: ret.createdAt,
-              updatedAt: ret.updatedAt,
+              updatedAt: ret.updatedAt
             };
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false }
     });
   }
 }
 
 export type AccountTreeDocument = DocumentType<AccountTree>;
-export const AccountTreeModel: mongoose.Model<AccountTreeDocument> =
-  AccountTree.shared;
+export const AccountTreeModel: mongoose.Model<AccountTreeDocument> = AccountTree.shared;

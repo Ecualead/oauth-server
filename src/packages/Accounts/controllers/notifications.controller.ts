@@ -3,17 +3,18 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
-import { Objects, Logger } from "@ikoabo/core_srv";
+import { Objects, Logger } from "@ikoabo/core";
 import async from "async";
-import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
-import { NOTIFICATION_TYPES } from "@/Projects/models/projects.enum";
 import { MailNotifications } from "@/Accounts/controllers/mail.notifications.controller";
 import { NOTIFICATIONS_EVENTS_TYPES } from "@/Accounts/models/accounts.enum";
+import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
+import { NOTIFICATION_TYPES } from "@/Projects/models/projects.enum";
+import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
 
 export class Notifications {
   private static _instance: Notifications;
@@ -90,12 +91,7 @@ export class Notifications {
               }
 
               /* Call the notifications */
-              this._callNotifications(
-                item.type,
-                type,
-                profile,
-                payload
-              ).finally(() => {
+              this._callNotifications(item.type, type, profile, payload).finally(() => {
                 cb();
               });
               break;
@@ -136,7 +132,7 @@ export class Notifications {
         this._logger.error("Not allowed notification type", {
           type: type,
           event: event,
-          profile: profile,
+          profile: profile
         });
         return new Promise<void>((resolve) => {
           resolve();

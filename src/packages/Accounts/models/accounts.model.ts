@@ -3,21 +3,16 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import mongoose from "mongoose";
+import { AUTH_ERRORS } from "@ikoabo/auth";
+import { BaseModel } from "@ikoabo/server";
+import { prop, pre, index, getModelForClass, DocumentType, Severity } from "@typegoose/typegoose";
 import bcrypt from "bcrypt";
-import {
-  prop,
-  pre,
-  index,
-  getModelForClass,
-  DocumentType,
-} from "@typegoose/typegoose";
-import { BaseModel, Arrays } from "@ikoabo/core_srv";
-import { ERRORS } from "@ikoabo/auth_srv";
+import mongoose from "mongoose";
 import { EMAIL_STATUS, RECOVER_TOKEN_STATUS } from "@/Accounts/models/accounts.enum";
 import { SocialNetworkProfile } from "@/SocialNetworks/models/social.networks.model";
 
@@ -70,17 +65,13 @@ export class AccountEmail {
   }
 
   /* Update the user crypt password */
-  bcrypt.hash(
-    this.getUpdate().$set["password"],
-    10,
-    (err: mongoose.Error, hash) => {
-      if (err) {
-        return next(err);
-      }
-      this.getUpdate().$set["password"] = hash;
-      next();
+  bcrypt.hash(this.getUpdate().$set["password"], 10, (err: mongoose.Error, hash) => {
+    if (err) {
+      return next(err);
     }
-  );
+    this.getUpdate().$set["password"] = hash;
+    next();
+  });
 })
 @index({ email: 1 }, { unique: true })
 @index({ _id: 1, "social.type": 1 }, { unique: true })
@@ -153,31 +144,27 @@ export class Account extends BaseModel {
               referral: ret.referral,
               status: ret.status,
               createdAt: ret.createdAt,
-              updatedAt: ret.updatedAt,
+              updatedAt: ret.updatedAt
             };
-          },
-        },
+          }
+        }
       },
-      options: { automaticName: false },
+      options: { automaticName: false, allowMixed: Severity.ALLOW }
     });
   }
 
   public validPassword?(password: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       if (!password || !("password" in this)) {
-        reject({ boError: ERRORS.INVALID_CREDENTIALS });
+        reject({ boError: AUTH_ERRORS.INVALID_CREDENTIALS });
       }
-      bcrypt.compare(
-        password,
-        this.password,
-        (err: mongoose.Error, isMatch: boolean) => {
-          if (isMatch) {
-            return resolve();
-          }
-
-          reject(err ? err : { boError: ERRORS.INVALID_CREDENTIALS });
+      bcrypt.compare(password, this.password, (err: mongoose.Error, isMatch: boolean) => {
+        if (isMatch) {
+          return resolve();
         }
-      );
+
+        reject(err ? err : { boError: AUTH_ERRORS.INVALID_CREDENTIALS });
+      });
     });
   }
 

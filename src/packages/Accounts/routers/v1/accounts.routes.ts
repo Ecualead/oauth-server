@@ -3,56 +3,47 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { AUTH_ERRORS } from "@ikoabo/auth";
+import { Objects, HTTP_STATUS } from "@ikoabo/core";
+import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
-import {
-  ResponseHandler,
-  Validators,
-  Objects,
-  ERRORS,
-  HTTP_STATUS,
-  ValidateObjectId,
-} from "@ikoabo/core_srv";
+import { Request as ORequest, Response as OResponse, Token } from "oauth2-server";
 import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
-import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
+import { Notifications } from "@/Accounts/controllers/notifications.controller";
+import { NOTIFICATIONS_EVENTS_TYPES } from "@/Accounts/models/accounts.enum";
 import {
   RegisterValidation,
   AccountValidation,
   EmailValidation,
-  RecoverValidation,
+  RecoverValidation
 } from "@/Accounts/models/accounts.joi";
 import { Account, AccountDocument } from "@/Accounts/models/accounts.model";
 import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
-import { Notifications } from "@/Accounts/controllers/notifications.controller";
-import { NOTIFICATIONS_EVENTS_TYPES } from "@/Accounts/models/accounts.enum";
-import { ERRORS as AUTH_ERRORS } from "@ikoabo/auth_srv";
-import {
-  Request as ORequest,
-  Response as OResponse,
-  Token,
-} from "oauth2-server";
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import { ApplicationDocument } from "@/Applications/models/applications.model";
+import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 import { OAuth2ModelCtrl } from "@/OAuth2/controllers/oauth2.model.controller";
 
 const router = Router();
 
 router.post(
   "/signup",
-  Validators.joi(RegisterValidation),
+  Validator.joi(RegisterValidation),
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_register_user"]),
   (req: Request, res: Response, next: NextFunction) => {
     // TODO XXX Add password policy
     /* Initialize the account data */
-    let data: Account = {
+    const data: Account = {
       name: req.body["name"],
       lastname: req.body["lastname"],
       email: req.body["email"],
       password: req.body["password"],
-      phone: req.body["phone"],
+      phone: req.body["phone"]
     };
 
     /* Register the new user account */
@@ -69,11 +60,11 @@ router.post(
             Notifications.shared
               .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_SIGNUP, profile, {
                 token: Objects.get(account, "emails.0.confirm.token"),
-                email: req.body["email"],
+                email: req.body["email"]
               })
               .finally(() => {
                 res.locals["response"] = {
-                  user: Objects.get(profile, "account._id", profile.account),
+                  user: Objects.get(profile, "account._id", profile.account)
                 };
                 next();
               });
@@ -89,7 +80,7 @@ router.post(
 
 router.post(
   "/confirm",
-  Validators.joi(AccountValidation),
+  Validator.joi(AccountValidation),
   OAuth2Ctrl.authenticate(["application", "mod_ims_confirm_account"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Confirm the user account */
@@ -102,7 +93,7 @@ router.post(
         /* Send the account confirmation notification */
         Notifications.shared
           .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_CONFIRM, profile, {
-            email: req.body["email"],
+            email: req.body["email"]
           })
           .finally(() => {
             res.locals["response"] = { email: req.body["email"] };
@@ -119,8 +110,8 @@ router.post(
 router.post(
   "/resend",
   (req: Request, res: Response, next: NextFunction) => {
-    let request = new ORequest(req);
-    let response = new OResponse(res);
+    const request = new ORequest(req);
+    const response = new OResponse(res);
     OAuth2Ctrl.server
       .token(request, response)
       .then((token: Token) => {
@@ -131,8 +122,8 @@ router.post(
   (_req: Request, res: Response, next: NextFunction) => {
     /* If there is no error then user account is confirmated and don't need resend the email */
     next({
-      boError: ERRORS.INVALID_OPERATION,
-      boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE,
+      boError: AUTH_ERRORS.ACCOUNT_ALREADY_CONFIRMED,
+      boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
     });
   },
   OAuth2Ctrl.handleError,
@@ -141,9 +132,7 @@ router.post(
     if (err.boError === AUTH_ERRORS.EMAIL_NOT_CONFIRMED) {
       /* Extract credentials from authorization header */
       const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
-      const [login, password] = Buffer.from(b64auth, "base64")
-        .toString()
-        .split(":");
+      const [login, password] = Buffer.from(b64auth, "base64").toString().split(":");
 
       if (!login) {
         return next(err);
@@ -155,29 +144,22 @@ router.post(
           /* Check application valid scope */
           if (application.scope.indexOf("mod_ims_resend_confirm") < 0) {
             return next({
-              boError: ERRORS.INVALID_OPERATION,
-              boStatus: HTTP_STATUS.HTTP_NOT_ACCEPTABLE,
+              boError: AUTH_ERRORS.INVALID_SCOPE,
+              boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
             });
           }
 
           /* Call to resend confirmation */
-          AccountCtrl.requestConfirmation(
-            req.body["username"],
-            Objects.get(application, "project")
-          )
+          AccountCtrl.requestConfirmation(req.body["username"], Objects.get(application, "project"))
             .then((profile: AccountProjectProfileDocument) => {
               /* Send the register notification */
               Notifications.shared
-                .doNotification(
-                  NOTIFICATIONS_EVENTS_TYPES.NET_SIGNUP,
-                  profile,
-                  {
-                    email: req.body["email"],
-                  }
-                )
+                .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_SIGNUP, profile, {
+                  email: req.body["email"]
+                })
                 .finally(() => {
                   res.locals["response"] = {
-                    user: Objects.get(profile, "account._id", profile.account),
+                    user: Objects.get(profile, "account._id", profile.account)
                   };
                   next();
                 });
@@ -195,19 +177,16 @@ router.post(
 
 router.post(
   "/recover/request",
-  Validators.joi(EmailValidation),
+  Validator.joi(EmailValidation),
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_account"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
-    AccountCtrl.requestRecover(
-      req.body["email"],
-      Objects.get(res.locals, "token.client.project")
-    )
+    AccountCtrl.requestRecover(req.body["email"], Objects.get(res.locals, "token.client.project"))
       .then((profile: AccountProjectProfileDocument) => {
         /* Send the account confirmation notification */
         Notifications.shared
           .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_RECOVER, profile, {
-            email: req.body["email"],
+            email: req.body["email"]
           })
           .finally(() => {
             res.locals["response"] = { email: req.body["email"] };
@@ -223,7 +202,7 @@ router.post(
 
 router.post(
   "/recover/validate",
-  Validators.joi(AccountValidation),
+  Validator.joi(AccountValidation),
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_validate"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Validate the recover token */
@@ -241,7 +220,7 @@ router.post(
 
 router.post(
   "/recover/store",
-  Validators.joi(RecoverValidation),
+  Validator.joi(RecoverValidation),
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_change"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Recover the user account */
@@ -272,8 +251,7 @@ router.post(
   OAuth2Ctrl.authenticate(),
   (_req: Request, res: Response, next: NextFunction) => {
     /* Revoke the access token */
-    OAuth2ModelCtrl
-      .revokeToken(res.locals["token"])
+    OAuth2ModelCtrl.revokeToken(res.locals["token"])
       .then(() => {
         res.locals["response"] = {};
         next();
@@ -298,7 +276,7 @@ router.get(
           lastname: value.lastname,
           email: value.email,
           phone: value.phone,
-          code: value.code,
+          code: value.code
         };
         next();
       })
@@ -311,7 +289,7 @@ router.get(
 
 router.get(
   "/avatar-info/:id",
-  Validators.joi(ValidateObjectId, "params"),
+  Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_avatar_info"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
@@ -323,7 +301,7 @@ router.get(
           lastname: value.lastname,
           initials: value.initials,
           color1: value.color1,
-          color2: value.color2,
+          color2: value.color2
         };
         next();
       })

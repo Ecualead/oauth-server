@@ -3,11 +3,11 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
- * This file is part of the IKOA Business Opportunity Auth Service.
+ * This file is part of the IKOA Business Opportunity
+ * Identity Management Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { BASE_STATUS } from "@ikoabo/core_srv";
 
 export enum ACCOUNT_STATUS {
   AS_DISABLED_BY_ADMIN = -4,
@@ -17,14 +17,14 @@ export enum ACCOUNT_STATUS {
   AS_UNKNOWN = 0,
   AS_DISABLED = 1,
   AS_ENABLED = 2,
-  AS_REGISTERED = 3,
+  AS_REGISTERED = 3
 }
 
 export enum RECOVER_TOKEN_STATUS {
   RTS_DISABLED = 0,
   RTS_TO_CONFIRM = 1,
   RTS_TO_RECOVER = 2,
-  RTS_CONFIRMED = 3,
+  RTS_CONFIRMED = 3
 }
 
 export enum NOTIFICATIONS_EVENTS_TYPES {
@@ -33,7 +33,7 @@ export enum NOTIFICATIONS_EVENTS_TYPES {
   NET_CONFIRM = 2,
   NET_SIGNIN = 3,
   NET_CHPWD = 4,
-  NET_RECOVER = 5,
+  NET_RECOVER = 5
 }
 
 export enum EMAIL_STATUS {
@@ -46,7 +46,7 @@ export enum EMAIL_STATUS {
   ES_REGISTERED = 3,
   ES_CONFIRMED = 4,
   ES_NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH = 5,
-  ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH = 6,
+  ES_NEEDS_CONFIRM_EMAIL_CAN_AUTH = 6
 }
 
 export const PROTECTED_PROJECT_FIELDS: string[] = [
@@ -57,7 +57,7 @@ export const PROTECTED_PROJECT_FIELDS: string[] = [
   "account",
   "scope",
   "social",
-  "status",
+  "status"
 ];
 
 export const DEFAULT_SCOPES: string[] = [];
@@ -74,7 +74,7 @@ export const SCP_DOMAIN_DEFAULT: string[] = [
   "app_create",
   "app_remove",
   "app_update",
-  "usr_register",
+  "usr_register"
 ];
 
 /**
@@ -85,7 +85,7 @@ export const SCP_PRJ_DEFAULT: string[] = [
   "app_create",
   "app_remove",
   "app_update",
-  "usr_register",
+  "usr_register"
 ];
 
 /**
@@ -96,7 +96,7 @@ export const SCP_APP_DEFAULT: string[] = [
   "app_create",
   "app_remove",
   "app_update",
-  "usr_register",
+  "usr_register"
 ];
 
 /**
@@ -107,7 +107,7 @@ export const SCP_ACCOUNT_DEFAULT: string[] = [
   "app_create",
   "app_remove",
   "app_update",
-  "usr_register",
+  "usr_register"
 ];
 
 /**
@@ -124,5 +124,5 @@ export const SCP_NON_INHERITABLE: string[] = [
   "app_create",
   "app_remove",
   "app_update",
-  "usr_register",
+  "usr_register"
 ];
