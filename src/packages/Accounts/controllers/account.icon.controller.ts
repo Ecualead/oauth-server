@@ -9,7 +9,7 @@
  * permission of the author.
  */
 import { Logger } from "@ikoabo/core";
-import random from "random";
+import { int as RandomInt } from "random";
 import randomColor from "randomcolor";
 const gender = require("gender-detection");
 const nameInitials = require("name-initials");
@@ -43,8 +43,8 @@ class AccountIcon {
       seed: name,
       hue:
         strGender === "male"
-          ? MALE_COLORS[random.int(0, MALE_COLORS.length - 1)]
-          : FEMALE_COLORS[random.int(0, FEMALE_COLORS.length - 1)]
+          ? MALE_COLORS[RandomInt(0, MALE_COLORS.length - 1)]
+          : FEMALE_COLORS[RandomInt(0, FEMALE_COLORS.length - 1)]
     });
     return colorBase;
   }

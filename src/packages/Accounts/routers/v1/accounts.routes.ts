@@ -22,7 +22,7 @@ import {
   EmailValidation,
   RecoverValidation
 } from "@/Accounts/models/accounts.joi";
-import { Account, AccountDocument } from "@/Accounts/models/accounts.model";
+import { AccountDocument } from "@/Accounts/models/accounts.model";
 import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import { ApplicationDocument } from "@/Applications/models/applications.model";
@@ -38,12 +38,15 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     // TODO XXX Add password policy
     /* Initialize the account data */
-    const data: Account = {
+    const data: any = {
       name: req.body["name"],
       lastname: req.body["lastname"],
       email: req.body["email"],
       password: req.body["password"],
-      phone: req.body["phone"]
+      phone: req.body["phone"],
+      type: req.body["type"],
+      custom1: req.body["custom1"],
+      custom2: req.body["custom2"]
     };
 
     /* Register the new user account */
@@ -114,7 +117,7 @@ router.post(
     const response = new OResponse(res);
     OAuth2Ctrl.server
       .token(request, response)
-      .then((token: Token) => {
+      .then((_token: Token) => {
         next();
       })
       .catch(next);
@@ -132,14 +135,14 @@ router.post(
     if (err.boError === AUTH_ERRORS.EMAIL_NOT_CONFIRMED) {
       /* Extract credentials from authorization header */
       const b64auth = (req.headers.authorization || "").split(" ")[1] || "";
-      const [login, password] = Buffer.from(b64auth, "base64").toString().split(":");
+      const [login, _password] = Buffer.from(b64auth, "base64").toString().split(":");
 
       if (!login) {
         return next(err);
       }
 
       /* Fetch the requesting application */
-      ApplicationCtrl.fetch(login, null, null, ["project"])
+      ApplicationCtrl.fetch(login, null, ["project"])
         .then((application: ApplicationDocument) => {
           /* Check application valid scope */
           if (application.scope.indexOf("mod_ims_resend_confirm") < 0) {

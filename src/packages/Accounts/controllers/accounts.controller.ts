@@ -22,7 +22,7 @@ import {
   SCP_NON_INHERITABLE,
   EMAIL_STATUS
 } from "@/Accounts/models/accounts.enum";
-import { AccountDocument, Account, AccountModel } from "@/Accounts/models/accounts.model";
+import { AccountDocument, AccountModel } from "@/Accounts/models/accounts.model";
 import {
   AccountProjectProfileDocument,
   AccountProjectProfileModel
@@ -40,7 +40,7 @@ import { SocialNetworkCredential } from "@/SocialNetworks/models/social.networks
 
 const MAX_ATTEMPTS = 5;
 
-class Accounts extends CRUD<Account, AccountDocument> {
+class Accounts extends CRUD<AccountDocument> {
   private static _instance: Accounts;
 
   /**
@@ -60,7 +60,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
     return Accounts._instance;
   }
 
-  public register(data: Account, application: ApplicationDocument): Promise<AccountDocument> {
+  public register(data: any, application: ApplicationDocument): Promise<AccountDocument> {
     return new Promise<AccountDocument>((resolve, reject) => {
       /* Find if there is an user registered with the email */
       AccountModel.findOne({ "emails.email": data.email })
@@ -157,7 +157,7 @@ class Accounts extends CRUD<Account, AccountDocument> {
   }
 
   public registerSocial(
-    data: Account,
+    data: any,
     socialType: SOCIAL_NETWORK_TYPES,
     profile: any
   ): Promise<AccountDocument> {
