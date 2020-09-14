@@ -12,11 +12,9 @@ import "module-alias/register";
 import { Logger } from "@ikoabo/core";
 import { ClusterServer } from "@ikoabo/server";
 import AsyncLock from "async-lock";
-import { Settings } from "@/configs/settings.config";
 
 /* Initialize cluster server */
 const clusterServer = ClusterServer.setup(
-  Settings,
   { running: requestCredentials },
   { worker: runWorker }
 );
@@ -42,14 +40,14 @@ import { MailCtrl } from "@ikoabo/notifications";
  */
 function requestCredentials(): Promise<void> {
   return new Promise<void>((resolve) => {
-    AuthenticationCtrl.setup(Settings.AUTH.SERVER);
-    AuthenticationCtrl.authService(Settings.AUTH.ID, Settings.AUTH.SECRET)
+    AuthenticationCtrl.setup(process.env.AUTH_SERVER);
+    AuthenticationCtrl.authService(process.env.AUTH_ID, process.env.AUTH_SECRET)
       .catch((err) => {
         logger.error("Invalid authentication configuration", err);
       })
       .finally(() => {
         /* Initialize mail component */
-        MailCtrl.setup(Settings.NOTIFICATIONS.SERVER, AuthenticationCtrl.token);
+        MailCtrl.setup(process.env.NOTIFICATIONS_SERVER, AuthenticationCtrl.token);
         resolve();
       });
   });
