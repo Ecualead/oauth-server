@@ -1,6 +1,6 @@
 {
   "name": "ims",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "IKOA Business Opportunity Identity Management Service",
   "main": "index.js",
   "scripts": {
