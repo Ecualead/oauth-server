@@ -9,19 +9,9 @@
  * permission of the author.
  */
 import "module-alias/register";
-import { Logger } from "@ikoabo/core";
 import { ClusterServer } from "@ikoabo/server";
+import { Logger } from "@ikoabo/core";
 import AsyncLock from "async-lock";
-
-/* Initialize cluster server */
-const clusterServer = ClusterServer.setup(
-  { running: requestCredentials },
-  { worker: runWorker }
-);
-/* Initialize componentes before import routes */
-const lock = new AsyncLock();
-const logger = new Logger("Microservice");
-
 /* Base components routes */
 import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
 import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
@@ -34,6 +24,12 @@ import SocialNetworkRouter from "@/SocialNetworks/routers/v1/social.networks.rou
 import { AccountCodeCtrl } from "@/Accounts/controllers/accounts.code.controller";
 import { AuthenticationCtrl } from "@ikoabo/auth";
 import { MailCtrl } from "@ikoabo/notifications";
+
+/* Initialize cluster server */
+const clusterServer = ClusterServer.setup({ running: requestCredentials }, { worker: runWorker });
+/* Initialize componentes before import routes */
+const lock = new AsyncLock();
+const logger = new Logger("Microservice");
 
 /**
  * Authenticate agains auth service

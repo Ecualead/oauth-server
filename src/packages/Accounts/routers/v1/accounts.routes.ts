@@ -158,7 +158,7 @@ router.post(
               /* Send the register notification */
               Notifications.shared
                 .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_SIGNUP, profile, {
-                  email: req.body["email"]
+                  email: req.body["username"]
                 })
                 .finally(() => {
                   res.locals["response"] = {
