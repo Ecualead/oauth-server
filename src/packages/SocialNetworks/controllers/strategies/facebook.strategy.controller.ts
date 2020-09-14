@@ -9,8 +9,7 @@
  * permission of the author.
  */
 import passport from "passport";
-import { Profile as FacebookProfile, Strategy as FacebookStrategy } from "passport-facebook";
-import FacebookTokenStrategy from "passport-facebook-token";
+import { Strategy as FacebookStrategy } from "passport-facebook";
 import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
 import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
 

@@ -14,7 +14,6 @@ import { Validator, ResponseHandler } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 import { ApplicationAccessPolicyCtrl } from "@/Applications/controllers/application.access.policy.controller";
-import { Settings } from "@/configs/settings.config";
 import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
 import { SocialNetworkCtrl } from "@/SocialNetworks/controllers/social.networks.controller";
 import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.enum";
@@ -153,7 +152,7 @@ router.get(
         res.locals["socialNetwork"] = request;
 
         /* Calling social network authentication with callback reference */
-        const cbFailure = `${Settings.AUTH.SERVER}/v1/oauth/social/${social}/callback/failure`;
+        const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/social/${social}/callback/failure`;
         SocialNetworkCtrl.doAuthenticate(request, {
           state: request.id,
           failureRedirect: cbFailure

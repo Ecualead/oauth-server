@@ -9,7 +9,7 @@
  * permission of the author.
  */
 import passport from "passport";
-import { OAuth2Strategy as GoogleStrategy, Profile as GoogleProfile } from "passport-google-oauth";
+import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
 import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
 import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
 
