@@ -10,12 +10,12 @@
  */
 import { SERVER_STATUS, HTTP_STATUS, SERVER_ERRORS } from "@ikoabo/core";
 import { DataScoped } from "@/controllers/data.scoped.controller";
-import { Module, ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
+import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
 
 /**
  * Module controller
  */
-class Modules extends DataScoped<Module, ModuleDocument> {
+class Modules extends DataScoped<ModuleDocument> {
   private static _instance: Modules;
 
   private constructor() {

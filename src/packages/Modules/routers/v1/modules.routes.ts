@@ -11,7 +11,7 @@
 import { Objects, Tokens, SERVER_STATUS } from "@ikoabo/core";
 import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
-import JSONStream from "jsonstream";
+import { stringify } from "jsonstream";
 import { ScopeValidation, StatusValidation, RestrictionValidation } from "@/models/base.joi";
 import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import { ModuleCreateValidation, ModuleUpdateValidation } from "@/Modules/models/modules.joi";
@@ -79,9 +79,7 @@ router.get(
   "/",
   OAuth2Ctrl.authenticate(["user"]),
   (_req: Request, res: Response, _next: NextFunction) => {
-    ModuleCtrl.fetchAll({ status: SERVER_STATUS.ENABLED })
-      .pipe(JSONStream.stringify())
-      .pipe(res.type("json"));
+    ModuleCtrl.fetchAll({ status: SERVER_STATUS.ENABLED }).pipe(stringify()).pipe(res.type("json"));
   },
   ResponseHandler.success,
   ResponseHandler.error
