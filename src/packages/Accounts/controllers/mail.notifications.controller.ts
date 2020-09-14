@@ -40,9 +40,9 @@ export class MailNotifications extends BaseNotifications {
     return MailNotifications._instance;
   }
 
-  private _getAccountData(profile: AccountProjectProfileDocument, payload?: any): Account {
+  private _getAccountData(profile: AccountProjectProfileDocument, payload?: any): any {
     /* Fetch the account notification data */
-    const account: Account = {
+    return {
       name: Objects.get(profile, "account.name", ""),
       lastname: Objects.get(profile, "account.lastname", ""),
       code: Objects.get(profile, "account.code", ""),
@@ -50,7 +50,6 @@ export class MailNotifications extends BaseNotifications {
       phone: Objects.get(profile, "account.phone", ""),
       createdAt: Objects.get(profile, "account.createdAt", "")
     };
-    return account;
   }
 
   private _getToken(profile: AccountProjectProfileDocument, payload?: any): string {

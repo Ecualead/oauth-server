@@ -8,18 +8,13 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ikoabo/auth";
 import { Arrays, Tokens, SERVER_STATUS, SERVER_ERRORS, HTTP_STATUS } from "@ikoabo/core";
-import {
-  Application,
-  ApplicationDocument,
-  ApplicationModel
-} from "@/Applications/models/applications.model";
+import { ApplicationDocument, ApplicationModel } from "@/Applications/models/applications.model";
 import { DataScoped } from "@/controllers/data.scoped.controller";
 import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
 import { ProjectDocument } from "@/Projects/models/projects.model";
 
-export class Applications extends DataScoped<Application, ApplicationDocument> {
+export class Applications extends DataScoped<ApplicationDocument> {
   private static _instance: Applications;
 
   /**
@@ -39,7 +34,7 @@ export class Applications extends DataScoped<Application, ApplicationDocument> {
     return Applications._instance;
   }
 
-  public create(data: Application): Promise<ApplicationDocument> {
+  public create(data: any): Promise<ApplicationDocument> {
     return new Promise<ApplicationDocument>((resolve, reject) => {
       /* Find the parent project */
       ProjectCtrl.fetch(data.project.toString())

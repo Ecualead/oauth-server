@@ -71,6 +71,7 @@ export class OAuth2Token extends BaseModel {
       createdAt: this.createdAt
     };
 
+    let applicationOwner, projectOwner, user: any;
     token.scope.push("default");
     switch (token.type) {
       case OAUTH2_TOKEN_TYPE.TT_MODULE:
@@ -83,11 +84,12 @@ export class OAuth2Token extends BaseModel {
         break;
       case OAUTH2_TOKEN_TYPE.TT_USER_SOCIAL:
         token.scope.push("social");
+      // eslint-disable-next-line no-fallthrough
       case OAUTH2_TOKEN_TYPE.TT_USER:
         /* Get application parameters */
-        const applicationOwner = Objects.get(token.client, "owner", "").toString();
-        const projectOwner = Objects.get(token.client, "project.owner", "").toString();
-        const user = Objects.get(token.user, "id", this.user).toString();
+        applicationOwner = Objects.get(token.client, "owner", "").toString();
+        projectOwner = Objects.get(token.client, "project.owner", "").toString();
+        user = Objects.get(token.user, "id", this.user).toString();
 
         /* Check if the user is the application owner */
         if (applicationOwner === user) {

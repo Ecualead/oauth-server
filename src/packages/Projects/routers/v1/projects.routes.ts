@@ -11,7 +11,7 @@
 import { Objects } from "@ikoabo/core";
 import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
-import JSONStream from "jsonstream";
+import { stringify } from "jsonstream";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { ScopeValidation, StatusValidation } from "@/models/base.joi";
 import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
@@ -79,10 +79,8 @@ router.get(
   Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
   DomainCtrl.validate("params.id", "token.user._id"),
-  (req: Request, res: Response, next: NextFunction) => {
-    ProjectCtrl.fetchAll({ domain: req.params.id })
-      .pipe(JSONStream.stringify())
-      .pipe(res.type("json"));
+  (req: Request, res: Response, _next: NextFunction) => {
+    ProjectCtrl.fetchAll({ domain: req.params.id }).pipe(stringify()).pipe(res.type("json"));
   },
   ResponseHandler.success,
   ResponseHandler.error

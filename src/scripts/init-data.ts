@@ -18,7 +18,6 @@ import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projec
 import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
 import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
 import { ApplicationDocument, ApplicationModel } from "@/Applications/models/applications.model";
-import { Settings } from "@/configs/settings.config";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { DomainModel, DomainDocument } from "@/Domains/models/domains.model";
 import { Module, ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
@@ -26,7 +25,7 @@ import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
 import { ProjectModel, ProjectDocument } from "@/Projects/models/projects.model";
 
 Logger.setLogLevel(LOG_LEVEL.DEBUG);
-const modules: Module[] = [
+const modules: any[] = [
   {
     name: "IMS",
     description: "Identity Management System",
@@ -152,7 +151,6 @@ const modules: Module[] = [
   }
 ];
 
-HttpServer.setup(Settings);
 const _logger: Logger = new Logger("InitData");
 HttpServer.shared.initMongo().then(() => {
   _logger.debug("*** DATA IMPORT STARTED ***");
@@ -241,7 +239,7 @@ HttpServer.shared.initMongo().then(() => {
               })
                 .then((application: ApplicationDocument) => {
                   /* Fetch application with project populated */
-                  ApplicationCtrl.fetch(application.id, {}, {}, ["project"])
+                  ApplicationCtrl.fetch(application.id, {}, ["project"])
                     .then((application: ApplicationDocument) => {
                       _logger.debug("Application created", {
                         application: application

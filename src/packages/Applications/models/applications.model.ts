@@ -18,9 +18,8 @@ import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
 import { Project } from "@/Projects/models/projects.model";
 
 @pre<Application>("save", function (next) {
-  const obj: any = this;
-  if (obj.isNew) {
-    obj.secret = Tokens.long;
+  if (this.isNew) {
+    this.secret = Tokens.long;
   }
   next();
 })
@@ -96,32 +95,30 @@ export class Application extends BaseModel {
   }
 
   public getBase64Secret?(): string {
-    const tmp: any = this;
-    return Buffer.from([tmp.id, tmp.secret].join(":")).toString("base64");
+    return Buffer.from([this._id.toString(), this.secret].join(":")).toString("base64");
   }
 
   public toClient?(): Client {
-    const obj: any = this;
     const client = {
-      id: obj._id.toString(),
+      id: this._id.toString(),
       type: this.type,
-      grants: obj.grants,
+      grants: this.grants,
       accessTokenLifetime:
-        obj.type === APPLICATION_TYPES.APP_SERVICE
+        this.type === APPLICATION_TYPES.APP_SERVICE
           ? -1
           : Objects.get(
-              obj,
+              this,
               "project.settings.tokenLifetime.accessToken",
               PROJECT_LIFETIME_TYPES.LT_ONE_MONTH
             ),
       refreshTokenLifetime: Objects.get(
-        obj,
+        this,
         "project.settings.tokenLifetime.refreshToken",
         PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
       ),
-      scope: obj.scope,
-      project: obj.project,
-      restriction: obj.restriction
+      scope: this.scope,
+      project: this.project,
+      restriction: this.restriction
     };
     return client;
   }

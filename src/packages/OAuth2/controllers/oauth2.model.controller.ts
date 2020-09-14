@@ -34,7 +34,6 @@ import { OAuth2CodeDocument, OAuth2CodeModel } from "@/OAuth2/models/oauth2.code
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 import { OAuth2TokenModel, OAuth2TokenDocument } from "@/OAuth2/models/oauth2.token.model";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
-import { ProjectDocument } from "@/Projects/models/projects.model";
 
 class OAuth2Model
   implements PasswordModel, ClientCredentialsModel, AuthorizationCodeModel, RefreshTokenModel {
@@ -222,7 +221,7 @@ class OAuth2Model
    * @param {string | string[]} scope  scope allowed to the token
    * @returns {Promise<string>}  Return the access token
    */
-  generateAccessToken(application: Client, user: User, scope: string | string[]): Promise<string> {
+  generateAccessToken(application: Client, user: User, _scope: string | string[]): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       /* Generate access token */
       this._logger.debug("Generating access token for application/module", {
@@ -521,7 +520,7 @@ class OAuth2Model
               .catch(reject);
           } else {
             /* Get the target application */
-            ApplicationCtrl.fetch(token.application.toString(), {}, {}, ["project"])
+            ApplicationCtrl.fetch(token.application.toString(), {}, ["project"])
               .then((application: ApplicationDocument) => {
                 token.application = application;
 
@@ -607,7 +606,7 @@ class OAuth2Model
    * @param {string | string[]} scope  Target requested scope
    * @returns {Promise<string>}  Return the refresh token
    */
-  generateRefreshToken(client: Client, user: User, scope: string | string[]): Promise<string> {
+  generateRefreshToken(client: Client, user: User, _scope: string | string[]): Promise<string> {
     return new Promise<string>((resolve) => {
       // TODO XXX Check scope
       /* Generate refresh token */

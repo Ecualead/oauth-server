@@ -37,10 +37,11 @@ class ApplicationAccessPolicy {
   }
 
   private _validate(req: Request, type: number, restriction: string[], resolve: any, reject: any) {
+    let url, ipAddress: any;
     switch (type) {
       /* Validate request origin */
       case APPLICATION_TYPES.APP_WEB_CLIENT_SIDE:
-        const url = URL.parse(req.headers["origin"] || `https://${req.hostname}`);
+        url = URL.parse(req.headers["origin"] || `https://${req.hostname}`);
         if (restriction.indexOf(url.hostname) < 0) {
           this._logger.error("Application access restricted", {
             origin: req.headers["origin"],
@@ -59,7 +60,7 @@ class ApplicationAccessPolicy {
       case APPLICATION_TYPES.APP_MODULE:
       case APPLICATION_TYPES.APP_SERVICE:
       case APPLICATION_TYPES.APP_WEB_SERVER_SIDE:
-        const ipAddress = req.ips.length > 0 ? req.ips[0] : req.ip;
+        ipAddress = req.ips.length > 0 ? req.ips[0] : req.ip;
         if (restriction.indexOf(ipAddress) < 0) {
           this._logger.error("Application access restricted", {
             ipAddress: ipAddress,

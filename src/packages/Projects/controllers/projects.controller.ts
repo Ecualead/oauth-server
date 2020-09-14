@@ -13,11 +13,11 @@ import { DataScoped } from "@/controllers/data.scoped.controller";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { DomainDocument } from "@/Domains/models/domains.model";
 import { ModuleDocument } from "@/Modules/models/modules.model";
-import { Project, ProjectDocument, ProjectModel } from "@/Projects/models/projects.model";
+import { ProjectDocument, ProjectModel } from "@/Projects/models/projects.model";
 import { ProjectNotification } from "@/Projects/models/projects.notifications.model";
 import { SocialNetworkSetting } from "@/SocialNetworks/models/social.networks.model";
 
-class Projects extends DataScoped<Project, ProjectDocument> {
+class Projects extends DataScoped<ProjectDocument> {
   private static _instance: Projects;
 
   /**
@@ -37,7 +37,7 @@ class Projects extends DataScoped<Project, ProjectDocument> {
     return Projects._instance;
   }
 
-  public create(data: Project): Promise<ProjectDocument> {
+  public create(data: any): Promise<ProjectDocument> {
     return new Promise<ProjectDocument>((resolve, reject) => {
       /* Find for the parent domain */
       DomainCtrl.fetch(data.domain.toString())

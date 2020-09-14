@@ -76,14 +76,13 @@ export class Module extends BaseModel {
   }
 
   public toClient?(): Client {
-    const obj: any = this;
     const client = {
-      id: obj._id.toString(),
+      id: this._id.toString(),
       type: APPLICATION_TYPES.APP_MODULE,
       grants: ["client_credentials"],
       accessTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
       refreshTokenLifetime: PROJECT_LIFETIME_TYPES.LT_INFINITE,
-      scope: obj.scope,
+      scope: this.scope,
       restriction: this.restriction
     };
     return client;

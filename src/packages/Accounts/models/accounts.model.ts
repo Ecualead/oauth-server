@@ -11,7 +11,7 @@
 import { AUTH_ERRORS } from "@ikoabo/auth";
 import { BaseModel } from "@ikoabo/server";
 import { prop, pre, index, getModelForClass, DocumentType, Severity } from "@typegoose/typegoose";
-import bcrypt from "bcrypt";
+import { hash, compare } from "bcrypt";
 import mongoose from "mongoose";
 import { EMAIL_STATUS, RECOVER_TOKEN_STATUS } from "@/Accounts/models/accounts.enum";
 import { SocialNetworkProfile } from "@/SocialNetworks/models/social.networks.model";
@@ -51,7 +51,7 @@ export class AccountEmail {
   }
 
   /* Update the user crypt password */
-  bcrypt.hash(this.password, 10, (err: mongoose.Error, hash) => {
+  hash(this.password, 10, (err: mongoose.Error, hash) => {
     if (err) {
       return next(err);
     }
@@ -65,7 +65,7 @@ export class AccountEmail {
   }
 
   /* Update the user crypt password */
-  bcrypt.hash(this.getUpdate().$set["password"], 10, (err: mongoose.Error, hash) => {
+  hash(this.getUpdate().$set["password"], 10, (err: mongoose.Error, hash) => {
     if (err) {
       return next(err);
     }
@@ -122,6 +122,15 @@ export class Account extends BaseModel {
   @prop({ type: SocialNetworkProfile })
   social?: SocialNetworkProfile[];
 
+  @prop({ default: 0 })
+  type?: number;
+
+  @prop()
+  custom1?: string;
+
+  @prop()
+  custom2?: string;
+
   /**
    * Get the mongoose data model
    */
@@ -158,7 +167,7 @@ export class Account extends BaseModel {
       if (!password || !("password" in this)) {
         reject({ boError: AUTH_ERRORS.INVALID_CREDENTIALS });
       }
-      bcrypt.compare(password, this.password, (err: mongoose.Error, isMatch: boolean) => {
+      compare(password, this.password, (err: mongoose.Error, isMatch: boolean) => {
         if (isMatch) {
           return resolve();
         }

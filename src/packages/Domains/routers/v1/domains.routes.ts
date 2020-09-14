@@ -11,7 +11,7 @@
 import { Objects, SERVER_STATUS } from "@ikoabo/core";
 import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
-import JSONStream from "jsonstream";
+import { stringify } from "jsonstream";
 import { DomainCtrl } from "@/Domains/controllers/domains.controller";
 import { DomainCreateValidation, DomainUpdateValidation } from "@/Domains/models/domains.joi";
 import { DomainDocument } from "@/Domains/models/domains.model";
@@ -77,7 +77,7 @@ router.get(
   (_req: Request, res: Response, _next: NextFunction) => {
     /* Fetch all domains of the current user */
     DomainCtrl.fetchAll({ owner: Objects.get(res.locals, "token.user._id") })
-      .pipe(JSONStream.stringify())
+      .pipe(stringify())
       .pipe(res.type("json"));
   },
   ResponseHandler.success,

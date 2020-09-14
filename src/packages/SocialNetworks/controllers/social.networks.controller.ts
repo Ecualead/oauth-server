@@ -13,17 +13,25 @@ import { Logger, HTTP_STATUS, Objects } from "@ikoabo/core";
 import { Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 import passport from "passport";
-import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
-import { SocialNetworkStrategyFactory } from "@/SocialNetworks/controllers/strategies/strategy.factory.controller";
 import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
 import { AccountModel, AccountDocument } from "@/Accounts/models/accounts.model";
-import { AccountProjectProfileDocument, AccountProjectProfileModel} from "@/Accounts/models/accounts.projects.model";
-import { Settings } from "@/configs/settings.config";
+import {
+  AccountProjectProfileDocument,
+  AccountProjectProfileModel
+} from "@/Accounts/models/accounts.projects.model";
 import { OAuth2ModelCtrl } from "@/OAuth2/controllers/oauth2.model.controller";
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
+import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
+import { SocialNetworkStrategyFactory } from "@/SocialNetworks/controllers/strategies/strategy.factory.controller";
 import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.enum";
-import { socialNetworkToStr, SocialNetworkCredential } from "@/SocialNetworks/models/social.networks.model";
-import { SocialNetworkRequestDocument, SocialNetworkRequestModel } from "@/SocialNetworks/models/social.networks.request.model";
+import {
+  socialNetworkToStr,
+  SocialNetworkCredential
+} from "@/SocialNetworks/models/social.networks.model";
+import {
+  SocialNetworkRequestDocument,
+  SocialNetworkRequestModel
+} from "@/SocialNetworks/models/social.networks.request.model";
 
 class SocialNetwork {
   private static _instance: SocialNetwork;
@@ -44,21 +52,20 @@ class SocialNetwork {
   }
 
   public doAuthenticate(socialNetwork: SocialNetworkRequestDocument, options = {}) {
-    const self = this;
     return (req: Request, res: Response, next: NextFunction) => {
       /* Initialize the social network strategy */
-      self._setupSocialStrategy(socialNetwork);
+      this._setupSocialStrategy(socialNetwork);
 
       /* Authenticate against social network */
-      passport.authenticate(socialNetwork.id, options, (err, user, info) => {
+      passport.authenticate(socialNetwork.id, options, (err, user, _info) => {
         /* Check if there were some errors */
         if (err) {
-          self._logger.error("Error authenticating social network", {
+          this._logger.error("Error authenticating social network", {
             error: err
           });
 
           /* Remove the passport strategy */
-          self._clearStrategy(socialNetwork.id);
+          this._clearStrategy(socialNetwork.id);
 
           /* Check for oauth errors */
           if (err["oauthError"] || !err.code || !Number.isInteger(err.code)) {
@@ -77,7 +84,7 @@ class SocialNetwork {
         /* When no user is given there is an unknown error */
         if (!user) {
           /* Remove the passport strategy */
-          self._clearStrategy(socialNetwork.id);
+          this._clearStrategy(socialNetwork.id);
 
           return next({
             boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
@@ -107,7 +114,7 @@ class SocialNetwork {
       AccountCtrl.getProfile(
         Objects.get(request, "user.id", request.user).toString(),
         Objects.get(request, "application.project.id", "").toString()
-      ).then((profile: AccountProjectProfileDocument) => {
+      ).then((_profile: AccountProjectProfileDocument) => {
         const client: any = Objects.get(request, "application");
         const user: any = Objects.get(request, "user");
         user["isSocial"] = true;
@@ -208,7 +215,7 @@ class SocialNetwork {
     };
 
     /* Prepare the callback URI */
-    const callbackURI = `${Settings.AUTH.SERVER}/v1/oauth/social/${socialNetworkToStr(
+    const callbackURI = `${process.env.AUTH_SERVER}/v1/oauth/social/${socialNetworkToStr(
       socialNetwork.social.type
     )}/callback`;
 

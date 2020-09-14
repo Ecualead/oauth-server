@@ -16,7 +16,10 @@ export const RegisterValidation = Joi.object().keys({
   name: Joi.string().allow("").optional(),
   lastname: Joi.string().allow("").optional(),
   phone: Joi.string().allow("").optional(),
-  referral: Joi.string().allow("").optional()
+  referral: Joi.string().allow("").optional(),
+  type: Joi.number().optional().default(0),
+  custom1: Joi.string().allow("").optional(),
+  custom2: Joi.string().allow("").optional()
 });
 
 export const AccountValidation = Joi.object().keys({
