@@ -34,6 +34,7 @@ import { OAuth2CodeDocument, OAuth2CodeModel } from "@/OAuth2/models/oauth2.code
 import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
 import { OAuth2TokenModel, OAuth2TokenDocument } from "@/OAuth2/models/oauth2.token.model";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
+import { DEFAULT_SCOPES } from "@/Accounts/models/accounts.enum";
 
 class OAuth2Model
   implements PasswordModel, ClientCredentialsModel, AuthorizationCodeModel, RefreshTokenModel {
@@ -450,7 +451,12 @@ class OAuth2Model
       }
 
       /* Get all valid scope from the match */
-      OAuth2Model.matchScope(application, user, Arrays.initialize<string>(token.scope as any))
+      const scopes: string[] = Arrays.initialize<string>(token.scope as any).filter(
+        (value: string) => {
+          return !DEFAULT_SCOPES.includes(value);
+        }
+      );
+      OAuth2Model.matchScope(application, user, scopes)
         .then((validScope: string[]) => {
           /* Save the authorization code into database */
           OAuth2TokenModel.create({

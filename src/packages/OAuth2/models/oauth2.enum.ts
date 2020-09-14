@@ -16,3 +16,14 @@ export enum OAUTH2_TOKEN_TYPE {
   TT_USER = 3,
   TT_USER_SOCIAL = 4
 }
+
+export const DEFAULT_SCOPES: string[] = [
+  "default",
+  "non_user",
+  "module",
+  "application",
+  "social",
+  "application_owner",
+  "project_owner",
+  "user"
+];
