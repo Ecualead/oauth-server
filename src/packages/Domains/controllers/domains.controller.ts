@@ -10,11 +10,11 @@
  */
 import { SERVER_STATUS, HTTP_STATUS, SERVER_ERRORS } from "@ikoabo/core";
 import { DataScoped } from "@/controllers/data.scoped.controller";
-import { Domain, DomainModel, DomainDocument } from "@/Domains/models/domains.model";
+import { DomainModel, DomainDocument } from "@/Domains/models/domains.model";
 import { ModuleDocument } from "@/Modules/models/modules.model";
 import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
 
-class Domains extends DataScoped<Domain, DomainDocument> {
+class Domains extends DataScoped<DomainDocument> {
   private static _instance: Domains;
 
   private constructor() {
