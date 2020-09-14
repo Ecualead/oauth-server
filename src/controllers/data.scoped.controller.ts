@@ -12,7 +12,7 @@ import { SERVER_STATUS, SERVER_ERRORS } from "@ikoabo/core";
 import { CRUD } from "@ikoabo/server";
 import mongoose from "mongoose";
 
-export abstract class DataScoped<T, D extends mongoose.Document> extends CRUD<T, D> {
+export abstract class DataScoped<D extends mongoose.Document> extends CRUD<D> {
   constructor(logger: string, model: mongoose.Model<D>, modelname: string) {
     super(logger, model, modelname);
   }
