@@ -20,7 +20,8 @@ import {
   RegisterValidation,
   AccountValidation,
   EmailValidation,
-  RecoverValidation
+  RecoverValidation,
+  PassowrdChangeValidation
 } from "@/Accounts/models/accounts.joi";
 import { AccountDocument } from "@/Accounts/models/accounts.model";
 import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
@@ -315,4 +316,53 @@ router.get(
   ResponseHandler.error
 );
 
+router.put(
+  "/password",
+  Validator.joi(PassowrdChangeValidation),
+  OAuth2Ctrl.authenticate(["user"]),
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Request a recover email */
+    AccountCtrl.fetch(Objects.get(res.locals, "token.user._id"))
+      .then((value: AccountDocument) => {
+        AccountCtrl.changePassword(value, req.body["oldPassword"], req.body["newPassword"])
+          .then((account: AccountDocument) => {
+            AccountCtrl.getProfile(account.id, Objects.get(res.locals, "token.application.project"))
+              .then((profile: AccountProjectProfileDocument) => {
+                /* Send the account confirmation notification */
+                Notifications.shared
+                  .doNotification(NOTIFICATIONS_EVENTS_TYPES.NET_CHPWD, profile, {
+                    email: Objects.get(res.locals, "token.username")
+                  })
+                  .finally(() => {
+                    res.locals["response"] = {
+                      user: account.id
+                    };
+                    next();
+                  });
+              })
+              .catch(next);
+          })
+          .catch(next);
+      })
+      .catch(next);
+
+    /* Request a recover email */
+    AccountCtrl.fetch(req.params.id)
+      .then((value: AccountDocument) => {
+        res.locals["response"] = {
+          user: value.id,
+          name: value.name,
+          lastname: value.lastname,
+          initials: value.initials,
+          color1: value.color1,
+          color2: value.color2
+        };
+        next();
+      })
+      .catch(next);
+  },
+  OAuth2Ctrl.handleError,
+  ResponseHandler.success,
+  ResponseHandler.error
+);
 export default router;

@@ -36,3 +36,8 @@ export const RecoverValidation = Joi.object().keys({
   token: Joi.string().required(),
   password: Joi.string().required()
 });
+
+export const PassowrdChangeValidation = Joi.object().keys({
+  oldPassword: Joi.string().required(),
+  newPassword: Joi.string().required()
+});
