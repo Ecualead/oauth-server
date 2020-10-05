@@ -31,10 +31,9 @@ import { ApplicationModel, ApplicationDocument } from "@/Applications/models/app
 import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
 import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
 import { OAuth2CodeDocument, OAuth2CodeModel } from "@/OAuth2/models/oauth2.code.model";
-import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
+import { OAUTH2_TOKEN_TYPE, DEFAULT_SCOPES } from "@/OAuth2/models/oauth2.enum";
 import { OAuth2TokenModel, OAuth2TokenDocument } from "@/OAuth2/models/oauth2.token.model";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
-import { DEFAULT_SCOPES } from "@/Accounts/models/accounts.enum";
 
 class OAuth2Model
   implements PasswordModel, ClientCredentialsModel, AuthorizationCodeModel, RefreshTokenModel {
