@@ -68,6 +68,7 @@ export class OAuth2Token extends BaseModel {
       user: <any>(this.user ? this.user : this.application),
       type: this.type,
       keep: this.keep,
+      username: this.username,
       createdAt: this.createdAt
     };
 
@@ -118,6 +119,7 @@ export class OAuth2Token extends BaseModel {
       client: <any>this.application,
       user: <any>(this.user ? this.user : this.application),
       keep: this.keep,
+      username: this.username,
       createdAt: this.createdAt
     };
     token.scope.push(token.client.id === token.user.id ? "application" : "user");
@@ -146,6 +148,7 @@ export class OAuth2Token extends BaseModel {
               client: ret.application,
               user: ret.user ? ret.user : ret.application,
               keep: ret.keep,
+              username: ret.username,
               createdAt: ret.createdAt
             };
             token.scope.push(token.client.id === token.user.id ? "application" : "user");
