@@ -326,7 +326,7 @@ router.put(
       .then((value: AccountDocument) => {
         AccountCtrl.changePassword(value, req.body["oldPassword"], req.body["newPassword"])
           .then((account: AccountDocument) => {
-            AccountCtrl.getProfile(account.id, Objects.get(res.locals, "token.application.project"))
+            AccountCtrl.getProfile(account.id, Objects.get(res.locals, "token.client.project._id"))
               .then((profile: AccountProjectProfileDocument) => {
                 /* Send the account confirmation notification */
                 Notifications.shared
@@ -343,21 +343,6 @@ router.put(
               .catch(next);
           })
           .catch(next);
-      })
-      .catch(next);
-
-    /* Request a recover email */
-    AccountCtrl.fetch(req.params.id)
-      .then((value: AccountDocument) => {
-        res.locals["response"] = {
-          user: value.id,
-          name: value.name,
-          lastname: value.lastname,
-          initials: value.initials,
-          color1: value.color1,
-          color2: value.color2
-        };
-        next();
       })
       .catch(next);
   },
