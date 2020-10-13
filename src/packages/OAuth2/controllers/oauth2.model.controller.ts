@@ -35,6 +35,21 @@ import { OAUTH2_TOKEN_TYPE, DEFAULT_SCOPES } from "@/OAuth2/models/oauth2.enum";
 import { OAuth2TokenModel, OAuth2TokenDocument } from "@/OAuth2/models/oauth2.token.model";
 import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
 
+function prepareScope(scope?: string | string[]): string[] {
+  /* Check for valid value */
+  if (!scope) {
+    return [];
+  }
+
+  /* Check if value is an array */
+  if (Array.isArray(scope)) {
+    return scope;
+  }
+
+  /* Split the string by space */
+  return scope.split(" ");
+}
+
 class OAuth2Model
   implements PasswordModel, ClientCredentialsModel, AuthorizationCodeModel, RefreshTokenModel {
   private static _instance: OAuth2Model;
@@ -171,7 +186,7 @@ class OAuth2Model
       this._logger.debug(`Storing authorization code ${code.authorizationCode}`);
 
       /* Get all valid scope from the match */
-      const scopes: string[] = Array.isArray(code.scope) ? code.scope : code.scope.split(" ");
+      const scopes: string[] = prepareScope(code.scope);
       OAuth2Model.matchScope(application, user, scopes)
         .then((validScope: string[]) => {
           /* Save the authorization code into database */
@@ -306,7 +321,7 @@ class OAuth2Model
   ): Promise<string | string[] | Falsey> {
     return new Promise<string | string[] | Falsey>((resolve, reject) => {
       /* Get all valid scope from the match */
-      const scopes: string[] = Array.isArray(scope) ? scope : scope.split(" ");
+      const scopes: string[] = prepareScope(scope);
       OAuth2Model.matchScope(application, user, scopes)
         .then((validScope: string[]) => {
           /* Ensure virtual scope are present */
@@ -452,10 +467,7 @@ class OAuth2Model
       }
 
       /* Get all valid scope from the match */
-      const scopes: string[] = (Array.isArray(token.scope)
-        ? token.scope
-        : token.scope.split(" ")
-      ).filter((value: string) => {
+      const scopes: string[] = prepareScope(token.scope).filter((value: string) => {
         return !DEFAULT_SCOPES.includes(value);
       });
       OAuth2Model.matchScope(application, user, scopes)
@@ -597,8 +609,8 @@ class OAuth2Model
   verifyScope(token: Token, scope: string | string[]): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       /* Force scope to be an array */
-      scope = Array.isArray(scope) ? scope : scope.split(" ");
-      token.scope = Array.isArray(token.scope) ? token.scope : token.scope.split(" ");
+      scope = prepareScope(scope);
+      token.scope = prepareScope(token.scope);
       const validScope = scope.every((tmpScope) => token.scope.indexOf(tmpScope) >= 0);
       resolve(validScope);
     });
