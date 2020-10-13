@@ -171,7 +171,8 @@ class OAuth2Model
       this._logger.debug(`Storing authorization code ${code.authorizationCode}`);
 
       /* Get all valid scope from the match */
-      OAuth2Model.matchScope(application, user, Arrays.initialize<string>(code.scope as any))
+      const scopes: string[] = Array.isArray(code.scope) ? code.scope : code.scope.split(" ");
+      OAuth2Model.matchScope(application, user, scopes)
         .then((validScope: string[]) => {
           /* Save the authorization code into database */
           OAuth2CodeModel.create({
@@ -305,7 +306,8 @@ class OAuth2Model
   ): Promise<string | string[] | Falsey> {
     return new Promise<string | string[] | Falsey>((resolve, reject) => {
       /* Get all valid scope from the match */
-      OAuth2Model.matchScope(application, user, Arrays.initialize<string>(scope as any))
+      const scopes: string[] = Array.isArray(scope) ? scope : scope.split(" ");
+      OAuth2Model.matchScope(application, user, scopes)
         .then((validScope: string[]) => {
           /* Ensure virtual scope are present */
           validScope.push(application.id === user.id ? "application" : "user");
@@ -450,11 +452,12 @@ class OAuth2Model
       }
 
       /* Get all valid scope from the match */
-      const scopes: string[] = Arrays.initialize<string>(token.scope as any).filter(
-        (value: string) => {
-          return !DEFAULT_SCOPES.includes(value);
-        }
-      );
+      const scopes: string[] = (Array.isArray(token.scope)
+        ? token.scope
+        : token.scope.split(" ")
+      ).filter((value: string) => {
+        return !DEFAULT_SCOPES.includes(value);
+      });
       OAuth2Model.matchScope(application, user, scopes)
         .then((validScope: string[]) => {
           /* Save the authorization code into database */
@@ -594,11 +597,9 @@ class OAuth2Model
   verifyScope(token: Token, scope: string | string[]): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       /* Force scope to be an array */
-      scope = Arrays.initialize<string>(scope as any);
-      token.scope = Arrays.initialize<string>(token.scope as any);
-
+      scope = Array.isArray(scope) ? scope : scope.split(" ");
+      token.scope = Array.isArray(token.scope) ? token.scope : token.scope.split(" ");
       const validScope = scope.every((tmpScope) => token.scope.indexOf(tmpScope) >= 0);
-
       resolve(validScope);
     });
   }
