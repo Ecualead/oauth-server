@@ -144,6 +144,7 @@ router.post(
               const user = Objects.get(token, "user.id", null);
               if (user && user !== res.locals["response"]["application"]) {
                 res.locals["response"]["user"] = user;
+                res.locals["response"]["username"] = Objects.get(token, "username", null);
               }
               next();
             })
