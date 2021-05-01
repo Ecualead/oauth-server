@@ -1,49 +1,19 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { AUTH_ERRORS } from "@ikoabo/auth";
 import { BaseModel } from "@ikoabo/server";
-import { prop, pre, index, getModelForClass, DocumentType, Severity } from "@typegoose/typegoose";
+import { prop, pre, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import { hash, compare } from "bcrypt";
 import mongoose from "mongoose";
-import { EMAIL_STATUS, RECOVER_TOKEN_STATUS } from "@/Accounts/models/accounts.enum";
-import { SocialNetworkProfile } from "@/SocialNetworks/models/social.networks.model";
-
-@index({ token: 1 })
-@index({ status: 1 })
-@index({ expires: 1 })
-export class AccountToken {
-  @prop()
-  token?: string;
-
-  @prop({ required: true, default: 0 })
-  attempts?: number;
-
-  @prop({ required: true, default: RECOVER_TOKEN_STATUS.RTS_DISABLED })
-  status?: number;
-
-  @prop({ required: true, default: 0 })
-  expires?: number;
-}
-
-@index({ email: 1 }, { unique: true })
-export class AccountEmail {
-  @prop({ required: true, unique: true })
-  email!: string;
-
-  @prop({ required: true, default: EMAIL_STATUS.ES_REGISTERED })
-  status?: number;
-
-  @prop({ required: true })
-  confirm!: AccountToken;
-}
+import { Project } from "@/models/project/project.model";
 
 @pre<Account>("save", function (next) {
   if (!this.isModified("password")) {
@@ -73,15 +43,21 @@ export class AccountEmail {
     next();
   });
 })
-@index({ email: 1 }, { unique: true })
-@index({ _id: 1, "social.type": 1 }, { unique: true })
+@index({ project: 1 })
 @index({ code: 1 })
+@index({ project: 1, code: 1 }, { unique: true })
 export class Account extends BaseModel {
+  @prop({ required: true, ref: Project })
+  project!: Ref<Project>;
+
   @prop()
   name?: string;
 
   @prop()
-  lastname?: string;
+  lastname1?: string;
+
+  @prop()
+  lastname2?: string;
 
   @prop()
   initials?: string;
@@ -93,16 +69,7 @@ export class Account extends BaseModel {
   color2?: string;
 
   @prop({ required: true })
-  code?: string;
-
-  @prop()
-  email?: string;
-
-  @prop({ type: AccountEmail })
-  emails?: AccountEmail[];
-
-  @prop()
-  phone?: string;
+  code!: string;
 
   @prop()
   password?: string;
@@ -117,10 +84,10 @@ export class Account extends BaseModel {
   confirmationExpires?: number;
 
   @prop()
-  recover?: AccountToken;
+  referral?: string;
 
-  @prop({ type: SocialNetworkProfile })
-  social?: SocialNetworkProfile[];
+  @prop({ ref: Account })
+  parent?: Ref<Account>;
 
   @prop({ default: 0 })
   type?: number;
@@ -130,6 +97,9 @@ export class Account extends BaseModel {
 
   @prop()
   custom2?: string;
+
+  @prop({ type: String })
+  scope?: string[];
 
   /**
    * Get the mongoose data model
@@ -146,10 +116,9 @@ export class Account extends BaseModel {
             return {
               user: ret.id,
               name: ret.name,
-              lastname: ret.lastname,
+              lastname1: ret.lastname1,
+              lastname2: ret.lastname2,
               code: ret.code,
-              email: ret.email,
-              phone: ret.phone,
               referral: ret.referral,
               status: ret.status,
               createdAt: ret.createdAt,
@@ -158,7 +127,7 @@ export class Account extends BaseModel {
           }
         }
       },
-      options: { automaticName: false, allowMixed: Severity.ALLOW }
+      options: { automaticName: false }
     });
   }
 
@@ -175,14 +144,6 @@ export class Account extends BaseModel {
         reject(err ? err : { boError: AUTH_ERRORS.INVALID_CREDENTIALS });
       });
     });
-  }
-
-  public locateEmail?(email: string): AccountEmail | null {
-    let itr = 0;
-    while (itr < this.emails.length && this.emails[itr].email !== email) {
-      itr++;
-    }
-    return itr < this.emails.length ? this.emails[itr] : null;
   }
 }
 

@@ -1,28 +1,31 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { BaseModel } from "@ikoabo/server";
-import { Ref, prop, getModelForClass, DocumentType, index } from "@typegoose/typegoose";
+import { prop, getModelForClass, DocumentType, index, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { Module } from "@/Modules/models/modules.model";
+import { Project } from "@/models/project/project.model";
 
-@index({ canonical: 1 }, { unique: true })
-export class Domain extends BaseModel {
+@index({ project: 1 })
+@index({ key: 1 })
+@index({ name: 1 })
+@index({ project: 1, name: 1 }, { unique: true })
+export class ProjectKey extends BaseModel {
+  @prop({ required: true, ref: Project })
+  project?: Ref<Project>;
+
   @prop({ required: true })
   name!: string;
 
   @prop({ required: true, unique: true })
-  canonical?: string;
-
-  @prop()
-  image?: string;
+  key!: string;
 
   @prop()
   description?: string;
@@ -30,16 +33,13 @@ export class Domain extends BaseModel {
   @prop({ type: String })
   scope?: string[];
 
-  @prop({ type: mongoose.Types.ObjectId, ref: Module })
-  modules?: Ref<Module>[];
-
   /**
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(Domain, {
+    return getModelForClass(ProjectKey, {
       schemaOptions: {
-        collection: "domains",
+        collection: "projects.keys",
         timestamps: true,
         toJSON: {
           virtuals: true,
@@ -47,9 +47,11 @@ export class Domain extends BaseModel {
           transform: (_doc: any, ret: any) => {
             return {
               id: ret.id,
+              project: ret.project,
               name: ret.name,
-              image: ret.image,
+              key: ret.key,
               description: ret.description,
+              scope: ret.scope,
               status: ret.status,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt
@@ -62,5 +64,5 @@ export class Domain extends BaseModel {
   }
 }
 
-export type DomainDocument = DocumentType<Domain>;
-export const DomainModel: mongoose.Model<DomainDocument> = Domain.shared;
+export type ProjectKeyDocument = DocumentType<ProjectKey>;
+export const ProjectKeyModel: mongoose.Model<ProjectKeyDocument> = ProjectKey.shared;

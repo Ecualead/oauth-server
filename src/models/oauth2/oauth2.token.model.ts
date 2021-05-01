@@ -1,10 +1,10 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -13,9 +13,9 @@ import { BaseModel } from "@ikoabo/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { Token, RefreshToken } from "oauth2-server";
-import { Account } from "@/Accounts/models/accounts.model";
-import { Application } from "@/Applications/models/applications.model";
-import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
+import { Account } from "@/models/account/account.model";
+import { Application } from "@/models/application/application.model";
+import { OAUTH2_TOKEN_TYPE } from "@/constants/oauth2.enum";
 
 @index({ accessToken: 1 })
 @index({ accessTokenExpiresAt: 1 })
@@ -51,8 +51,8 @@ export class OAuth2Token extends BaseModel {
   @prop()
   username?: string;
 
-  @prop({ required: true, default: OAUTH2_TOKEN_TYPE.TT_UNKNOWN })
-  type?: number;
+  @prop({ enum: OAUTH2_TOKEN_TYPE, required: true, default: OAUTH2_TOKEN_TYPE.UNKNOWN })
+  type?: OAUTH2_TOKEN_TYPE;
 
   /**
    * Convert the document into Access Token
@@ -75,18 +75,14 @@ export class OAuth2Token extends BaseModel {
     let applicationOwner, projectOwner, user: any;
     token.scope.push("default");
     switch (token.type) {
-      case OAUTH2_TOKEN_TYPE.TT_MODULE:
-        token.scope.push("non_user");
-        token.scope.push("module");
-        break;
-      case OAUTH2_TOKEN_TYPE.TT_APPLICATION:
+      case OAUTH2_TOKEN_TYPE.APPLICATION:
         token.scope.push("non_user");
         token.scope.push("application");
         break;
-      case OAUTH2_TOKEN_TYPE.TT_USER_SOCIAL:
-        token.scope.push("social");
+      case OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH:
+        token.scope.push("external_auth");
       // eslint-disable-next-line no-fallthrough
-      case OAUTH2_TOKEN_TYPE.TT_USER:
+      case OAUTH2_TOKEN_TYPE.USER:
         /* Get application parameters */
         applicationOwner = Objects.get(token.client, "owner", "").toString();
         projectOwner = Objects.get(token.client, "project.owner", "").toString();

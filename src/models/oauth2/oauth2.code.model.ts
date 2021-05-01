@@ -1,10 +1,10 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -12,8 +12,8 @@ import { BaseModel } from "@ikoabo/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { AuthorizationCode } from "oauth2-server";
-import { Account } from "@/Accounts/models/accounts.model";
-import { Application } from "@/Applications/models/applications.model";
+import { Account } from "@/models/account/account.model";
+import { Application } from "@/models/application/application.model";
 
 @index({ code: 1 })
 @index({ expiresAt: 1 })
