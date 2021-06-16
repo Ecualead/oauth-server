@@ -31,8 +31,8 @@ export class AccountPhone extends BaseModel {
   @prop({ enum: EMAIL_STATUS, required: true, default: EMAIL_STATUS.REGISTERED })
   status!: EMAIL_STATUS;
 
-  @prop({ required: true })
-  token!: AccountToken;
+  @prop()
+  token?: AccountToken;
 
   /**
    * Get the mongoose data model

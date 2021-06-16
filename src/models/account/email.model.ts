@@ -16,7 +16,7 @@ import { Account } from "@/models/account/account.model";
 
 @index({ token: 1 })
 @index({ status: 1 })
-@index({ expires: 1 })
+@index({ expire: 1 })
 export class AccountToken {
   @prop({ required: true })
   token!: string;
