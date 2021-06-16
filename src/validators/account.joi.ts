@@ -1,20 +1,21 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Joi } from "@ikoabo/server";
+ import { Joi } from "@ikoabo/server";
 
 export const RegisterValidation = Joi.object().keys({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
   name: Joi.string().allow("").optional(),
-  lastname: Joi.string().allow("").optional(),
+  lastname1: Joi.string().allow("").optional(),
+  lastname2: Joi.string().allow("").optional(),
   phone: Joi.string().allow("").optional(),
   referral: Joi.string().allow("").optional(),
   type: Joi.number().optional().default(0),

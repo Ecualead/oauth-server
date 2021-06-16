@@ -1,14 +1,14 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import fs from "fs";
+ import fs from "fs";
 import path from "path";
 import { AUTH_ERRORS } from "@ikoabo/auth";
 import { Logger } from "@ikoabo/core";

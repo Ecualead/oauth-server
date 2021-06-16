@@ -19,8 +19,8 @@ import { AccountToken } from "@/models/account/email.model";
 @index({ phone: 1 })
 @index({ phone: 1, account: 1 }, { unique: true })
 export class AccountPhone extends BaseModel {
-  @prop({ required: true, ref: Account })
-  account!: Ref<Account>;
+  @prop({ ref: Account })
+  account?: Ref<Account>;
 
   @prop()
   description?: string;
@@ -51,7 +51,6 @@ export class AccountPhone extends BaseModel {
               account: ret.account,
               description: ret.description,
               phone: ret.phone,
-              token: ret.token,
               status: ret.status,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt

@@ -14,6 +14,7 @@ import { prop, pre, index, getModelForClass, DocumentType, Ref } from "@typegoos
 import { hash, compare } from "bcrypt";
 import mongoose from "mongoose";
 import { Project } from "@/models/project/project.model";
+import { HTTP_STATUS } from "@ikoabo/core";
 
 @pre<Account>("save", function (next) {
   if (!this.isModified("password")) {
@@ -26,20 +27,22 @@ import { Project } from "@/models/project/project.model";
       return next(err);
     }
     this.password = hash;
+    this.passwordUpdated = Date.now();
     next();
   });
 })
 @pre<Account>("findOneAndUpdate", function (next) {
-  if (!this.getUpdate().$set["password"]) {
+  if (!(this.getUpdate() as any)["$set"]["password"]) {
     next();
   }
 
   /* Update the user crypt password */
-  hash(this.getUpdate().$set["password"], 10, (err: mongoose.Error, hash) => {
+  hash((this.getUpdate() as any)["$set"]["password"], 10, (err: mongoose.Error, hash) => {
     if (err) {
       return next(err);
     }
-    this.getUpdate().$set["password"] = hash;
+    (this.getUpdate() as any)["$set"]["password"] = hash;
+    (this.getUpdate() as any)["$set"]["passwordUpdated"] = Date.now();
     next();
   });
 })
@@ -75,9 +78,6 @@ export class Account extends BaseModel {
   password?: string;
 
   @prop()
-  passwordExpires?: number;
-
-  @prop()
   passwordUpdated?: number;
 
   @prop()
@@ -88,6 +88,9 @@ export class Account extends BaseModel {
 
   @prop({ ref: Account })
   parent?: Ref<Account>;
+
+  @prop({ type: String, default: [] })
+  tree?: string[];
 
   @prop({ default: 0 })
   type?: number;
@@ -141,7 +144,14 @@ export class Account extends BaseModel {
           return resolve();
         }
 
-        reject(err ? err : { boError: AUTH_ERRORS.INVALID_CREDENTIALS });
+        reject(
+          err
+            ? err
+            : {
+                boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+                boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
+              }
+        );
       });
     });
   }
