@@ -1,28 +1,27 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import "module-alias/register";
 import { Logger, LOG_LEVEL, Tokens } from "@ikoabo/core";
 import { HttpServer } from "@ikoabo/server";
-import async from "async";
-import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
-import { AccountDocument } from "@/Accounts/models/accounts.model";
-import { AccountProjectProfileDocument } from "@/Accounts/models/accounts.projects.model";
-import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
-import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
-import { ApplicationDocument, ApplicationModel } from "@/Applications/models/applications.model";
-import { DomainCtrl } from "@/Domains/controllers/domains.controller";
-import { DomainModel, DomainDocument } from "@/Domains/models/domains.model";
-import { Module, ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
-import { ProjectCtrl } from "@/Projects/controllers/projects.controller";
-import { ProjectModel, ProjectDocument } from "@/Projects/models/projects.model";
+import { DomainCtrl } from "@/controllers/domain/domain.controller";
+import { DomainDocument } from "@/models/domain/domain.model";
+import { ProjectCtrl } from "@/controllers/project/project.controller";
+import { ProjectDocument } from "@/models/project/project.model";
+import { APPLICATION_TYPE } from "@/constants/application.enum";
+import { ApplicationCtrl } from "@/controllers/application/application.controller";
+import { ApplicationDocument } from "@/models/application/application.model";
+import { AccountCtrl } from "@/controllers/account/account.controller";
+import { AccountDocument } from "@/models/account/account.model";
+import { AccountEmailDocument } from "@/models/account/email.model";
+import { AccountPhoneDocument } from "@/models/account/phone.model";
 
 Logger.setLogLevel(LOG_LEVEL.DEBUG);
 const modules: any[] = [
@@ -31,123 +30,7 @@ const modules: any[] = [
     description: "Identity Management System",
     url: "https://ims.ikoabo.com",
     restriction: [],
-    scope: [
-      "mod_ims_register_user",
-      "mod_ims_confirm_account",
-      "mod_ims_recover_account",
-      "mod_ims_resend_confirm",
-      "mod_ims_recover_validate",
-      "mod_ims_recover_change",
-      "mod_ims_module_ctrl"
-    ]
-  },
-  {
-    name: "BCS",
-    description: "Blog Content Service",
-    url: "https://bcs.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "EVT",
-    description: "Event Service",
-    url: "https://evt.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "FSS",
-    description: "File Storage Service",
-    url: "https://fss.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "NTS",
-    description: "Notifications Service",
-    url: "https://nts.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "RTE",
-    description: "Real Time Event Service",
-    url: "https://rte.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "TCS",
-    description: "Taxonomy/Category Service",
-    url: "https://tcs.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "ECS",
-    description: "e-Commerce Service",
-    url: "https://ecs.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "PSP",
-    description: "Product/Service Portafolio",
-    url: "https://psp.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "PVG",
-    description: "Photo/Video Gallery Service",
-    url: "https://pvg.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "UVC",
-    description: "User v-Card Service",
-    url: "https://uvs.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "ICS",
-    description: "Instant Chat Service",
-    url: "https://ics.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "UVS",
-    description: "User VITAE Service",
-    url: "https://uvs.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "VSS",
-    description: "Video Streaming Service",
-    url: "https://vss.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "CBS",
-    description: "Chat Bot Service",
-    url: "https://cbs.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "SNS",
-    description: "Social Network Service",
-    url: "https://sns.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "ELS",
-    description: "e-Learning Service",
-    url: "https://els.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "MMA",
-    description: "Master Merchant Account Service",
-    url: "https://mma.ikoabo.com",
-    restriction: []
-  },
-  {
-    name: "BRS",
-    description: "Book Read Service",
-    url: "https://brs.ikoabo.com",
-    restriction: []
+    scope: []
   }
 ];
 
@@ -155,38 +38,21 @@ const _logger: Logger = new Logger("InitData");
 HttpServer.shared.initMongo().then(() => {
   _logger.debug("*** DATA IMPORT STARTED ***");
 
-  /* Registrate all initial modules */
-  const modulesData: any[] = [];
-  async.forEach(
-    modules,
-    (value: Module, cb: any) => {
-      value.secret = Tokens.long;
-      /* Register the module */
-      ModuleModel.create(value)
-        .then((value: ModuleDocument) => {
-          modulesData.push({
-            id: value.id,
-            name: value.name,
-            secret: value.secret
-          });
-          cb();
-        })
-        .catch(cb);
-    },
-    (err: any) => {
-      if (err) {
-        _logger.error("Error registering modules", err);
-        process.exit(-1);
-        return;
-      }
+  /* Create the initial domain */
+  DomainCtrl.create({
+    name: "IKOABO",
+    canonical: "com.ikoabo",
+    description: "IKOA Business Opportunity Domain"
+  })
+    .then((domain: DomainDocument) => {
+      _logger.debug("Domain created", { domain: domain });
 
-      _logger.debug("Modules created", { modules: modulesData });
-
-      /* Create the initial domain */
-      DomainCtrl.create({
-        name: "IKOABO",
+      /* Create the initial project */
+      ProjectCtrl.create({
+        domain: domain.id,
         canonical: "com.ikoabo",
-        description: "IKOA Business Opportunity Domain",
+        name: "Plataforma IKOABO",
+        description: "Infraestructura de servicios IKOA Business Opportunity",
         scope: [
           "mod_ims_register_user",
           "mod_ims_confirm_account",
@@ -197,151 +63,120 @@ HttpServer.shared.initMongo().then(() => {
           "mod_ims_module_ctrl"
         ]
       })
-        .then((domain: DomainDocument) => {
-          _logger.debug("Domain created", { domain: domain });
+        .then((project: ProjectDocument) => {
+          _logger.debug("Project created", { project: project });
 
-          /* Create the initial project */
-          ProjectCtrl.create({
-            domain: domain.id,
-            canonical: "com.ikoabo",
-            name: "Plataforma IKOABO",
-            description: "IKOA Business Opportunity",
+          /* Create the initial application */
+          ApplicationCtrl.create({
+            type: APPLICATION_TYPE.MODULE,
+            project: project.id,
+            canonical: "com.ikoabo.auth",
+            name: "IKOA Business Opportunity Auth Service",
+            secret: Tokens.long,
+            grants: ["client_credentials"],
             scope: [
               "mod_ims_register_user",
               "mod_ims_confirm_account",
               "mod_ims_recover_account",
               "mod_ims_resend_confirm",
               "mod_ims_recover_validate",
-              "mod_ims_recover_change",
-              "mod_ims_module_ctrl"
-            ]
+              "mod_ims_recover_change"
+            ],
+            restriction: []
           })
-            .then((project: ProjectDocument) => {
-              _logger.debug("Project created", { project: project });
+            .then((application: ApplicationDocument) => {
+              _logger.debug("Application created", {
+                application: application
+              });
 
-              /* Create the initial application */
-              ApplicationCtrl.create({
-                type: APPLICATION_TYPES.APP_WEB_CLIENT_SIDE,
-                project: project.id,
-                canonical: "com.ikoabo.dev",
-                name: "IKOA Business Opportunity",
-                secret: Tokens.long,
-                grants: ["client_credentials", "password"],
-                scope: [
-                  "mod_ims_register_user",
-                  "mod_ims_confirm_account",
-                  "mod_ims_recover_account",
-                  "mod_ims_resend_confirm",
-                  "mod_ims_recover_validate",
-                  "mod_ims_recover_change"
-                ],
-                restriction: []
-              })
-                .then((application: ApplicationDocument) => {
-                  /* Fetch application with project populated */
-                  ApplicationCtrl.fetch(application.id, {}, ["project"])
-                    .then((application: ApplicationDocument) => {
-                      _logger.debug("Application created", {
-                        application: application
+              /* Register the initial user */
+              AccountCtrl.registerAccount(
+                {
+                  name: "Reinier",
+                  lastname1: "Millo",
+                  lastname2: "Sánchez",
+                  password: "cxpIkoa*03052019"
+                },
+                project
+              )
+                .then((user: AccountDocument) => {
+                  _logger.debug("User registered", { user: user });
+
+                  /* Register the user into the application */
+                  AccountCtrl.registerEmail(
+                    "reinier.millo88@gmail.com",
+                    project,
+                    "Default email address",
+                    user.id
+                  )
+                    .then((email: AccountEmailDocument) => {
+                      _logger.debug("User email address registered", {
+                        email: email
                       });
 
-                      /* Register the initial user */
-                      AccountCtrl.register(
-                        {
-                          name: "Reinier",
-                          lastname: "Millo Sánchez",
-                          email: "reinier.millo88@gmail.com",
-                          password: "cxpIkoa*03052019",
-                          phone: "+593998328746"
-                        },
-                        application
-                      )
-                        .then((user: AccountDocument) => {
-                          _logger.debug("User registered", { user: user });
+                      AccountCtrl.registerPhone("+593998328746", "Default phone number", user.id)
+                        .then((phone: AccountPhoneDocument) => {
+                          _logger.debug("User phone number registered", {
+                            phone: phone
+                          });
 
-                          /* Register the user into the application */
-                          AccountCtrl.createUserProfile(user, project.id, null)
-                            .then((profile: AccountProjectProfileDocument) => {
-                              _logger.debug("User profile registered", {
-                                profile: profile
-                              });
-
-                              /* Update modules owner */
-                              ModuleModel.updateMany({}, { $set: { owner: user._id } })
+                          /* Update domain owner */
+                          DomainCtrl.update({ _id: domain._id }, { owner: user._id })
+                            .then(() => {
+                              /* Update project owner */
+                              ProjectCtrl.update({ _id: project._id }, { owner: user._id })
                                 .then(() => {
-                                  /* Update domain owner */
-                                  DomainModel.findOneAndUpdate(
-                                    { _id: domain._id },
-                                    { $set: { owner: user._id } }
+                                  /* Update application owner */
+                                  ApplicationCtrl.update(
+                                    { _id: application._id },
+                                    { owner: user._id }
                                   )
                                     .then(() => {
-                                      /* Update project owner */
-                                      ProjectModel.findOneAndUpdate(
-                                        { _id: project._id },
-                                        { $set: { owner: user._id } }
-                                      )
-                                        .then(() => {
-                                          /* Update application owner */
-                                          ApplicationModel.findOneAndUpdate(
-                                            { _id: domain._id },
-                                            { $set: { owner: user._id } }
-                                          )
-                                            .then(() => {
-                                              _logger.debug("*** DONE INITIAL DATA IMPORT ***");
-                                              process.exit(0);
-                                            })
-                                            .catch((err) => {
-                                              _logger.error(
-                                                "Error registering application owner",
-                                                err
-                                              );
-                                              process.exit(-1);
-                                            });
-                                        })
-                                        .catch((err) => {
-                                          _logger.error("Error registering project owner", err);
-                                          process.exit(-1);
-                                        });
+                                      _logger.debug("*** DONE INITIAL DATA IMPORT ***");
+                                      process.exit(0);
                                     })
                                     .catch((err) => {
-                                      _logger.error("Error registering domain owner", err);
+                                      _logger.error("Error registering application owner", err);
                                       process.exit(-1);
                                     });
                                 })
                                 .catch((err) => {
-                                  _logger.error("Error registering modules owner", err);
+                                  _logger.error("Error registering project owner", err);
                                   process.exit(-1);
                                 });
                             })
                             .catch((err) => {
-                              _logger.error("Error registering user profile", err);
+                              _logger.error("Error registering domain owner", err);
                               process.exit(-1);
                             });
                         })
                         .catch((err) => {
-                          _logger.error("Error registering user", err);
+                          _logger.error("Error registering user phone number", err);
                           process.exit(-1);
                         });
                     })
                     .catch((err) => {
-                      _logger.error("Error fetching application", err);
+                      _logger.error("Error registering user email address", err);
                       process.exit(-1);
                     });
                 })
                 .catch((err) => {
-                  _logger.error("Error creating application", err);
+                  _logger.error("Error registering user", err);
                   process.exit(-1);
                 });
             })
             .catch((err) => {
-              _logger.error("Error creating project", err);
+              _logger.error("Error creating application", err);
               process.exit(-1);
             });
         })
         .catch((err) => {
-          _logger.error("Error creating domain", err);
+          _logger.error("Error creating project", err);
           process.exit(-1);
         });
-    }
-  );
+    })
+    .catch((err) => {
+      _logger.error("Error creating domain", err);
+      process.exit(-1);
+    });
 });
