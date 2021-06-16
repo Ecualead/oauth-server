@@ -51,6 +51,7 @@ HttpServer.shared.initMongo().then(() => {
       ProjectCtrl.create({
         domain: domain.id,
         canonical: "com.ikoabo",
+        code: "ikoabo",
         name: "Plataforma IKOABO",
         description: "Infraestructura de servicios IKOA Business Opportunity",
         scope: [
@@ -92,6 +93,7 @@ HttpServer.shared.initMongo().then(() => {
               /* Register the initial user */
               AccountCtrl.registerAccount(
                 {
+                  project: project._id,
                   name: "Reinier",
                   lastname1: "Millo",
                   lastname2: "Sánchez",
