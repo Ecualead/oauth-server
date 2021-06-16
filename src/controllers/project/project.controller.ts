@@ -8,7 +8,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { DataScoped } from "@/controllers/data.scoped.controller";
+import { DataScoped } from "@/controllers/data-scoped.controller";
 import { ProjectDocument, ProjectModel } from "@/models/project/project.model";
 
 class Project extends DataScoped<ProjectDocument> {

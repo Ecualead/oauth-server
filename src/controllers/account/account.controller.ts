@@ -11,7 +11,7 @@
 import { AUTH_ERRORS } from "@ikoabo/auth";
 import { Objects, Tokens, Arrays, HTTP_STATUS } from "@ikoabo/core";
 import { CRUD } from "@ikoabo/server";
-import { AccountAccessPolicy } from "@/controllers/account/access.policy.controller";
+import { AccountAccessPolicy } from "@/controllers/account/access-policy.controller";
 import { AccountIconCtrl } from "@/controllers/account/icon.controller";
 import { AccountCodeCtrl } from "@/controllers/account/code.controller";
 import {

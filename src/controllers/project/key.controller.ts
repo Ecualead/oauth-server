@@ -9,7 +9,7 @@
  * permission of the author.
  */
 import { ProjectKeyDocument, ProjectKeyModel } from "@/models/project/key.model";
-import { DataScoped } from "@/controllers/data.scoped.controller";
+import { DataScoped } from "@/controllers/data-scoped.controller";
 
 class ProjectKey extends DataScoped<ProjectKeyDocument> {
   private static _instance: ProjectKey;

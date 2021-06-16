@@ -26,7 +26,7 @@ import { AccountDocument } from "@/models/account/account.model";
 import { ApplicationCtrl } from "@/controllers/application/application.controller";
 import { ApplicationDocument } from "@/models/application/application.model";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
-import { OAuth2ModelCtrl } from "@/controllers/oauth2/oauth2.model.controller";
+import { OAuth2ModelCtrl } from "@/controllers/oauth2/oauth2-model.controller";
 import { AccountEmailDocument } from "@/models/account/email.model";
 import { NotificationCtrl } from "@/controllers/notification/notification.controller";
 

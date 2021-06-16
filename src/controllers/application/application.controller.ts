@@ -10,7 +10,7 @@
  */
 import { Arrays, Tokens, SERVER_STATUS } from "@ikoabo/core";
 import { ApplicationDocument, ApplicationModel } from "@/models/application/application.model";
-import { DataScoped } from "@/controllers/data.scoped.controller";
+import { DataScoped } from "@/controllers/data-scoped.controller";
 import { ProjectCtrl } from "@/controllers/project/project.controller";
 import { ProjectDocument } from "@/models/project/project.model";
 

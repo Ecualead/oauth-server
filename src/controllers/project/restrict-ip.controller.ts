@@ -12,7 +12,7 @@ import {
   ProjectRestrictIpDocument,
   ProjectRestrictIpModel
 } from "@/models/project/restrict-ip.model";
-import { DataScoped } from "@/controllers/data.scoped.controller";
+import { DataScoped } from "@/controllers/data-scoped.controller";
 
 class ProjectRestrictIp extends DataScoped<ProjectRestrictIpDocument> {
   private static _instance: ProjectRestrictIp;

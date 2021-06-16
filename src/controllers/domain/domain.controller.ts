@@ -8,7 +8,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { DataScoped } from "@/controllers/data.scoped.controller";
+import { DataScoped } from "@/controllers/data-scoped.controller";
 import { DomainModel, DomainDocument } from "@/models/domain/domain.model";
 
 class Domains extends DataScoped<DomainDocument> {
