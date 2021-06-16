@@ -20,7 +20,6 @@ export const DEFAULT_SCOPES: string[] = [
   "root",
   "default",
   "non_user",
-  "module",
   "application",
   "service",
   "project",

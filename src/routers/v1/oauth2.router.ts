@@ -1,10 +1,10 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -17,9 +17,8 @@ import {
   Request as ORequest,
   Response as OResponse
 } from "oauth2-server";
-import { ApplicationAccessPolicyCtrl } from "@/Applications/controllers/application.access.policy.controller";
-import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
-import { OAUTH2_TOKEN_TYPE } from "@/OAuth2/models/oauth2.enum";
+import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
+import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
 
 const router = Router();
 
@@ -62,7 +61,7 @@ router.post(
 );
 
 router.post(
-  "/signin",
+  "/login",
   (req: Request, res: Response, next: NextFunction) => {
     const request = new ORequest(req);
     const response = new OResponse(res);
@@ -116,40 +115,26 @@ router.post(
       .authenticate(request, response)
       .then((token: Token) => {
         const project = Objects.get(token, "client.project.id", null);
-        /* Check for module authentication verification */
-        if (token.type === OAUTH2_TOKEN_TYPE.TT_MODULE) {
-          /* Validate module restriction */
-          ApplicationAccessPolicyCtrl.canAccess(req, Objects.get(token, "client", null))
-            .then(() => {
-              res.locals["response"] = {
-                module: Objects.get(token, "client", null),
-                scope: token.scope
-              };
-              next();
-            })
-            .catch(next);
-        } else {
-          /* Validate application restrictions */
-          ApplicationAccessPolicyCtrl.canAccess(req, Objects.get(token, "client.id", null))
-            .then(() => {
-              /* Set basic application information into the response */
-              res.locals["response"] = {
-                application: Objects.get(token, "client.id", null),
-                project: project,
-                domain: Objects.get(token, "client.project.domain", null),
-                scope: token.scope
-              };
+        /* Validate application restrictions */
+        ApplicationAccessPolicyCtrl.canAccess(req, Objects.get(token, "client.id", null))
+          .then(() => {
+            /* Set basic application information into the response */
+            res.locals["response"] = {
+              application: Objects.get(token, "client.id", null),
+              project: project,
+              domain: Objects.get(token, "client.project.domain", null),
+              scope: token.scope
+            };
 
-              /* Add user information if the token belongs to an user */
-              const user = Objects.get(token, "user.id", null);
-              if (user && user !== res.locals["response"]["application"]) {
-                res.locals["response"]["user"] = user;
-                res.locals["response"]["username"] = Objects.get(token, "username", null);
-              }
-              next();
-            })
-            .catch(next);
-        }
+            /* Add user information if the token belongs to an user */
+            const user = Objects.get(token, "user.id", null);
+            if (user && user !== res.locals["response"]["application"]) {
+              res.locals["response"]["user"] = user;
+              res.locals["response"]["username"] = Objects.get(token, "username", null);
+            }
+            next();
+          })
+          .catch(next);
       })
       .catch(next);
   },

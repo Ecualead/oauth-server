@@ -1,23 +1,23 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import passport from "passport";
 import { Strategy as TwitterStrategy } from "passport-twitter";
-import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
-import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
+import { ExternalAuthSchema } from "@/controllers/oauth2/schemas/base.controller";
+import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
 
 /**
  * Twitter social network startegy handler
  */
-class SocialNetworkTwitter extends SocialNetworkStrategy {
-  private static _instance: SocialNetworkTwitter;
+class ExternalAuthTwitter extends ExternalAuthSchema {
+  private static _instance: ExternalAuthTwitter;
 
   /**
    * Private constructor to allow singleton class instance
@@ -29,11 +29,11 @@ class SocialNetworkTwitter extends SocialNetworkStrategy {
   /**
    * Get singleton class instance
    */
-  public static get shared(): SocialNetworkTwitter {
-    if (!SocialNetworkTwitter._instance) {
-      SocialNetworkTwitter._instance = new SocialNetworkTwitter();
+  public static get shared(): ExternalAuthTwitter {
+    if (!ExternalAuthTwitter._instance) {
+      ExternalAuthTwitter._instance = new ExternalAuthTwitter();
     }
-    return SocialNetworkTwitter._instance;
+    return ExternalAuthTwitter._instance;
   }
 
   /**
@@ -44,7 +44,7 @@ class SocialNetworkTwitter extends SocialNetworkStrategy {
    * @param fn
    */
   public setup(
-    socialNetwork: SocialNetworkRequestDocument,
+    socialNetwork: ProjectExternalAuthDocument,
     cbUri: string,
     fn: any
   ): passport.Strategy {
@@ -52,13 +52,23 @@ class SocialNetworkTwitter extends SocialNetworkStrategy {
 
     return new TwitterStrategy(
       {
-        consumerKey: socialNetwork.social.clientId,
-        consumerSecret: socialNetwork.social.clientSecret,
+        consumerKey: socialNetwork.clientId,
+        consumerSecret: socialNetwork.clientSecret,
         callbackURL: cbUri,
         passReqToCallback: true
       },
       fn
     );
+  }
+
+  /**
+   * Get social profile id
+   *
+   * @param profile
+   */
+  public id(profile: any): string {
+    /* TODO XXX Handle External auth ID */
+    return "HandleID";
   }
 
   /**
@@ -97,4 +107,4 @@ class SocialNetworkTwitter extends SocialNetworkStrategy {
   }
 }
 
-export const SocialNetworkTwitterCtrl = SocialNetworkTwitter.shared;
+export const TwitterCtrl = ExternalAuthTwitter.shared;

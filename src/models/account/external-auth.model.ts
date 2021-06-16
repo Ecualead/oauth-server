@@ -28,8 +28,8 @@ export class AccountExternalAuth extends BaseModel {
   @prop({ required: true })
   externalId!: string;
 
-  @prop({ required: true })
-  accessToken!: string;
+  @prop()
+  accessToken?: string;
 
   @prop()
   refreshToken?: string;

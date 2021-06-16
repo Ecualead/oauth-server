@@ -1,23 +1,23 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import passport from "passport";
 import { Strategy as FacebookStrategy } from "passport-facebook";
-import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
-import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
+import { ExternalAuthSchema } from "@/controllers/oauth2/schemas/base.controller";
+import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
 
 /**
  * Facebook social network startegy handler
  */
-class SocialNetworkFacebook extends SocialNetworkStrategy {
-  private static _instance: SocialNetworkFacebook;
+class ExternalAuthFacebook extends ExternalAuthSchema {
+  private static _instance: ExternalAuthFacebook;
 
   /**
    * Private constructor to allow singleton class instance
@@ -29,11 +29,11 @@ class SocialNetworkFacebook extends SocialNetworkStrategy {
   /**
    * Get singleton class instance
    */
-  public static get shared(): SocialNetworkFacebook {
-    if (!SocialNetworkFacebook._instance) {
-      SocialNetworkFacebook._instance = new SocialNetworkFacebook();
+  public static get shared(): ExternalAuthFacebook {
+    if (!ExternalAuthFacebook._instance) {
+      ExternalAuthFacebook._instance = new ExternalAuthFacebook();
     }
-    return SocialNetworkFacebook._instance;
+    return ExternalAuthFacebook._instance;
   }
 
   /**
@@ -44,7 +44,7 @@ class SocialNetworkFacebook extends SocialNetworkStrategy {
    * @param fn
    */
   public setup(
-    socialNetwork: SocialNetworkRequestDocument,
+    socialNetwork: ProjectExternalAuthDocument,
     cbUri: string,
     fn: any
   ): passport.Strategy {
@@ -52,15 +52,25 @@ class SocialNetworkFacebook extends SocialNetworkStrategy {
 
     return new FacebookStrategy(
       {
-        clientID: socialNetwork.social.clientId,
-        clientSecret: socialNetwork.social.clientSecret,
+        clientID: socialNetwork.clientId,
+        clientSecret: socialNetwork.clientSecret,
         callbackURL: cbUri,
-        profileFields: socialNetwork.social.profile,
+        profileFields: socialNetwork.profile,
         enableProof: true,
         passReqToCallback: true
       },
       fn
     );
+  }
+
+  /**
+   * Get social profile id
+   *
+   * @param profile
+   */
+  public id(profile: any): string {
+    /* TODO XXX Handle External auth ID */
+    return "HandleID";
   }
 
   /**
@@ -106,4 +116,4 @@ class SocialNetworkFacebook extends SocialNetworkStrategy {
   }
 }
 
-export const SocialNetworkFacebookCtrl = SocialNetworkFacebook.shared;
+export const FacebookCtrl = ExternalAuthFacebook.shared;

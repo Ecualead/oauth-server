@@ -1,102 +1,112 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
+import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
+import { ExternalAuthCtrl } from "@/controllers/oauth2/external-auth.controller";
+import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
+import {
+  ExternalAuthRequestDocument,
+  ExternalAuthRequestModel
+} from "@/models/oauth2/external-auth-request.model";
+import {
+  ProjectExternalAuthDocument,
+  ProjectExternalAuthModel
+} from "@/models/project/external-auth.model";
+import {
+  ExternalAuthParamsValidation,
+  ExternalAuthStateValidation,
+  ExternalAuthValidation
+} from "@/validators/external-auth.joi";
 import { AUTH_ERRORS } from "@ikoabo/auth";
 import { HTTP_STATUS, Objects } from "@ikoabo/core";
 import { Validator, ResponseHandler } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
-import { ApplicationAccessPolicyCtrl } from "@/Applications/controllers/application.access.policy.controller";
-import { OAuth2Ctrl } from "@/OAuth2/controllers/oauth2.controller";
-import { SocialNetworkCtrl } from "@/SocialNetworks/controllers/social.networks.controller";
-import { SOCIAL_NETWORK_TYPES } from "@/SocialNetworks/models/social.networks.enum";
-import {
-  SocialNetworkValidation,
-  SocialNetworkParamsValidation,
-  SocialNetworkStateValidation
-} from "@/SocialNetworks/models/social.networks.joi";
-import {
-  socialNetworkToInt,
-  SocialNetworkSetting
-} from "@/SocialNetworks/models/social.networks.model";
-import {
-  SocialNetworkRequestModel,
-  SocialNetworkRequestDocument
-} from "@/SocialNetworks/models/social.networks.request.model";
 
 const router = Router();
 
+function checkExternal(req: Request, res: Response, next: NextFunction) {
+  const external: string = req.params.external;
+  ProjectExternalAuthModel.findById(external)
+    .then((external: ProjectExternalAuthDocument) => {
+      if (!external) {
+        return next({
+          boError: AUTH_ERRORS.INVALID_SOCIAL_REQUEST,
+          boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
+        });
+      }
+
+      res.locals["external"] = external;
+      next();
+    })
+    .catch(next);
+}
+
 /**
- * @api {get} /v1/auth/social/:social Request social network authentication
- * @apiVersion 1.0.0
- * @apiName AuthSocialSignin
- * @apiGroup Social Network Authentication
+ * @api {get} /v1/oauth/external/:external Request external authentication
+ * @apiVersion 2.0.0
+ * @apiName ExternalAuthRequest
+ * @apiGroup External Authentication
  *
  */
 router.get(
-  "/:social",
-  Validator.joi(SocialNetworkValidation, "params"),
-  Validator.joi(SocialNetworkParamsValidation, "query"),
+  "/:external",
+  Validator.joi(ExternalAuthValidation, "params"),
+  Validator.joi(ExternalAuthParamsValidation, "query"),
   (req: Request, res: Response, next: NextFunction) => {
     /* Force authentication with token */
     const token: string = Objects.get(req, "query.token", "").toString();
     req.headers.authorization = `Bearer ${token}`;
     OAuth2Ctrl.authenticate()(req, res, next);
   },
+  checkExternal,
   (req: Request, res: Response, next: NextFunction) => {
-    const social: string = req.params.social;
-    const socialType: number = socialNetworkToInt(social);
+    const authType: EXTERNAL_AUTH_TYPE = Objects.get(
+      res,
+      "locals.external.type",
+      EXTERNAL_AUTH_TYPE.UNKNOWN
+    );
     const token: string = Objects.get(req, "query.token", "").toString();
     const redirect: string = Objects.get(req, "query.redirect", "").toString();
 
-    /* Check if the target project has enabled the given social network authentication */
-    const socialNetworks: SocialNetworkSetting[] = Objects.get(
-      res,
-      "locals.token.client.project.settings.socialNetworks",
-      []
-    ).filter((value: SocialNetworkSetting) => value.type === socialType);
-
-    /* Check if the social network settings is valid */
-    if (socialType === SOCIAL_NETWORK_TYPES.SN_UNKNOWN || socialNetworks.length <= 0) {
-      return next({
-        boError: AUTH_ERRORS.INVALID_AUTH_SERVER,
-        boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
-      });
-    }
-
     /* Temporally store request data to allow callback */
-    SocialNetworkRequestModel.create({
+    ExternalAuthRequestModel.create({
       token: token,
       application: Objects.get(res, "locals.token.client.id"),
-      user: Objects.get(res, "locals.token.user.id"),
+      account: Objects.get(res, "locals.token.user.id"),
       redirect: redirect,
-      social: socialNetworks[0]
+      externalAuth: Objects.get(res, "locals.external._id")
     })
-      .then((request: SocialNetworkRequestDocument) => {
+      .then((request: ExternalAuthRequestDocument) => {
+        request.application = Objects.get(res, "locals.token.client");
+        request.account = Objects.get(res, "locals.token.user");
+        request.externalAuth = Objects.get(res, "locals.external");
+
         /* Pass the object to the next middleware */
-        res.locals["socialNetwork"] = request;
+        res.locals["request"] = request;
         next();
       })
       .catch(next);
   },
   (req: Request, res: Response, next: NextFunction) => {
     /* Calling social network authentication with callback reference */
-    SocialNetworkCtrl.doAuthenticate(Objects.get(res, "locals.socialNetwork"), {
-      state: Objects.get(res, "locals.socialNetwork.id"),
-      scope: Objects.get(res, "locals.socialNetwork.social.scope")
+    ExternalAuthCtrl.doAuthenticate(Objects.get(res, "locals.request"), {
+      state: Objects.get(res, "locals.request.id"),
+      scope: Objects.get(res, "locals.request.externalAuth.scope")
     })(req, res, next);
   },
   ResponseHandler.errorParse,
   (err: any, _req: Request, res: Response, next: NextFunction) => {
     /* Get the social network request */
-    const request: SocialNetworkRequestDocument = Objects.get(res, "locals.socialNetwork");
+    const request: ExternalAuthRequestDocument = Objects.get(res, "locals.request");
     if (!request) {
       return next({
         boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -113,26 +123,29 @@ router.get(
 );
 
 /**
- * @api {get} /v1/auth/social/:social/callback Social network callback
+ * @api {get} /v1/oauth/external/:external/callback External authentication success callback
  * @apiVersion 2.0.0
- * @apiName AuthSocialCallback
- * @apiGroup Social Network Authentication
+ * @apiName ExternalAuthSuccessCallbackState
+ * @apiGroup External Authentication
  *
  */
 router.get(
-  "/:social/callback",
-  Validator.joi(SocialNetworkValidation, "params"),
-  Validator.joi(SocialNetworkStateValidation, "query"),
+  "/:external/callback",
+  Validator.joi(ExternalAuthValidation, "params"),
+  Validator.joi(ExternalAuthStateValidation, "query"),
   (req: Request, res: Response, next: NextFunction) => {
+    const authType: EXTERNAL_AUTH_TYPE = Objects.get(
+      res,
+      "locals.external.type",
+      EXTERNAL_AUTH_TYPE.UNKNOWN
+    );
     const state: string = Objects.get(req, "query.state", "").toString();
-    const social: string = req.params["social"];
-    const socialType: SOCIAL_NETWORK_TYPES = socialNetworkToInt(social);
 
     /* Find the authentication state */
-    SocialNetworkRequestModel.findById(state)
+    ExternalAuthRequestModel.findById(state)
       .populate({ path: "application", populate: { path: "project" } })
-      .populate("user")
-      .then((request: SocialNetworkRequestDocument) => {
+      .populate("account")
+      .then((request: ExternalAuthRequestDocument) => {
         if (!request) {
           return next({
             boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -140,20 +153,20 @@ router.get(
           });
         }
 
-        /* Check that social network match */
-        if (request.social.type !== socialType) {
+        /* Check external auth type match */
+        if (Objects.get(request, "externalAuth.type") !== authType) {
           return next({
             boError: AUTH_ERRORS.INVALID_APPLICATION,
             boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
           });
         }
 
-        /* Store reuqest status for next middleware */
-        res.locals["socialNetwork"] = request;
+        /* Store external auth request for next middleware */
+        res.locals["request"] = request;
 
         /* Calling social network authentication with callback reference */
-        const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/social/${social}/callback/failure`;
-        SocialNetworkCtrl.doAuthenticate(request, {
+        const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/external/${external}/callback/failure`;
+        ExternalAuthCtrl.doAuthenticate(request, {
           state: request.id,
           failureRedirect: cbFailure
         })(req, res, next);
@@ -162,7 +175,7 @@ router.get(
   },
   (req: Request, res: Response, next: NextFunction) => {
     /* Get the social network request */
-    const request: SocialNetworkRequestDocument = Objects.get(res, "locals.socialNetwork");
+    const request: ExternalAuthRequestDocument = Objects.get(res, "locals.request");
     if (!request) {
       return next({
         boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -171,12 +184,12 @@ router.get(
     }
 
     /* Check if the social request was account attach */
-    if (request.user !== null) {
+    if (request.account !== null) {
       return res.redirect(`${request.redirect}?status=${HTTP_STATUS.HTTP_2XX_OK}`);
     }
 
     /* Authenticate the user account with the OAuth2 server */
-    SocialNetworkCtrl.authenticateSocialAccount(request)
+    ExternalAuthCtrl.authenticateSocialAccount(request)
       .then((token: Token) => {
         /* Validate application restrictions */
         ApplicationAccessPolicyCtrl.canAccess(req, token.client.id)
@@ -192,7 +205,7 @@ router.get(
   },
   (err: any, _req: Request, res: Response, next: NextFunction) => {
     /* Get the social network request */
-    const request: SocialNetworkRequestDocument = Objects.get(res, "locals.socialNetwork");
+    const request: ExternalAuthRequestDocument = Objects.get(res, "locals.request");
     if (!request) {
       return next({
         boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -210,26 +223,29 @@ router.get(
 );
 
 /**
- * @api {get} /v1auth/social/:social/callback/failure Social network failure callback
+ * @api {get} /v1/oauth/external/:external/callback/failure External authentication failure callback
  * @apiVersion 2.0.0
- * @apiName AuthSocialCallbackState
- * @apiGroup Social Network Authentication
+ * @apiName ExternalAuthFailureCallbackState
+ * @apiGroup External Authentication
  *
  */
 router.get(
-  "/:social/callback/failure",
-  Validator.joi(SocialNetworkValidation, "params"),
-  Validator.joi(SocialNetworkStateValidation, "query"),
+  "/:external/callback/failure",
+  Validator.joi(ExternalAuthValidation, "params"),
+  Validator.joi(ExternalAuthStateValidation, "query"),
   (req: Request, res: Response, next: NextFunction) => {
+    const authType: EXTERNAL_AUTH_TYPE = Objects.get(
+      res,
+      "locals.external.type",
+      EXTERNAL_AUTH_TYPE.UNKNOWN
+    );
     const state: string = Objects.get(req, "query.state", "").toString();
-    const social: string = req.params["social"];
-    const socialType: SOCIAL_NETWORK_TYPES = socialNetworkToInt(social);
 
     /* Find the authentication state */
-    SocialNetworkRequestModel.findById(state)
+    ExternalAuthRequestModel.findById(state)
       .populate({ path: "application", populate: { path: "project" } })
-      .populate("user")
-      .then((request: SocialNetworkRequestDocument) => {
+      .populate("account")
+      .then((request: ExternalAuthRequestDocument) => {
         if (!request) {
           return next({
             boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -238,7 +254,7 @@ router.get(
         }
 
         /* Check that social network match */
-        if (request.social.type !== socialType) {
+        if (Objects.get(request, "externalAuth.type") !== authType) {
           return next({
             boError: AUTH_ERRORS.INVALID_APPLICATION,
             boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE

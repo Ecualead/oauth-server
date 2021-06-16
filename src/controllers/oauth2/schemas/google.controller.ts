@@ -1,23 +1,23 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import passport from "passport";
 import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
-import { SocialNetworkStrategy } from "@/SocialNetworks/controllers/strategies/base.strategy.controller";
-import { SocialNetworkRequestDocument } from "@/SocialNetworks/models/social.networks.request.model";
+import { ExternalAuthSchema } from "@/controllers/oauth2/schemas/base.controller";
+import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
 
 /**
  * Google social network startegy handler
  */
-class SocialNetworkGoogle extends SocialNetworkStrategy {
-  private static _instance: SocialNetworkGoogle;
+class ExternalAuthGoogle extends ExternalAuthSchema {
+  private static _instance: ExternalAuthGoogle;
 
   /**
    * Private constructor to allow singleton class instance
@@ -29,11 +29,11 @@ class SocialNetworkGoogle extends SocialNetworkStrategy {
   /**
    * Get singleton class instance
    */
-  public static get shared(): SocialNetworkGoogle {
-    if (!SocialNetworkGoogle._instance) {
-      SocialNetworkGoogle._instance = new SocialNetworkGoogle();
+  public static get shared(): ExternalAuthGoogle {
+    if (!ExternalAuthGoogle._instance) {
+      ExternalAuthGoogle._instance = new ExternalAuthGoogle();
     }
-    return SocialNetworkGoogle._instance;
+    return ExternalAuthGoogle._instance;
   }
 
   /**
@@ -44,7 +44,7 @@ class SocialNetworkGoogle extends SocialNetworkStrategy {
    * @param fn
    */
   public setup(
-    socialNetwork: SocialNetworkRequestDocument,
+    socialNetwork: ProjectExternalAuthDocument,
     cbUri: string,
     fn: any
   ): passport.Strategy {
@@ -52,14 +52,24 @@ class SocialNetworkGoogle extends SocialNetworkStrategy {
 
     return new GoogleStrategy(
       <any>{
-        clientID: socialNetwork.social.clientId,
-        clientSecret: socialNetwork.social.clientSecret,
+        clientID: socialNetwork.clientId,
+        clientSecret: socialNetwork.clientSecret,
         callbackURL: cbUri,
         userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
         passReqToCallback: true
       },
       fn
     );
+  }
+
+  /**
+   * Get social profile id
+   *
+   * @param profile
+   */
+   public id(profile: any): string {
+    /* TODO XXX Handle External auth ID */
+    return "HandleID";
   }
 
   /**
@@ -98,4 +108,4 @@ class SocialNetworkGoogle extends SocialNetworkStrategy {
   }
 }
 
-export const SocialNetworkGoogleCtrl = SocialNetworkGoogle.shared;
+export const GoogleCtrl = ExternalAuthGoogle.shared;

@@ -1,10 +1,10 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -22,18 +22,17 @@ import {
   Token,
   User
 } from "oauth2-server";
-import { AccountAccessPolicy } from "@/Accounts/controllers/account.access.policy.controller";
-import { AccountCtrl } from "@/Accounts/controllers/accounts.controller";
-import { AccountDocument, AccountModel } from "@/Accounts/models/accounts.model";
-import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
-import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
-import { ApplicationModel, ApplicationDocument } from "@/Applications/models/applications.model";
-import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
-import { ModuleModel, ModuleDocument } from "@/Modules/models/modules.model";
-import { OAuth2CodeDocument, OAuth2CodeModel } from "@/OAuth2/models/oauth2.code.model";
-import { OAUTH2_TOKEN_TYPE, DEFAULT_SCOPES } from "@/OAuth2/models/oauth2.enum";
-import { OAuth2TokenModel, OAuth2TokenDocument } from "@/OAuth2/models/oauth2.token.model";
-import { PROJECT_LIFETIME_TYPES } from "@/Projects/models/projects.enum";
+import { AccountAccessPolicy } from "@/controllers/account/access-policy.controller";
+import { AccountCtrl } from "@/controllers/account/account.controller";
+import { AccountDocument, AccountModel } from "@/models/account/account.model";
+import { ApplicationCtrl } from "@/controllers/application/application.controller";
+import { APPLICATION_TYPE } from "@/constants/application.enum";
+import { ApplicationDocument } from "@/models/application/application.model";
+import { OAuth2CodeDocument, OAuth2CodeModel } from "@/models/oauth2/oauth2-code.model";
+import { OAuth2TokenModel, OAuth2TokenDocument } from "@/models/oauth2/oauth2-token.model";
+import { OAUTH2_TOKEN_TYPE, DEFAULT_SCOPES } from "@/constants/oauth2.enum";
+import { LIFETIME_TYPE } from "@/constants/project.enum";
+import { AccountEmailDocument } from "@/models/account/email.model";
 
 function prepareScope(scope?: string | string[]): string[] {
   /* Check for valid value */
@@ -81,8 +80,8 @@ class OAuth2Model
     return new Promise<string[]>((resolve, reject) => {
       if (user && user.id !== application.id) {
         /* Search for user project profile scope */
-        AccountCtrl.getProfile(user.id, application.project)
-          .then((value) => {
+        AccountCtrl.fetch({ _id: user.id })
+          .then((value: AccountDocument) => {
             if (!scope || scope.length === 0) {
               scope = value.scope;
             }
@@ -249,20 +248,22 @@ class OAuth2Model
       // TODO XXX Check for scope scope
       /* Check if the user is registered into the application */
       if (application.id !== user.id) {
-        /* Check user signin policy */
-        AccountAccessPolicy.canSignin(
-          <AccountDocument>user,
-          Objects.get(application, "project"),
-          user["username"],
-          user["isSocial"],
-          true
-        )
-          .then(() => {
-            /* Generate access token */
-            resolve(accessToken);
+        return AccountCtrl.fetchByEmail(user["username"], Objects.get(application, "project"))
+          .then((userEmail: AccountEmailDocument) => {
+            /* Check user signin policy */
+            AccountAccessPolicy.canSignin(
+              userEmail.account as AccountDocument,
+              Objects.get(application, "project"),
+              userEmail,
+              user["isSocial"]
+            )
+              .then(() => {
+                /* Generate access token */
+                resolve(accessToken);
+              })
+              .catch(reject);
           })
           .catch(reject);
-        return;
       }
 
       resolve(accessToken);
@@ -335,41 +336,6 @@ class OAuth2Model
   }
 
   /**
-   * Try to get client from modules schema
-   *
-   * @param {string} clientId  Client MongoDB ObjectID
-   * @param {string} clientSecret  Client secret
-   * @returns {Promise<OAuth2Server.Client>}
-   */
-  getClientModule(clientId: string, clientSecret: string): Promise<Client> {
-    return new Promise<Client>((resolve, reject) => {
-      this._logger.debug(
-        `Retrieve client module [clientId: ${clientId}, clientSecret: ${clientSecret}]`
-      );
-
-      /* Prepare the client query */
-      const clientQuery: any = {
-        _id: clientId,
-        secret: clientSecret
-      };
-
-      /* Search for the client into database */
-      ModuleModel.findOne(clientQuery)
-        .then((value: ModuleDocument) => {
-          if (!value) {
-            reject({
-              boError: AUTH_ERRORS.INVALID_APPLICATION,
-              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
-            });
-            return;
-          }
-          resolve(value.toClient());
-        })
-        .catch(reject);
-    });
-  }
-
-  /**
    * Retrieve a client using a client id or a client id/client secret combination
    *
    * @param {string} clientId  Client MongoDB ObjectID
@@ -387,27 +353,11 @@ class OAuth2Model
       }
 
       /* Search for the client into database */
-      ApplicationModel.findOne(clientQuery)
-        .populate("project")
+      ApplicationCtrl.fetch(clientQuery, {}, ["project"])
         .then((application: ApplicationDocument) => {
-          if (!application) {
-            /* If application was not found try to look for module */
-            this.getClientModule(clientId, clientSecret)
-              .then((module: Client) => {
-                resolve(module);
-              })
-              .catch(reject);
-            return;
-          }
           resolve(application.toClient());
         })
-        .catch(() => {
-          this.getClientModule(clientId, clientSecret)
-            .then((module: Client) => {
-              resolve(module);
-            })
-            .catch(reject);
-        });
+        .catch(reject);
     });
   }
 
@@ -425,7 +375,7 @@ class OAuth2Model
 
       /* Check if client token don't expire and there is no user involved */
       if (
-        application.accessTokenLifetime === PROJECT_LIFETIME_TYPES.LT_INFINITE &&
+        application.accessTokenLifetime === LIFETIME_TYPE.INFINITE &&
         user.id !== application.id
       ) {
         reject({
@@ -436,26 +386,23 @@ class OAuth2Model
       }
 
       /* Check the token generated type */
-      let tokenType = OAUTH2_TOKEN_TYPE.TT_USER;
+      let tokenType = OAUTH2_TOKEN_TYPE.USER;
       switch (application.type) {
-        case APPLICATION_TYPES.APP_MODULE /* Force module token */:
-          tokenType = OAUTH2_TOKEN_TYPE.TT_MODULE;
+        case APPLICATION_TYPE.MODULE: /* Force module token */
+        case APPLICATION_TYPE.SERVICE /* Force application token */:
+          tokenType = OAUTH2_TOKEN_TYPE.APPLICATION;
           break;
 
-        case APPLICATION_TYPES.APP_SERVICE /* Force application token */:
-          tokenType = OAUTH2_TOKEN_TYPE.TT_APPLICATION;
-          break;
-
-        case APPLICATION_TYPES.APP_ANDROID: /* Check application or user token */
-        case APPLICATION_TYPES.APP_IOS:
-        case APPLICATION_TYPES.APP_WEB_CLIENT_SIDE:
-        case APPLICATION_TYPES.APP_WEB_SERVER_SIDE:
+        case APPLICATION_TYPE.ANDROID: /* Check application or user token */
+        case APPLICATION_TYPE.IOS:
+        case APPLICATION_TYPE.WEB_CLIENT_SIDE:
+        case APPLICATION_TYPE.WEB_SERVER_SIDE:
           tokenType =
             "id" in user && user.id !== application.id
-              ? token.type && token.type > OAUTH2_TOKEN_TYPE.TT_USER
+              ? token.type && token.type > OAUTH2_TOKEN_TYPE.USER
                 ? token.type
-                : OAUTH2_TOKEN_TYPE.TT_USER
-              : OAUTH2_TOKEN_TYPE.TT_APPLICATION;
+                : OAUTH2_TOKEN_TYPE.USER
+              : OAUTH2_TOKEN_TYPE.APPLICATION;
           break;
 
         default:
@@ -480,7 +427,7 @@ class OAuth2Model
             refreshTokenExpiresAt: token.refreshTokenExpiresAt,
             scope: validScope,
             application: <any>application.id,
-            keep: application.accessTokenLifetime === PROJECT_LIFETIME_TYPES.LT_INFINITE,
+            keep: application.accessTokenLifetime === LIFETIME_TYPE.INFINITE,
             type: tokenType,
             user: user.id !== application.id ? user.id : null,
             username: user.id !== application.id ? user["username"] : null
@@ -491,9 +438,7 @@ class OAuth2Model
 
               /* Check if client token never expires */
               if (accessToken.keep) {
-                accessToken.accessTokenExpiresAt = new Date(
-                  Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
-                );
+                accessToken.accessTokenExpiresAt = new Date(Date.now() + LIFETIME_TYPE.YEAR);
               }
               accessToken.application = <any>application;
               resolve(accessToken.toToken());
@@ -526,74 +471,62 @@ class OAuth2Model
             return;
           }
 
-          /* Check if the token belongs to a module */
-          if (token.type === OAUTH2_TOKEN_TYPE.TT_MODULE) {
-            /* Get the target module */
-            ModuleCtrl.fetch(token.application.toString())
-              .then((module: ModuleDocument) => {
-                token.application = module.id;
-                token.accessTokenExpiresAt = new Date(
-                  Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
-                );
-                resolve(token.toToken());
-              })
-              .catch(reject);
-          } else {
-            /* Get the target application */
-            ApplicationCtrl.fetch(token.application.toString(), {}, ["project"])
-              .then((application: ApplicationDocument) => {
-                token.application = application;
+          /* Get the target application */
+          ApplicationCtrl.fetch(token.application.toString(), {}, ["project"])
+            .then((application: ApplicationDocument) => {
+              token.application = application;
 
-                /* Check if client token don't expire and there is no user involved */
-                if (
-                  token.keep &&
-                  token.user &&
-                  Objects.get(token, "user.id", "no-user-id") !==
-                    Objects.get(token, "application.id")
-                ) {
-                  reject({
-                    boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-                    boError: AUTH_ERRORS.NOT_ALLOWED_SIGNIN
-                  });
-                  return;
-                }
+              /* Check if client token don't expire and there is no user involved */
+              if (
+                token.keep &&
+                token.user &&
+                Objects.get(token, "user.id", "no-user-id") !== Objects.get(token, "application.id")
+              ) {
+                reject({
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.NOT_ALLOWED_SIGNIN
+                });
+                return;
+              }
 
-                /* Check if client token never expires */
-                if (token.keep) {
-                  token.accessTokenExpiresAt = new Date(
-                    Date.now() + PROJECT_LIFETIME_TYPES.LT_ONE_YEAR
-                  );
-                }
+              /* Check if client token never expires */
+              if (token.keep) {
+                token.accessTokenExpiresAt = new Date(Date.now() + LIFETIME_TYPE.YEAR);
+              }
 
-                /* Check if the token is expired */
-                if (token.accessTokenExpiresAt.getTime() < Date.now()) {
-                  reject({
-                    boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED,
-                    boError: AUTH_ERRORS.TOKEN_EXPIRED
-                  });
-                  return;
-                }
+              /* Check if the token is expired */
+              if (token.accessTokenExpiresAt.getTime() < Date.now()) {
+                reject({
+                  boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED,
+                  boError: AUTH_ERRORS.TOKEN_EXPIRED
+                });
+                return;
+              }
 
-                /* Check if the user is registered into the application */
-                if (token.user) {
-                  /* Check user signin policy */
-                  AccountAccessPolicy.canSignin(
-                    <AccountDocument>token.user,
-                    Objects.get(token, "application.project"),
-                    token.username,
-                    token.type === OAUTH2_TOKEN_TYPE.TT_USER_SOCIAL,
-                    true
-                  )
-                    .then(() => {
-                      resolve(token.toToken());
-                    })
-                    .catch(reject);
-                  return;
-                }
-                resolve(token.toToken());
-              })
-              .catch(reject);
-          }
+              /* Check if the user is registered into the application */
+              if (token.user) {
+                return AccountCtrl.fetchByEmail(
+                  token.username,
+                  Objects.get(token, "application.project")
+                )
+                  .then((userEmail: AccountEmailDocument) => {
+                    /* Check user signin policy */
+                    AccountAccessPolicy.canSignin(
+                      userEmail.account as AccountDocument,
+                      Objects.get(token, "application.project"),
+                      userEmail,
+                      token.type === OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH
+                    )
+                      .then(() => {
+                        resolve(token.toToken());
+                      })
+                      .catch(reject);
+                  })
+                  .catch(reject);
+              }
+              resolve(token.toToken());
+            })
+            .catch(reject);
         })
         .catch(reject);
     });
