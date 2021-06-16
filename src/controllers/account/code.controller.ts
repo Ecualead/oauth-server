@@ -15,7 +15,7 @@ import { Logger } from "@ikoabo/core";
 import AsyncLock from "async-lock";
 import RoaringBitmap32 from "roaring/RoaringBitmap32";
 
-const USER_CODE_FILE = path.join(__dirname, "..", "..", "..", "..", "codes", "map.");
+const USER_CODE_FILE = path.join(__dirname, "..", "..", "..", "codes", "map.");
 const USER_CODE_SIZE = 8;
 
 const lock = new AsyncLock();
