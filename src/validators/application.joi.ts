@@ -1,15 +1,15 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { Joi } from "@ikoabo/server";
-import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
+import { APPLICATION_TYPE } from "@/constants/application.enum";
 
 export const ApplicationCreateValidation = Joi.object().keys({
   name: Joi.string().required(),
@@ -18,8 +18,8 @@ export const ApplicationCreateValidation = Joi.object().keys({
   image: Joi.string().allow("").optional(),
   type: Joi.number()
     .integer()
-    .min(APPLICATION_TYPES.APP_UNKNOWN)
-    .max(APPLICATION_TYPES.APP_MAX)
+    .min(APPLICATION_TYPE.UNKNOWN)
+    .max(APPLICATION_TYPE.MAX)
     .required(),
   scope: Joi.array().items(Joi.string()).optional(),
   grants: Joi.array()
@@ -35,8 +35,8 @@ export const ApplicationUpdateValidation = Joi.object().keys({
   image: Joi.string().allow("").optional(),
   type: Joi.number()
     .integer()
-    .min(APPLICATION_TYPES.APP_UNKNOWN)
-    .max(APPLICATION_TYPES.APP_MAX)
+    .min(APPLICATION_TYPE.UNKNOWN)
+    .max(APPLICATION_TYPE.MAX)
     .required()
 });
 

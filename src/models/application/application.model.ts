@@ -51,6 +51,9 @@ export class Application extends BaseModel {
   @prop({ type: String })
   scope?: string[];
 
+  @prop({ type: String })
+  restrictions?: string[];
+
   /**
    * Get the mongoose data model
    */
@@ -91,7 +94,7 @@ export class Application extends BaseModel {
       type: this.type,
       grants: this.grants,
       accessTokenLifetime:
-        this.type === APPLICATION_TYPE.SERVICE
+        this.type === APPLICATION_TYPE.SERVICE || this.type === APPLICATION_TYPE.MODULE
           ? -1
           : Objects.get(this, "project.settings.tokenLifetime.accessToken", LIFETIME_TYPE.MONTH),
       refreshTokenLifetime: Objects.get(

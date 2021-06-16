@@ -1,22 +1,20 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import URL from "url";
+import { URL } from "url";
 import { AUTH_ERRORS } from "@ikoabo/auth";
 import { Logger, HTTP_STATUS, SERVER_ERRORS } from "@ikoabo/core";
 import { Request } from "express";
-import { ApplicationCtrl } from "@/Applications/controllers/applications.controller";
-import { APPLICATION_TYPES } from "@/Applications/models/applications.enum";
-import { ApplicationDocument } from "@/Applications/models/applications.model";
-import { ModuleCtrl } from "@/Modules/controllers/modules.controller";
-import { ModuleDocument } from "@/Modules/models/modules.model";
+import { APPLICATION_TYPE } from "@/constants/application.enum";
+import { ApplicationCtrl } from "./application.controller";
+import { ApplicationDocument } from "@/models/application/application.model";
 
 class ApplicationAccessPolicy {
   private static _instance: ApplicationAccessPolicy;
@@ -37,13 +35,12 @@ class ApplicationAccessPolicy {
   }
 
   private _validate(req: Request, type: number, restriction: string[], resolve: any, reject: any) {
-    let url, ipAddress: any;
     switch (type) {
       /* Validate request origin */
-      case APPLICATION_TYPES.APP_WEB_CLIENT_SIDE:
-        url = URL.parse(req.headers["origin"] || `https://${req.hostname}`);
+      case APPLICATION_TYPE.WEB_CLIENT_SIDE:
+        const url = new URL(req.headers["origin"] || `https://${req.hostname}`);
         if (restriction.indexOf(url.hostname) < 0) {
-          this._logger.error("Application access restricted", {
+          this._logger.error("Hostname restricted", {
             origin: req.headers["origin"],
             hostname: url.hostname,
             restriction: restriction
@@ -57,12 +54,11 @@ class ApplicationAccessPolicy {
         break;
 
       /* Validate request ip address */
-      case APPLICATION_TYPES.APP_MODULE:
-      case APPLICATION_TYPES.APP_SERVICE:
-      case APPLICATION_TYPES.APP_WEB_SERVER_SIDE:
-        ipAddress = req.ips.length > 0 ? req.ips[0] : req.ip;
+      case APPLICATION_TYPE.SERVICE:
+      case APPLICATION_TYPE.WEB_SERVER_SIDE:
+        const ipAddress = req.ips.length > 0 ? req.ips[0] : req.ip;
         if (restriction.indexOf(ipAddress) < 0) {
-          this._logger.error("Application access restricted", {
+          this._logger.error("IP address restricted", {
             ipAddress: ipAddress,
             expressIp: req.ip,
             expressIps: req.ips,
@@ -77,8 +73,8 @@ class ApplicationAccessPolicy {
         break;
 
       /* Not validated application types */
-      case APPLICATION_TYPES.APP_ANDROID:
-      case APPLICATION_TYPES.APP_IOS:
+      case APPLICATION_TYPE.ANDROID:
+      case APPLICATION_TYPE.IOS:
         resolve(true);
         break;
 
@@ -92,6 +88,7 @@ class ApplicationAccessPolicy {
           boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
         });
     }
+    /* TODO XXX Add porject access policy validation */
   }
 
   /**
@@ -110,19 +107,9 @@ class ApplicationAccessPolicy {
       /* Fetch the application information */
       ApplicationCtrl.fetch(application)
         .then((application: ApplicationDocument) => {
-          this._validate(req, application.type, application.restriction, resolve, reject);
+          this._validate(req, application.type, application.restrictions, resolve, reject);
         })
-        .catch((err: any) => {
-          /* If the application is not found, try to fetch a module */
-          if (err.boError === SERVER_ERRORS.OBJECT_NOT_FOUND) {
-            return ModuleCtrl.fetch(application)
-              .then((module: ModuleDocument) => {
-                this._validate(req, module.type, module.restriction, resolve, reject);
-              })
-              .catch(reject);
-          }
-          reject(err);
-        });
+        .catch(reject);
     });
   }
 }

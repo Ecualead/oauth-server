@@ -11,6 +11,7 @@
 
 export enum APPLICATION_TYPE {
   UNKNOWN = 0,
+  MODULE,
   SERVICE,
   ANDROID,
   IOS,
