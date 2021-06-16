@@ -13,10 +13,13 @@ import { prop, getModelForClass, DocumentType, index, Ref } from "@typegoose/typ
 import mongoose from "mongoose";
 import { Project } from "@/models/project/project.model";
 
+/**
+ * Project access key data model
+ */
 @index({ project: 1 })
 @index({ key: 1 })
 @index({ name: 1 })
-@index({ project: 1, name: 1 }, { unique: true })
+@index({ project: 1, key: 1 }, { unique: true })
 export class ProjectKey extends BaseModel {
   @prop({ required: true, ref: Project })
   project?: Ref<Project>;
@@ -24,7 +27,7 @@ export class ProjectKey extends BaseModel {
   @prop({ required: true })
   name!: string;
 
-  @prop({ required: true, unique: true })
+  @prop({ required: true })
   key!: string;
 
   @prop()
@@ -49,9 +52,7 @@ export class ProjectKey extends BaseModel {
               id: ret.id,
               project: ret.project,
               name: ret.name,
-              key: ret.key,
               description: ret.description,
-              scope: ret.scope,
               status: ret.status,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt

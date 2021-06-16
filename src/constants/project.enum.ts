@@ -13,9 +13,9 @@ export enum NOTIFICATION_TYPE {
   NONE = 0,
   EMAIL = 1,
   PUSH = 2,
-  WHATSAPP = 3,
-  TELEGRAM = 4,
-  MESSENGER = 5
+  WHATSAPP = 4,
+  TELEGRAM = 8,
+  MESSENGER = 16
 }
 
 /* Lifetime predefined values in milliseconds */

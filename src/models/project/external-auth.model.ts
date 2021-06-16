@@ -14,6 +14,9 @@ import mongoose from "mongoose";
 import { Project } from "@/models/project/project.model";
 import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
 
+/**
+ * Project external auth data model
+ */
 @index({ project: 1 })
 @index({ name: 1 })
 @index({ type: 1 })

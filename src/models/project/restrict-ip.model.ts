@@ -13,8 +13,10 @@ import { prop, getModelForClass, DocumentType, index, Ref } from "@typegoose/typ
 import mongoose from "mongoose";
 import { Project } from "@/models/project/project.model";
 
+/**
+ * Project IP address access restriction data model
+ */
 @index({ project: 1 })
-@index({ key: 1 })
 @index({ ip: 1 })
 @index({ project: 1, ip: 1 }, { unique: true })
 export class ProjectRestrictIp extends BaseModel {
