@@ -85,7 +85,7 @@ class Notification {
       /* Check for email notification */
       if (eventType && (eventType & NOTIFICATION_TYPE.EMAIL) === NOTIFICATION_TYPE.EMAIL) {
         /* Call the notifications */
-        this._callNotifications(
+        return this._callNotifications(
           NOTIFICATION_TYPE.EMAIL,
           type,
           profile,
@@ -95,6 +95,8 @@ class Notification {
           resolve(true);
         });
       }
+
+      resolve(true);
     });
   }
 
