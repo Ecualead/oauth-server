@@ -19,6 +19,8 @@ import {
 } from "oauth2-server";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
 import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
+import { ApplicationCtrl } from "@/controllers/application/application.controller";
+import { Application, ApplicationDocument } from "@/models/application/application.model";
 
 const router = Router();
 
@@ -62,6 +64,24 @@ router.post(
 
 router.post(
   "/login",
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Extract project from requesting application */
+    const basic = req.headers.authorization.split(" ");
+    if (basic.length === 2 && basic[0].toUpperCase() === "BASIC") {
+      const buff = Buffer.from(basic[1], "base64");
+      const plain: string[] = buff.toString("ascii").split(":");
+      if (plain.length === 2) {
+        return ApplicationCtrl.fetch({ _id: plain[0] })
+          .then((application: ApplicationDocument) => {
+            const email = req.body["username"];
+            req.body["username"] = `${application.project} ${email}`;
+          })
+          .finally(() => {
+            next();
+          });
+      }
+    }
+  },
   (req: Request, res: Response, next: NextFunction) => {
     const request = new ORequest(req);
     const response = new OResponse(res);

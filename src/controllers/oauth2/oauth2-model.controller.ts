@@ -32,7 +32,7 @@ import { OAuth2CodeDocument, OAuth2CodeModel } from "@/models/oauth2/oauth2-code
 import { OAuth2TokenModel, OAuth2TokenDocument } from "@/models/oauth2/oauth2-token.model";
 import { OAUTH2_TOKEN_TYPE, DEFAULT_SCOPES } from "@/constants/oauth2.enum";
 import { LIFETIME_TYPE } from "@/constants/project.enum";
-import { AccountEmailDocument } from "@/models/account/email.model";
+import { AccountEmailDocument, AccountEmailModel } from "@/models/account/email.model";
 
 function prepareScope(scope?: string | string[]): string[] {
   /* Check for valid value */
@@ -248,7 +248,7 @@ class OAuth2Model
       // TODO XXX Check for scope scope
       /* Check if the user is registered into the application */
       if (application.id !== user.id) {
-        return AccountCtrl.fetchByEmail(user["username"], Objects.get(application, "project"))
+        return AccountCtrl.fetchByEmail(user["username"], Objects.get(application, "project.id"))
           .then((userEmail: AccountEmailDocument) => {
             /* Check user signin policy */
             AccountAccessPolicy.canSignin(
@@ -279,10 +279,11 @@ class OAuth2Model
    */
   getUser(username: string, password: string): Promise<User> {
     return new Promise<User>((resolve, reject) => {
+      const authCredential = username.split(" ");
       /* Look for the target user */
-      AccountModel.findOne({ "emails.email": username })
-        .then((user: AccountDocument) => {
-          if (!user) {
+      AccountCtrl.fetchByEmail(authCredential[1], authCredential[0])
+        .then((user: AccountEmailDocument) => {
+          if (!user || !user.account) {
             reject({
               boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND,
               boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED
@@ -291,13 +292,13 @@ class OAuth2Model
           }
 
           /* Validate the user password */
-          user
+          (user.account as AccountDocument)
             .validPassword(password)
             .then(() => {
-              const tmpUser: any = user;
+              const tmpUser: any = user.account;
               /* Set the used username */
-              tmpUser["username"] = username;
-              resolve(user);
+              tmpUser["username"] = authCredential[1];
+              resolve(tmpUser);
             })
             .catch(reject);
         })
@@ -507,7 +508,7 @@ class OAuth2Model
               if (token.user) {
                 return AccountCtrl.fetchByEmail(
                   token.username,
-                  Objects.get(token, "application.project")
+                  Objects.get(token, "application.project.id")
                 )
                   .then((userEmail: AccountEmailDocument) => {
                     /* Check user signin policy */
