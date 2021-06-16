@@ -16,8 +16,7 @@ export const DomainCreate = Joi.object().keys({
     .pattern(new RegExp(/^([a-zA-Z0-9]\.)+[a-zA-Z0-9]$/))
     .required(),
   image: Joi.string().allow("").optional(),
-  description: Joi.string().allow("").optional(),
-  scope: Joi.array().items(Joi.string()).optional()
+  description: Joi.string().allow("").optional()
 });
 
 export const DomainUpdate = Joi.object().keys({

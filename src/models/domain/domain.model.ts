@@ -8,7 +8,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
- import { BaseModel } from "@ikoabo/server";
+import { BaseModel } from "@ikoabo/server";
 import { prop, getModelForClass, DocumentType, index } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 
@@ -26,9 +26,6 @@ export class Domain extends BaseModel {
   @prop()
   description?: string;
 
-  @prop({ type: String })
-  scope?: string[];
-
   /**
    * Get the mongoose data model
    */
@@ -45,6 +42,7 @@ export class Domain extends BaseModel {
               id: ret.id,
               name: ret.name,
               image: ret.image,
+              canonical: ret.canonical,
               description: ret.description,
               status: ret.status,
               createdAt: ret.createdAt,

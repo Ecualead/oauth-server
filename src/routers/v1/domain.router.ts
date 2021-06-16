@@ -13,12 +13,18 @@ import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { DomainCtrl } from "@/controllers/domain/domain.controller";
 import { DomainDocument } from "@/models/domain/domain.model";
-import { ScopeValidation, StatusValidation } from "@/validators/base.joi";
+import { StatusValidation } from "@/validators/base.joi";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
 import { DomainCreate, DomainUpdate } from "@/validators/domain.joi";
 
 const router = Router();
 
+/**
+ * @api {post} /v1/domain Create new domain
+ * @apiVersion 2.0.0
+ * @apiName CreateDomain
+ * @apiGroup Domains
+ */
 router.post(
   "/",
   Validator.joi(DomainCreate),
@@ -30,7 +36,6 @@ router.post(
       canonical: req.body["canonical"],
       image: req.body["image"],
       description: req.body["description"],
-      scope: req.body["scope"],
       owner: Objects.get(res.locals, "token.user._id"),
       status: SERVER_STATUS.ENABLED,
       modifiedBy: Objects.get(res.locals, "token.user._id")
@@ -43,6 +48,12 @@ router.post(
   }
 );
 
+/**
+ * @api {put} /v1/domain/:id Update domain information
+ * @apiVersion 2.0.0
+ * @apiName UpdateDomain
+ * @apiGroup Domains
+ */
 router.put(
   "/:id",
   Validator.joi(ValidateObjectId, "params"),
@@ -54,7 +65,8 @@ router.put(
     DomainCtrl.update(req.params.id, {
       name: req.body["name"],
       image: req.body["image"],
-      description: req.body["description"]
+      description: req.body["description"],
+      modifiedBy: Objects.get(res.locals, "token.user._id")
     })
       .then((value: DomainDocument) => {
         res.locals["response"] = { id: value.id };
@@ -64,6 +76,12 @@ router.put(
   }
 );
 
+/**
+ * @api {get} /v1/domain Get curren user domains
+ * @apiVersion 2.0.0
+ * @apiName FetchAllDomain
+ * @apiGroup Domains
+ */
 router.get(
   "/",
   OAuth2Ctrl.authenticate(["user"]),
@@ -75,6 +93,12 @@ router.get(
   }
 );
 
+/**
+ * @api {get} /v1/domain/:id Get a domain information
+ * @apiVersion 2.0.0
+ * @apiName FetchDomain
+ * @apiGroup Domains
+ */
 router.get(
   "/:id",
   Validator.joi(ValidateObjectId, "params"),
@@ -82,18 +106,17 @@ router.get(
   DomainCtrl.validate("params.id", "token.user._id"),
   (_req: Request, res: Response, next: NextFunction) => {
     /* Return the domain information */
-    res.locals["response"] = {
-      id: res.locals["domain"].id,
-      name: res.locals["domain"].name,
-      image: res.locals["domain"].image,
-      description: res.locals["domain"].description,
-      scope: res.locals["domain"].scope,
-      status: res.locals["domain"].status
-    };
+    res.locals["response"] = res.locals["obj"].toJSON();
     next();
   }
 );
 
+/**
+ * @api {delete} /v1/domain/:id Delete a domain
+ * @apiVersion 2.0.0
+ * @apiName DeleteDomain
+ * @apiGroup Domains
+ */
 router.delete(
   "/:id",
   Validator.joi(ValidateObjectId, "params"),
@@ -110,6 +133,12 @@ router.delete(
   }
 );
 
+/**
+ * @api {put} /v1/domain/:id/:action Change the domain state
+ * @apiVersion 2.0.0
+ * @apiName StatusDomain
+ * @apiGroup Domains
+ */
 router.put(
   "/:id/:action",
   Validator.joi(StatusValidation, "params"),
@@ -129,38 +158,6 @@ router.put(
   },
   ResponseHandler.success,
   ResponseHandler.error
-);
-
-router.post(
-  "/:id/scope",
-  Validator.joi(ValidateObjectId, "params"),
-  Validator.joi(ScopeValidation),
-  OAuth2Ctrl.authenticate(["user"]),
-  DomainCtrl.validate("params.id", "token.user._id"),
-  (req: Request, res: Response, next: NextFunction) => {
-    DomainCtrl.addScope(req.params.id, req.body["scope"])
-      .then((value: DomainDocument) => {
-        res.locals["response"] = { id: value.id };
-        next();
-      })
-      .catch(next);
-  }
-);
-
-router.delete(
-  "/:id/scope",
-  Validator.joi(ValidateObjectId, "params"),
-  Validator.joi(ScopeValidation),
-  OAuth2Ctrl.authenticate(["user"]),
-  DomainCtrl.validate("params.id", "token.user._id"),
-  (req: Request, res: Response, next: NextFunction) => {
-    DomainCtrl.deleteScope(req.params.id, req.body["scope"])
-      .then((value: DomainDocument) => {
-        res.locals["response"] = { id: value.id };
-        next();
-      })
-      .catch(next);
-  }
 );
 
 export default router;

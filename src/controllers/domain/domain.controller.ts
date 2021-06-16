@@ -15,7 +15,7 @@ class Domains extends DataScoped<DomainDocument> {
   private static _instance: Domains;
 
   private constructor() {
-    super("Domains", DomainModel, "domain");
+    super("Domains", DomainModel);
   }
 
   public static get shared(): Domains {
