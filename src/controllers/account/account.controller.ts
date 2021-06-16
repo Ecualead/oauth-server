@@ -37,6 +37,7 @@ import {
   AccountExternalAuthDocument,
   AccountExternalAuthModel
 } from "@/models/account/external-auth.model";
+import { mongoose } from "@typegoose/typegoose";
 
 const MAX_ATTEMPTS = 5;
 
@@ -67,14 +68,14 @@ class Accounts extends CRUD<AccountDocument> {
    * @param project
    * @returns
    */
-  public fetchByEmail(email: string, project: ProjectDocument): Promise<AccountEmailDocument> {
+  public fetchByEmail(email: string, project: string): Promise<AccountEmailDocument> {
     return new Promise<AccountEmailDocument>((resolve, reject) => {
       /* Look for the user by email */
       AccountEmailModel.findOne({ email: email })
         .populate({
           path: "account",
           match: {
-            project: project._id
+            project: mongoose.Types.ObjectId(project)
           }
         })
         .then((userEmail: AccountEmailDocument) => {
@@ -232,7 +233,6 @@ class Accounts extends CRUD<AccountDocument> {
           profile["scope"] = profile["scope"].filter(
             (scope: string) => SCP_PREVENT.indexOf(scope) < 0
           );
-
           /* Fetch the referral user */
           this.fetchReferral(project.id, profile.referral).then(
             (parent: AccountDocument | null) => {
@@ -242,7 +242,6 @@ class Accounts extends CRUD<AccountDocument> {
               } else {
                 profile["parent"] = parent._id;
               }
-
               /* Register the new user */
               this.create(profile)
                 .then((account: AccountDocument) => {
@@ -405,7 +404,7 @@ class Accounts extends CRUD<AccountDocument> {
     }
 
     /* Validate expiration time */
-    if (Objects.get(email, "token.expires", 0) < Date.now()) {
+    if (Objects.get(email, "token.expire", 0) < Date.now()) {
       return reject({
         boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
         boError: AUTH_ERRORS.TOKEN_EXPIRED
@@ -427,7 +426,7 @@ class Accounts extends CRUD<AccountDocument> {
           status: EMAIL_STATUS.CONFIRMED,
           "token.token": null,
           "token.status": TOKEN_STATUS.DISABLED,
-          "token.expires": 0,
+          "token.expire": 0,
           "token.attempts": 0
         }
       },
@@ -482,7 +481,7 @@ class Accounts extends CRUD<AccountDocument> {
           )
             .then(() => {
               /* Check for the current email status */
-              if (userEmail.status !== EMAIL_STATUS.NEEDS_CONFIRM_EMAIL_CAN_AUTH) {
+              if (userEmail.status === EMAIL_STATUS.CONFIRMED) {
                 /* Email address don't need to be confirmed */
                 return reject({
                   boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
@@ -547,7 +546,7 @@ class Accounts extends CRUD<AccountDocument> {
                 id: value.id
               });
 
-              this.fetchByEmail(email, value.project as ProjectDocument)
+              this.fetchByEmail(email, (value.project as ProjectDocument).id)
                 .then(resolve)
                 .catch(reject);
             })
@@ -587,7 +586,7 @@ class Accounts extends CRUD<AccountDocument> {
       }
 
       /* Look for the user by email */
-      this.fetchByEmail(email, project)
+      this.fetchByEmail(email, project.id)
         .then((userEmail: AccountEmailDocument) => {
           /* Check if the user has allowed to signin */
           AccountAccessPolicy.canSignin(
@@ -604,7 +603,7 @@ class Accounts extends CRUD<AccountDocument> {
                 $set: {
                   "token.token": token,
                   "token.status": TOKEN_STATUS.TO_RECOVER,
-                  "token.expires": Date.now() + LIFETIME_TYPE.DAY,
+                  "token.expire": Date.now() + LIFETIME_TYPE.DAY,
                   "token.attempts": 1
                 }
               };
@@ -641,7 +640,7 @@ class Accounts extends CRUD<AccountDocument> {
           email: email,
           "token.token": token,
           "token.status": TOKEN_STATUS.TO_RECOVER,
-          "token.expires": { $gt: Date.now() },
+          "token.expire": { $gt: Date.now() },
           "token.attempts": { $lt: MAX_ATTEMPTS }
         },
         {
@@ -729,7 +728,7 @@ class Accounts extends CRUD<AccountDocument> {
               }
 
               /* Validate expiration time */
-              if (Objects.get(userEmail, "token.expires", 0) < Date.now()) {
+              if (Objects.get(userEmail, "token.expire", 0) < Date.now()) {
                 return reject({
                   boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
                   boError: AUTH_ERRORS.TOKEN_EXPIRED
@@ -756,7 +755,7 @@ class Accounts extends CRUD<AccountDocument> {
                   $set: {
                     "token.token": null,
                     "token.status": TOKEN_STATUS.DISABLED,
-                    "token.expires": 0,
+                    "token.expire": 0,
                     "token.attempts": 0
                   }
                 },
@@ -813,7 +812,7 @@ class Accounts extends CRUD<AccountDocument> {
       $set: {
         "token.token": token,
         "token.status": TOKEN_STATUS.TO_CONFIRM,
-        "token.expires": Date.now() + LIFETIME_TYPE.DAY,
+        "token.expire": Date.now() + LIFETIME_TYPE.DAY,
         "token.attempts": 1
       }
     };
@@ -853,7 +852,7 @@ class Accounts extends CRUD<AccountDocument> {
       }
 
       /* Look for the user by email */
-      this.fetchByEmail(email, project)
+      this.fetchByEmail(email, project.id)
         .then((userEmail: AccountEmailDocument) => {
           /* Check if the user can authenticate using the user policy */
           AccountAccessPolicy.canSignin(
