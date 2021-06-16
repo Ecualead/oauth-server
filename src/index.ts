@@ -1,10 +1,10 @@
 /**
- * Copyright (C) 2020 IKOA Business Opportunity
+ * Copyright (C) 2020-2021 IKOA Business Opportunity
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <millo@ikoabo.com>
  *
  * This file is part of the IKOA Business Opportunity
- * Identity Management Service.
+ * Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -13,15 +13,17 @@ import { ClusterServer } from "@ikoabo/server";
 import { Logger } from "@ikoabo/core";
 import AsyncLock from "async-lock";
 /* Base components routes */
-import AccountRouter from "@/Accounts/routers/v1/accounts.routes";
-import ApplicationRouter from "@/Applications/routers/v1/applications.routes";
-import DomainRouter from "@/Domains/routers/v1/domains.routes";
-import ModulesRouter from "@/Modules/routers/v1/modules.routes";
-import OAuth2Router from "@/OAuth2/routers/v1/oauth2.routes";
-import ProjectRouter from "@/Projects/routers/v1/projects.routes";
-import ProjectSettingsRouter from "@/Projects/routers/v1/projects.settings.routes";
-import SocialNetworkRouter from "@/SocialNetworks/routers/v1/social.networks.router";
-import { AccountCodeCtrl } from "@/Accounts/controllers/accounts.code.controller";
+import AccountRouter from "@/routers/v1/account.router";
+import ApplicationRouter from "@/routers/v1/application.router";
+import DomainRouter from "@/routers/v1/domain.router";
+import OAuth2Router from "@/routers/v1/oauth2.router";
+import ExternalAuthRouter from "@/routers/v1/external-auth.router";
+import ProjectRouter from "@/routers/v1/project/project.router";
+import ProjectExternalAuthRouter from "@/routers/v1/project/external-auth.router";
+import ProjectRestrictIpRouter from "@/routers/v1/project/restrict-ip.router";
+import ProjectKeyRouter from "@/routers/v1/project/key.router";
+import ProjectSettingsRouter from "@/routers/v1/project/setting.router";
+import { AccountCodeCtrl } from "@/controllers/account/code.controller";
 import { AuthenticationCtrl } from "@ikoabo/auth";
 import { MailCtrl } from "@ikoabo/notifications";
 
@@ -29,10 +31,10 @@ import { MailCtrl } from "@ikoabo/notifications";
 const clusterServer = ClusterServer.setup({ running: requestCredentials }, { worker: runWorker });
 /* Initialize componentes before import routes */
 const lock = new AsyncLock();
-const logger = new Logger("Microservice");
+const logger = new Logger("Service");
 
 /**
- * Authenticate agains auth service
+ * Authenticate against auth service
  */
 function requestCredentials(): Promise<void> {
   return new Promise<void>((resolve) => {
@@ -82,10 +84,15 @@ function runWorker(worker: any): Promise<void> {
 
 /* Run cluster with base routes */
 clusterServer.run({
-  "/v1/modules": ModulesRouter,
-  "/v1/domains": DomainRouter,
-  "/v1/projects": [ProjectRouter, ProjectSettingsRouter],
-  "/v1/applications": ApplicationRouter,
-  "/v1/oauth/social": SocialNetworkRouter,
-  "/v1/oauth": [AccountRouter, OAuth2Router]
+  "/v1/domain": DomainRouter,
+  "/v1/project": [
+    ProjectRouter,
+    ProjectExternalAuthRouter,
+    ProjectRestrictIpRouter,
+    ProjectKeyRouter,
+    ProjectSettingsRouter
+  ],
+  "/v1/application": ApplicationRouter,
+  "/v1/oauth/:project": [AccountRouter, OAuth2Router],
+  "/v1/oauth/external": ExternalAuthRouter
 });
