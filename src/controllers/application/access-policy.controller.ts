@@ -39,7 +39,7 @@ class ApplicationAccessPolicy {
       /* Validate request origin */
       case APPLICATION_TYPE.WEB_CLIENT_SIDE:
         const url = new URL(req.headers["origin"] || `https://${req.hostname}`);
-        if (restriction.indexOf(url.hostname) < 0) {
+        if (restriction.length > 0 && restriction.indexOf(url.hostname) < 0) {
           this._logger.error("Hostname restricted", {
             origin: req.headers["origin"],
             hostname: url.hostname,
@@ -54,10 +54,11 @@ class ApplicationAccessPolicy {
         break;
 
       /* Validate request ip address */
+      case APPLICATION_TYPE.MODULE:
       case APPLICATION_TYPE.SERVICE:
       case APPLICATION_TYPE.WEB_SERVER_SIDE:
         const ipAddress = req.ips.length > 0 ? req.ips[0] : req.ip;
-        if (restriction.indexOf(ipAddress) < 0) {
+        if (restriction.length > 0 && restriction.indexOf(ipAddress) < 0) {
           this._logger.error("IP address restricted", {
             ipAddress: ipAddress,
             expressIp: req.ip,
