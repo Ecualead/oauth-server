@@ -33,6 +33,10 @@ import { ProjectDocument } from "@/models/project/project.model";
 import { AccountEmailDocument, AccountEmailModel } from "@/models/account/email.model";
 import { Request, Response, NextFunction } from "express";
 import { AccountPhoneDocument, AccountPhoneModel } from "@/models/account/phone.model";
+import {
+  AccountExternalAuthDocument,
+  AccountExternalAuthModel
+} from "@/models/account/external-auth.model";
 
 const MAX_ATTEMPTS = 5;
 
@@ -63,7 +67,7 @@ class Accounts extends CRUD<AccountDocument> {
    * @param project
    * @returns
    */
-  private _fetchByEmail(email: string, project: ProjectDocument): Promise<AccountEmailDocument> {
+  public fetchByEmail(email: string, project: ProjectDocument): Promise<AccountEmailDocument> {
     return new Promise<AccountEmailDocument>((resolve, reject) => {
       /* Look for the user by email */
       AccountEmailModel.findOne({ email: email })
@@ -337,51 +341,47 @@ class Accounts extends CRUD<AccountDocument> {
     });
   }
 
-  public registerSocial(
-    data: any,
+  public registerExternalAuth(
     authType: EXTERNAL_AUTH_TYPE,
-    profile: any
-  ): Promise<AccountDocument> {
-    return new Promise<AccountDocument>((resolve, reject) => {
+    accountData: any,
+    externalProfile: any,
+    externalId: string,
+    accessToken: string,
+    refreshToken?: string
+  ): Promise<AccountExternalAuthDocument> {
+    return new Promise<AccountExternalAuthDocument>((resolve, reject) => {
       /* Request user code creation */
       AccountCodeCtrl.code
         .then((code: string) => {
           /* Set the user code */
-          data.code = code;
+          accountData["code"] = code;
 
           /* Set the new user status */
-          data.status = ACCOUNT_STATUS.REGISTERED;
+          accountData["status"] = ACCOUNT_STATUS.REGISTERED;
 
-          /* Set the registration email information */
-          data.emails = [];
-
-          /* If mail is set then add to account */
-          if (data.email) {
-            data.emails.push({
-              email: data.email,
-              status: EMAIL_STATUS.REGISTERED,
-              confirm: {
-                status: TOKEN_STATUS.DISABLED
-              }
-            });
-          }
-
-          /* Set social network profile information */
-          data.social = [
-            {
-              type: authType,
-              profile: profile
-            }
-          ];
           /* Initialize avatar metadata */
-          const fullname = `${data.name} ${data.lastname}`;
-          data.initials = AccountIconCtrl.getInitials(fullname);
-          data.color1 = AccountIconCtrl.getColor(fullname);
-
-          this._logger.debug("Registering new user account from social network", data);
+          const fullname = `${accountData.name} ${accountData.lastname1} ${accountData.lastname2}`;
+          accountData["initials"] = AccountIconCtrl.getInitials(fullname);
+          accountData["color1"] = AccountIconCtrl.getColor(fullname);
 
           /* Register the new user */
-          AccountModel.create(data).then(resolve).catch(reject);
+          AccountModel.create(accountData)
+            .then((account: AccountDocument) => {
+              AccountExternalAuthModel.create({
+                account: account._id,
+                type: authType,
+                externalId: externalId,
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                profile: externalProfile
+              })
+                .then((externalAuth: AccountExternalAuthDocument) => {
+                  externalAuth.account = account;
+                  resolve(externalAuth);
+                })
+                .catch(reject);
+            })
+            .catch(reject);
         })
         .catch(reject);
     });
@@ -547,7 +547,7 @@ class Accounts extends CRUD<AccountDocument> {
                 id: value.id
               });
 
-              this._fetchByEmail(email, value.project as ProjectDocument)
+              this.fetchByEmail(email, value.project as ProjectDocument)
                 .then(resolve)
                 .catch(reject);
             })
@@ -587,7 +587,7 @@ class Accounts extends CRUD<AccountDocument> {
       }
 
       /* Look for the user by email */
-      this._fetchByEmail(email, project)
+      this.fetchByEmail(email, project)
         .then((userEmail: AccountEmailDocument) => {
           /* Check if the user has allowed to signin */
           AccountAccessPolicy.canSignin(
@@ -853,7 +853,7 @@ class Accounts extends CRUD<AccountDocument> {
       }
 
       /* Look for the user by email */
-      this._fetchByEmail(email, project)
+      this.fetchByEmail(email, project)
         .then((userEmail: AccountEmailDocument) => {
           /* Check if the user can authenticate using the user policy */
           AccountAccessPolicy.canSignin(
