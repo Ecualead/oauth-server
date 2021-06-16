@@ -93,6 +93,6 @@ clusterServer.run({
     ProjectSettingsRouter
   ],
   "/v1/application": ApplicationRouter,
-  "/v1/oauth/:project": [AccountRouter, OAuth2Router],
+  "/v1/oauth": [AccountRouter, OAuth2Router],
   "/v1/oauth/external": ExternalAuthRouter
 });
