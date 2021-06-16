@@ -16,33 +16,8 @@
       "DOM"
     ],
     "paths": {
-      "@/Modules/*": [
-        "src/packages/Modules/*"
-      ],
-      "@/Domains/*": [
-        "src/packages/Domains/*"
-      ],
-      "@/Projects/*": [
-        "src/packages/Projects/*"
-      ],
-      "@/Applications/*": [
-        "src/packages/Applications/*"
-      ],
-      "@/Accounts/*": [
-        "src/packages/Accounts/*"
-      ],
-      "@/OAuth2/*": [
-        "src/packages/OAuth2/*"
-      ],
-      "@/SocialNetworks/*": [
-        "src/packages/SocialNetworks/*"
-      ],
-      "@/KYC/*": [
-        "src/packages/KYC/*"
-      ],
       "@/*": [
         "src/*",
-        "src/packages/*"
       ]
     }
   },
