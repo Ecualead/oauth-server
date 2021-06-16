@@ -9,14 +9,14 @@
  * permission of the author.
  */
 import { Logger } from "@ikoabo/core";
-import { Random } from "random";
+import random from "random";
 import randomColor from "randomcolor";
 const gender = require("gender-detection");
 const nameInitials = require("name-initials");
 
 const MALE_COLORS: any[] = ["red", "brown", "green", "blue"];
 const FEMALE_COLORS: any[] = ["orange", "yellow", "purple", "pink"];
-const RandomCtrl = new Random();
+const RandomCtrl = random;
 
 class AccountIcon {
   private static _instance: AccountIcon;
