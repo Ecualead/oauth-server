@@ -130,7 +130,7 @@ router.get(
  *
  */
 router.get(
-  "/:external/callback",
+  "/:external/success",
   Validator.joi(ExternalAuthValidation, "params"),
   Validator.joi(ExternalAuthStateValidation, "query"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -230,7 +230,7 @@ router.get(
  *
  */
 router.get(
-  "/:external/callback/failure",
+  "/:external/fail",
   Validator.joi(ExternalAuthValidation, "params"),
   Validator.joi(ExternalAuthStateValidation, "query"),
   (req: Request, res: Response, next: NextFunction) => {
