@@ -220,7 +220,7 @@ class ExternalAuth {
     };
 
     /* Prepare the callback URI */
-    const callbackURI = `${process.env.AUTH_SERVER}/v1/oauth/external/${(request.externalAuth as ProjectExternalAuthDocument).id}/success`;
+    const callbackURI = `${process.env.AUTH_SERVER}/v1/oauth/external/${(request.externalAuth as ProjectExternalAuthDocument).id}/success?state=1`;
 
     /* Initialize the passport strategy for the given network type */
     const strategy: passport.Strategy = ExternalAuth.getByType(
