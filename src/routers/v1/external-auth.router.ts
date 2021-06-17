@@ -163,12 +163,13 @@ router.get(
     const state: string = Objects.get(req, "query.state", "").toString();
     const external: string = Objects.get(req, "params.external", "").toString();
 
-    console.log(state+"TEST");
+    console.log(state + "TEST");
 
     /* Find the authentication state */
     ExternalAuthRequestModel.findById(state)
+      .populate("externalAuth")
       .then((authRequest: ExternalAuthRequestDocument) => {
-        console.log(authRequest)
+        console.log(authRequest);
         if (!authRequest) {
           return next({
             boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -177,7 +178,7 @@ router.get(
         }
 
         /* Check external auth type match */
-        if (Objects.get(v, "externalAuth.type") !== authType) {
+        if (Objects.get(authRequest, "externalAuth.type") !== authType) {
           return next({
             boError: AUTH_ERRORS.INVALID_APPLICATION,
             boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
