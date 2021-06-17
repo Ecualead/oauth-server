@@ -77,11 +77,32 @@ router.get(
     const token: string = Objects.get(req, "query.token", "").toString();
     const redirect: string = Objects.get(req, "query.redirect", "").toString();
 
+    /* Check for project mismatch */
+    const targetProject = Objects.get(
+      res,
+      "locals.token.client.project.id",
+      Objects.get(res, "locals.token.client.project", "")
+    ).toString();
+    const externalProject = Objects.get(res, "locals.external.project", "").toString();
+    if (targetProject !== externalProject) {
+      return next({
+        boError: AUTH_ERRORS.INVALID_SOCIAL_REQUEST,
+        boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
+      });
+    }
+
+    /* Check if user id is valid user account */
+    const appId = Objects.get(res, "locals.token.client.id").toString();
+    let userId = Objects.get(res, "locals.token.user.id").toString();
+    if (userId === appId) {
+      userId = null;
+    }
+
     /* Temporally store request data to allow callback */
     ExternalAuthRequestModel.create({
       token: token,
-      application: Objects.get(res, "locals.token.client.id"),
-      account: Objects.get(res, "locals.token.user.id"),
+      application: appId,
+      account: userId,
       redirect: redirect,
       externalAuth: Objects.get(res, "locals.external._id")
     })
@@ -140,11 +161,11 @@ router.get(
       EXTERNAL_AUTH_TYPE.UNKNOWN
     );
     const state: string = Objects.get(req, "query.state", "").toString();
+    const external: string = Objects.get(req, "params.external", "").toString();
 
     /* Find the authentication state */
     ExternalAuthRequestModel.findById(state)
       .populate({ path: "application", populate: { path: "project" } })
-      .populate("account")
       .then((request: ExternalAuthRequestDocument) => {
         if (!request) {
           return next({
@@ -165,7 +186,7 @@ router.get(
         res.locals["request"] = request;
 
         /* Calling social network authentication with callback reference */
-        const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/external/${external}/callback/failure`;
+        const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/external/${external}/fail`;
         ExternalAuthCtrl.doAuthenticate(request, {
           state: request.id,
           failureRedirect: cbFailure
