@@ -167,6 +167,7 @@ router.get(
     /* Find the authentication state */
     ExternalAuthRequestModel.findById(state)
       .populate("externalAuth")
+      .populate({ path: "application", populate: { path: "project" } })
       .then((authRequest: ExternalAuthRequestDocument) => {
         if (!authRequest) {
           return next({
