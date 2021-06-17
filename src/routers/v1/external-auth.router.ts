@@ -163,12 +163,13 @@ router.get(
     const state: string = Objects.get(req, "query.state", "").toString();
     const external: string = Objects.get(req, "params.external", "").toString();
 
-    console.log(state);
+    console.log(state+"TEST");
 
     /* Find the authentication state */
     ExternalAuthRequestModel.findById(state)
-      .then((request: ExternalAuthRequestDocument) => {
-        if (!request) {
+      .then((authRequest: ExternalAuthRequestDocument) => {
+        console.log(authRequest)
+        if (!authRequest) {
           return next({
             boError: AUTH_ERRORS.INVALID_CREDENTIALS,
             boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
@@ -176,7 +177,7 @@ router.get(
         }
 
         /* Check external auth type match */
-        if (Objects.get(request, "externalAuth.type") !== authType) {
+        if (Objects.get(v, "externalAuth.type") !== authType) {
           return next({
             boError: AUTH_ERRORS.INVALID_APPLICATION,
             boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
@@ -184,12 +185,12 @@ router.get(
         }
 
         /* Store external auth request for next middleware */
-        res.locals["request"] = request;
+        res.locals["request"] = authRequest;
 
         /* Calling social network authentication with callback reference */
         const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/external/${external}/fail`;
-        ExternalAuthCtrl.doAuthenticate(request, {
-          state: request.id,
+        ExternalAuthCtrl.doAuthenticate(authRequest, {
+          state: authRequest.id,
           failureRedirect: cbFailure
         })(req, res, next);
       })
