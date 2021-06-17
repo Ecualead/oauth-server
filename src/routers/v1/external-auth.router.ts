@@ -163,9 +163,10 @@ router.get(
     const state: string = Objects.get(req, "query.state", "").toString();
     const external: string = Objects.get(req, "params.external", "").toString();
 
+    console.log(state);
+
     /* Find the authentication state */
     ExternalAuthRequestModel.findById(state)
-      .populate({ path: "application", populate: { path: "project" } })
       .then((request: ExternalAuthRequestDocument) => {
         if (!request) {
           return next({
