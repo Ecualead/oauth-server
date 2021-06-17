@@ -47,6 +47,9 @@ export class ProjectExternalAuth extends BaseModel {
   @prop({ type: String })
   profile?: string[];
 
+  @prop({ type: String })
+  redirect?: string[];
+
   /**
    * Get the mongoose data model
    */
