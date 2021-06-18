@@ -12,6 +12,8 @@ import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
 import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
 import { ExternalAuthCtrl } from "@/controllers/oauth2/external-auth.controller";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
+import { checkExternal } from "@/middlewares/external-auth.middleware";
+import { checkUrlProject } from "@/middlewares/project.middleware";
 import {
   ExternalAuthRequestDocument,
   ExternalAuthRequestModel
@@ -31,24 +33,7 @@ import { Validator, ResponseHandler } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 
-const router = Router();
-
-function checkExternal(req: Request, res: Response, next: NextFunction) {
-  const external: string = req.params.external;
-  ProjectExternalAuthModel.findById(external)
-    .then((external: ProjectExternalAuthDocument) => {
-      if (!external) {
-        return next({
-          boError: AUTH_ERRORS.INVALID_SOCIAL_REQUEST,
-          boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
-        });
-      }
-
-      res.locals["external"] = external;
-      next();
-    })
-    .catch(next);
-}
+const router = Router({ mergeParams: true });
 
 /**
  * @api {get} /v1/oauth/external/:external Request external authentication
@@ -67,6 +52,7 @@ router.get(
     req.headers.authorization = `Bearer ${token}`;
     OAuth2Ctrl.authenticate()(req, res, next);
   },
+  checkUrlProject,
   checkExternal,
   (req: Request, res: Response, next: NextFunction) => {
     const authType: EXTERNAL_AUTH_TYPE = Objects.get(
@@ -154,6 +140,7 @@ router.get(
   "/:external/success",
   Validator.joi(ExternalAuthValidation, "params"),
   Validator.joi(ExternalAuthStateValidation, "query"),
+  checkUrlProject,
   checkExternal,
   (req: Request, res: Response, next: NextFunction) => {
     const authType: EXTERNAL_AUTH_TYPE = Objects.get(
@@ -256,6 +243,7 @@ router.get(
   "/:external/fail",
   Validator.joi(ExternalAuthValidation, "params"),
   Validator.joi(ExternalAuthStateValidation, "query"),
+  checkUrlProject,
   checkExternal,
   (req: Request, res: Response, next: NextFunction) => {
     const authType: EXTERNAL_AUTH_TYPE = Objects.get(

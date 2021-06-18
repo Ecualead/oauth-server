@@ -847,7 +847,10 @@ class Accounts extends CRUD<AccountDocument> {
         TOKEN_TYPE.DISABLED
       );
       if (recoverType === TOKEN_TYPE.DISABLED) {
-        reject({ boError: AUTH_ERRORS.RECOVER_NOT_ALLOWED });
+        reject({
+          boError: AUTH_ERRORS.RECOVER_NOT_ALLOWED,
+          boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
+        });
         return;
       }
 

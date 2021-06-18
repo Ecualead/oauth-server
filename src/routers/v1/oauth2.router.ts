@@ -20,9 +20,10 @@ import {
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
 import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
 import { ApplicationCtrl } from "@/controllers/application/application.controller";
-import { Application, ApplicationDocument } from "@/models/application/application.model";
+import { ApplicationDocument } from "@/models/application/application.model";
+import { checkUrlProject } from "@/middlewares/project.middleware";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 const options = {
   authenticateHandler: {
@@ -35,6 +36,7 @@ const options = {
 
 router.post(
   "/authorize",
+  checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
     const request = new ORequest(req);
     const response = new OResponse(res);
@@ -64,6 +66,7 @@ router.post(
 
 router.post(
   "/login",
+  checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
     /* Extract project from requesting application */
     const basic = req.headers.authorization.split(" ");
@@ -115,43 +118,6 @@ router.post(
                 }).catch(next);
             return;
         }*/
-            next();
-          })
-          .catch(next);
-      })
-      .catch(next);
-  },
-  OAuth2Ctrl.handleError,
-  ResponseHandler.success,
-  ResponseHandler.error
-);
-
-router.post(
-  "/authenticate",
-  (req: Request, res: Response, next: NextFunction) => {
-    const request = new ORequest(req);
-    const response = new OResponse(res);
-    OAuth2Ctrl.server
-      .authenticate(request, response)
-      .then((token: Token) => {
-        const project = Objects.get(token, "client.project.id", null);
-        /* Validate application restrictions */
-        ApplicationAccessPolicyCtrl.canAccess(req, Objects.get(token, "client.id", null))
-          .then(() => {
-            /* Set basic application information into the response */
-            res.locals["response"] = {
-              application: Objects.get(token, "client.id", null),
-              project: project,
-              domain: Objects.get(token, "client.project.domain", null),
-              scope: token.scope
-            };
-
-            /* Add user information if the token belongs to an user */
-            const user = Objects.get(token, "user.id", null);
-            if (user && user !== res.locals["response"]["application"]) {
-              res.locals["response"]["user"] = user;
-              res.locals["response"]["username"] = Objects.get(token, "username", null);
-            }
             next();
           })
           .catch(next);

@@ -29,8 +29,9 @@ import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
 import { OAuth2ModelCtrl } from "@/controllers/oauth2/oauth2-model.controller";
 import { AccountEmailDocument } from "@/models/account/email.model";
 import { NotificationCtrl } from "@/controllers/notification/notification.controller";
+import { checkUrlProject } from "@/middlewares/project.middleware";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 /**
  * @api {post} /v1/oauth/:project/register Register new user account
@@ -41,6 +42,7 @@ const router = Router();
 router.post(
   "/register",
   Validator.joi(RegisterValidation),
+  checkUrlProject,
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_register_user"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Validate if user email is registered */
@@ -143,6 +145,7 @@ router.post(
 router.post(
   "/confirm",
   Validator.joi(AccountValidation),
+  checkUrlProject,
   OAuth2Ctrl.authenticate(["application", "mod_ims_confirm_account"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Confirm the user account */
@@ -181,6 +184,7 @@ router.post(
  */
 router.post(
   "/resend",
+  checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
     const request = new ORequest(req);
     const response = new OResponse(res);
@@ -259,6 +263,7 @@ router.post(
 router.post(
   "/recover/request",
   Validator.joi(EmailValidation),
+  checkUrlProject,
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_account"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
@@ -295,6 +300,7 @@ router.post(
 router.post(
   "/recover/validate",
   Validator.joi(AccountValidation),
+  checkUrlProject,
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_validate"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Validate the recover token */
@@ -323,6 +329,7 @@ router.post(
 router.post(
   "/recover/store",
   Validator.joi(RecoverValidation),
+  checkUrlProject,
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_change"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Recover the user account */
@@ -363,6 +370,7 @@ router.post(
 router.post(
   "/logout",
   OAuth2Ctrl.authenticate(),
+  checkUrlProject,
   (_req: Request, res: Response, next: NextFunction) => {
     /* Revoke the access token */
     OAuth2ModelCtrl.revokeToken(res.locals["token"])
@@ -386,6 +394,7 @@ router.post(
 router.get(
   "/profile",
   OAuth2Ctrl.authenticate("user"),
+  checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
     AccountCtrl.fetch(Objects.get(res.locals, "token.user._id"))
@@ -418,6 +427,7 @@ router.get(
 router.get(
   "/profile/:id",
   Validator.joi(ValidateObjectId, "params"),
+  checkUrlProject,
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_avatar_info"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
@@ -451,6 +461,7 @@ router.get(
 router.put(
   "/password",
   Validator.joi(PassowrdChangeValidation),
+  checkUrlProject,
   OAuth2Ctrl.authenticate(["user"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */

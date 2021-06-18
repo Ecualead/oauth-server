@@ -8,10 +8,10 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
- import fs from "fs";
+import fs from "fs";
 import path from "path";
 import { AUTH_ERRORS } from "@ikoabo/auth";
-import { Logger } from "@ikoabo/core";
+import { HTTP_STATUS, Logger } from "@ikoabo/core";
 import AsyncLock from "async-lock";
 import RoaringBitmap32 from "roaring/RoaringBitmap32";
 
@@ -68,7 +68,10 @@ class AccountCode {
           /* Data is full. This never must happend (2251875390625) */
           if (topLeft === leftValue) {
             this._logger.error("User code data is full");
-            reject({ boError: AUTH_ERRORS.INVALID_CODE_FULL });
+            reject({
+              boError: AUTH_ERRORS.INVALID_CODE_FULL,
+              boStatus: HTTP_STATUS.HTTP_4XX_BAD_REQUEST
+            });
             return;
           }
         }
@@ -84,7 +87,10 @@ class AccountCode {
         resolve(code);
       } catch (err) {
         this._logger.error("Error generating code", err);
-        reject({ boError: AUTH_ERRORS.INVALID_CODE_ERROR });
+        reject({
+          boError: AUTH_ERRORS.INVALID_CODE_ERROR,
+          boStatus: HTTP_STATUS.HTTP_4XX_BAD_REQUEST
+        });
         return;
       }
     });
