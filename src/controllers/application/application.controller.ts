@@ -10,11 +10,11 @@
  */
 import { Arrays, Tokens, SERVER_STATUS } from "@ikoabo/core";
 import { ApplicationDocument, ApplicationModel } from "@/models/application/application.model";
-import { DataScoped } from "@/controllers/data-scoped.controller";
 import { ProjectCtrl } from "@/controllers/project/project.controller";
 import { ProjectDocument } from "@/models/project/project.model";
+import { CRUD } from "@ikoabo/server";
 
-export class Applications extends DataScoped<ApplicationDocument> {
+export class Applications extends CRUD<ApplicationDocument> {
   private static _instance: Applications;
 
   /**
@@ -48,7 +48,10 @@ export class Applications extends DataScoped<ApplicationDocument> {
           /* Generate application secret */
           data.secret = Tokens.long;
 
-          super.create(data).then(resolve).catch(reject);
+          super
+            .create(data)
+            .then((application: ApplicationDocument) => resolve(application))
+            .catch(reject);
         })
         .catch(reject);
     });

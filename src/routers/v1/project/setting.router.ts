@@ -34,7 +34,7 @@ router.put(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(TokenLifetimeValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
+  ProjectCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const update: any = {
       "settings.tokenLifetime.accessToken": Objects.get(
@@ -70,7 +70,7 @@ router.put(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(EmailConfirmationValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
+  ProjectCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const update: any = {
       "settings.emailConfirmation.type": Objects.get(
@@ -102,7 +102,7 @@ router.put(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(PasswordPolicyValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
+  ProjectCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const update: any = {
       "settings.passwordPolicy.lifetime": Objects.get(req, "body.lifetime", LIFETIME_TYPE.INFINITE),

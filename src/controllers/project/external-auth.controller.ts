@@ -12,9 +12,9 @@ import {
   ProjectExternalAuthDocument,
   ProjectExternalAuthModel
 } from "@/models/project/external-auth.model";
-import { DataScoped } from "@/controllers/data-scoped.controller";
+import { CRUD } from "@ikoabo/server";
 
-class ProjectExternalAuth extends DataScoped<ProjectExternalAuthDocument> {
+class ProjectExternalAuth extends CRUD<ProjectExternalAuthDocument> {
   private static _instance: ProjectExternalAuth;
 
   /**

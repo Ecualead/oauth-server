@@ -35,7 +35,7 @@ router.post(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(KeyValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
+  ProjectCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectKeyCtrl.create({
       project: req.params["id"],
@@ -67,7 +67,7 @@ router.put(
   Validator.joi(ProjectRelatedParamsValidation, "params"),
   Validator.joi(KeyValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectKeyCtrl.validate("params.obj", "token.user._id"),
+  ProjectKeyCtrl.isValidOwner("params.obj", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectKeyCtrl.update(
       { _id: req.params["obj"], project: req.params["id"] },
@@ -96,7 +96,7 @@ router.get(
   "/:id/setting/key",
   Validator.joi(ValidateObjectId, "query.d"),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
+  ProjectCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, _next: NextFunction) => {
     ProjectKeyCtrl.fetchAll({ project: req.params.id })
       .pipe(Streams.stringify())
@@ -116,7 +116,7 @@ router.get(
   "/:id/setting/key/:obj",
   Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectKeyCtrl.validate("params.obj", "token.user._id"),
+  ProjectKeyCtrl.isValidOwner("params.obj", "token.user._id"),
   (_req: Request, res: Response, next: NextFunction) => {
     res.locals["response"] = {
       id: Objects.get(res, "locals.obj.id"),
@@ -145,7 +145,7 @@ router.delete(
   "/:id/setting/key/:obj",
   Validator.joi(ProjectRelatedParamsValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectKeyCtrl.validate("params.obj", "token.user._id"),
+  ProjectKeyCtrl.isValidOwner("params.obj", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectKeyCtrl.delete({ _id: req.params["obj"], project: req.params["id"] })
       .then((value: ProjectKeyDocument) => {
@@ -168,7 +168,7 @@ router.put(
   "/:id/setting/key/:obj/:action",
   Validator.joi(ProjectRelatedStatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectKeyCtrl.validate("params.obj", "token.user._id"),
+  ProjectKeyCtrl.isValidOwner("params.obj", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const handler =
       req.params.action === "enable"
@@ -196,9 +196,9 @@ router.post(
   Validator.joi(ProjectRelatedParamsValidation, "params"),
   Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectKeyCtrl.validate("params.obj", "token.user._id"),
+  ProjectKeyCtrl.isValidOwner("params.obj", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ProjectKeyCtrl.addScope(req.params.id, req.body["scope"])
+    ProjectKeyCtrl.addToSet(req.params.id, "scope", req.body["scope"])
       .then((value: ProjectKeyDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -220,9 +220,9 @@ router.delete(
   Validator.joi(ProjectRelatedParamsValidation, "params"),
   Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectKeyCtrl.validate("params.obj", "token.user._id"),
+  ProjectKeyCtrl.isValidOwner("params.obj", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ProjectKeyCtrl.deleteScope(req.params.id, req.body["scope"])
+    ProjectKeyCtrl.pull(req.params.id, "scope", req.body["scope"])
       .then((value: ProjectKeyDocument) => {
         res.locals["response"] = { id: value.id };
         next();

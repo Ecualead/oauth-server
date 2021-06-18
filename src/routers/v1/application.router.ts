@@ -35,7 +35,7 @@ router.post(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(ApplicationCreateValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
+  ProjectCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     /* TODO XXX Handle validation for module creation */
     ApplicationCtrl.create({
@@ -76,7 +76,7 @@ router.put(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(ApplicationUpdateValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.update(req.params.id, {
       name: req.body["name"],
@@ -104,7 +104,7 @@ router.get(
   "/:id",
   Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.fetch(req.params.id)
       .then((value: ApplicationDocument) => {
@@ -139,7 +139,7 @@ router.delete(
   "/:id",
   Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.delete(req.params.id)
       .then((value: ApplicationDocument) => {
@@ -162,7 +162,7 @@ router.put(
   "/:id/:action",
   Validator.joi(StatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const handler =
       req.params.action === "enable"
@@ -190,9 +190,9 @@ router.post(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ApplicationCtrl.addScope(req.params.id, req.body["scope"])
+    ApplicationCtrl.addToSet(req.params.id, "scope", req.body["scope"])
       .then((value: ApplicationDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -214,9 +214,9 @@ router.delete(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(ScopeValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
-    ApplicationCtrl.deleteScope(req.params.id, req.body["scope"])
+    ApplicationCtrl.pull(req.params.id, "scope", req.body["scope"])
       .then((value: ApplicationDocument) => {
         res.locals["response"] = { id: value.id };
         next();
@@ -238,7 +238,7 @@ router.post(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(ApplicationGrantValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.addGrant(req.params.id, req.body["grant"])
       .then((value: ApplicationDocument) => {
@@ -262,7 +262,7 @@ router.delete(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(ApplicationGrantValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.deleteGrant(req.params.id, req.body["grant"])
       .then((value: ApplicationDocument) => {
@@ -286,7 +286,7 @@ router.post(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(RestrictionValidation, "body"),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.addRestriction(req.params.id, req.body["restriction"])
       .then((value: ApplicationDocument) => {
@@ -310,7 +310,7 @@ router.delete(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(RestrictionValidation, "body"),
   OAuth2Ctrl.authenticate(["user"]),
-  ApplicationCtrl.validate("params.id", "token.user._id"),
+  ApplicationCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ApplicationCtrl.deleteRestriction(req.params.id, req.body["restriction"])
       .then((value: ApplicationDocument) => {

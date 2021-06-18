@@ -35,7 +35,7 @@ router.post(
   Validator.joi(ValidateObjectId, "params"),
   Validator.joi(ExternalAuthValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
+  ProjectCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectExternalAuthCtrl.create({
       project: req.params["id"],
@@ -70,7 +70,7 @@ router.put(
   Validator.joi(ProjectRelatedParamsValidation, "params"),
   Validator.joi(ExternalAuthValidation),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectExternalAuthCtrl.validate("params.obj", "token.user._id"),
+  ProjectExternalAuthCtrl.isValidOwner("params.obj", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectExternalAuthCtrl.update(
       { _id: req.params["obj"], project: req.params["id"] },
@@ -104,7 +104,7 @@ router.get(
   "/:id/setting/external",
   Validator.joi(ValidateObjectId, "query.d"),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectCtrl.validate("params.id", "token.user._id"),
+  ProjectCtrl.isValidOwner("params.id", "token.user._id"),
   (req: Request, res: Response, _next: NextFunction) => {
     ProjectExternalAuthCtrl.fetchAll({ project: req.params.id })
       .pipe(Streams.stringify())
@@ -124,7 +124,7 @@ router.get(
   "/:id/setting/external/:obj",
   Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectExternalAuthCtrl.validate("params.obj", "token.user._id"),
+  ProjectExternalAuthCtrl.isValidOwner("params.obj", "token.user._id"),
   (_req: Request, res: Response, next: NextFunction) => {
     res.locals["response"] = {
       id: Objects.get(res, "locals.obj.id"),
@@ -157,7 +157,7 @@ router.delete(
   "/:id/setting/external/:obj",
   Validator.joi(ProjectRelatedParamsValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectExternalAuthCtrl.validate("params.obj", "token.user._id"),
+  ProjectExternalAuthCtrl.isValidOwner("params.obj", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     ProjectExternalAuthCtrl.delete({ _id: req.params["obj"], project: req.params["id"] })
       .then((value: ProjectExternalAuthDocument) => {
@@ -180,7 +180,7 @@ router.put(
   "/:id/setting/external/:obj/:action",
   Validator.joi(ProjectRelatedStatusValidation, "params"),
   OAuth2Ctrl.authenticate(["user"]),
-  ProjectExternalAuthCtrl.validate("params.obj", "token.user._id"),
+  ProjectExternalAuthCtrl.isValidOwner("params.obj", "token.user._id"),
   (req: Request, res: Response, next: NextFunction) => {
     const handler =
       req.params.action === "enable"

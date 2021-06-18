@@ -12,9 +12,9 @@ import {
   ProjectRestrictIpDocument,
   ProjectRestrictIpModel
 } from "@/models/project/restrict-ip.model";
-import { DataScoped } from "@/controllers/data-scoped.controller";
+import { CRUD } from "@ikoabo/server";
 
-class ProjectRestrictIp extends DataScoped<ProjectRestrictIpDocument> {
+class ProjectRestrictIp extends CRUD<ProjectRestrictIpDocument> {
   private static _instance: ProjectRestrictIp;
 
   /**

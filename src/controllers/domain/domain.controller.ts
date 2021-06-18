@@ -8,10 +8,10 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { DataScoped } from "@/controllers/data-scoped.controller";
 import { DomainModel, DomainDocument } from "@/models/domain/domain.model";
+import { CRUD } from "@ikoabo/server";
 
-class Domains extends DataScoped<DomainDocument> {
+class Domains extends CRUD<DomainDocument> {
   private static _instance: Domains;
 
   private constructor() {

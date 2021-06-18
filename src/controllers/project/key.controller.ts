@@ -9,9 +9,9 @@
  * permission of the author.
  */
 import { ProjectKeyDocument, ProjectKeyModel } from "@/models/project/key.model";
-import { DataScoped } from "@/controllers/data-scoped.controller";
+import { CRUD } from "@ikoabo/server";
 
-class ProjectKey extends DataScoped<ProjectKeyDocument> {
+class ProjectKey extends CRUD<ProjectKeyDocument> {
   private static _instance: ProjectKey;
 
   /**

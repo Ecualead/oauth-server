@@ -8,10 +8,10 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { DataScoped } from "@/controllers/data-scoped.controller";
 import { ProjectDocument, ProjectModel } from "@/models/project/project.model";
+import { CRUD } from "@ikoabo/server";
 
-class Project extends DataScoped<ProjectDocument> {
+class Project extends CRUD<ProjectDocument> {
   private static _instance: Project;
 
   /**
