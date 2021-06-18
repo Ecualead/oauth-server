@@ -37,10 +37,10 @@
   },
   "homepage": "https://gitlab.com/ikoabo/services/ims#readme",
   "dependencies": {
-    "@ikoabo/auth": "^1.0.19",
-    "@ikoabo/core": "^1.1.2",
+    "@ikoabo/auth": "^1.1.0",
+    "@ikoabo/core": "^1.1.4",
     "@ikoabo/notifications": "^1.0.3",
-    "@ikoabo/server": "1.1.22",
+    "@ikoabo/server": "^1.1.25",
     "@typegoose/typegoose": "^7.6.1",
     "async": "^3.2.0",
     "async-lock": "^1.3.0",
