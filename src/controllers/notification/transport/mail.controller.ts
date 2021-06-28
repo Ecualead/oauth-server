@@ -9,7 +9,7 @@
  * permission of the author.
  */
 import { Objects } from "@ikoabo/core";
-import { MailCtrl } from "@ikoabo/notifications";
+import { MailCtrl } from "@ikoabo/mailer";
 import { BaseNotification } from "@/controllers/notification/base.controller";
 import { AccountDocument } from "@/models/account/account.model";
 import { AccountEmailDocument } from "@/models/account/email.model";
@@ -69,14 +69,23 @@ class MailNotification extends BaseNotification {
   private sendMail(data: IMailNotification): Promise<void> {
     return new Promise<void>((resolve) => {
       /* Send mail notification about the account creation */
-      MailCtrl.send(data.project, data.type, data.subject, data.lang, data.account.email, [], [], {
-        name: data.account.name,
-        code: data.account.code,
-        phone: data.account.phone,
-        date: data.account.createdAt,
-        token: data.token,
-        email: data.account.email
-      }).finally(() => {
+      MailCtrl.send(
+        data.project,
+        data.subject,
+        null,
+        data.type,
+        {
+          name: data.account.name,
+          code: data.account.code,
+          phone: data.account.phone,
+          date: data.account.createdAt,
+          token: data.token,
+          email: data.account.email
+        },
+        data.account.email,
+        [],
+        []
+      ).finally(() => {
         this._logger.debug("Sending mail notification", data);
         resolve();
       });

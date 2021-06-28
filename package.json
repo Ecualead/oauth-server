@@ -39,7 +39,7 @@
   "dependencies": {
     "@ikoabo/auth": "^1.1.0",
     "@ikoabo/core": "^1.1.4",
-    "@ikoabo/notifications": "^1.0.3",
+    "@ikoabo/mailer": "^1.0.0",
     "@ikoabo/server": "^1.1.25",
     "@typegoose/typegoose": "^7.6.1",
     "async": "^3.2.0",

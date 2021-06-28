@@ -26,7 +26,7 @@ import ProjectKeyRouter from "@/routers/v1/project/key.router";
 import ProjectSettingsRouter from "@/routers/v1/project/setting.router";
 import { AccountCodeCtrl } from "@/controllers/account/code.controller";
 import { AuthenticationCtrl } from "@ikoabo/auth";
-import { MailCtrl } from "@ikoabo/notifications";
+import { MailCtrl } from "@ikoabo/mailer";
 
 /* Initialize cluster server */
 const clusterServer = ClusterServer.setup({ running: requestCredentials }, { worker: runWorker });
