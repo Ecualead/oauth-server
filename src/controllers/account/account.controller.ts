@@ -71,22 +71,71 @@ class Accounts extends CRUD<AccountDocument> {
   public fetchByEmail(email: string, project: string): Promise<AccountEmailDocument> {
     return new Promise<AccountEmailDocument>((resolve, reject) => {
       /* Look for the user by email */
-      AccountEmailModel.findOne({ email: email })
-        .populate({
-          path: "account",
-          match: {
-            project: mongoose.Types.ObjectId(project)
+      AccountEmailModel.aggregate([
+        {
+          $lookup: {
+            from: "accounts",
+            localField: "account",
+            foreignField: "_id",
+            as: "account"
           }
-        })
-        .then((userEmail: AccountEmailDocument) => {
+        },
+        {
+          $match: {
+            email: email,
+            "account.project": mongoose.Types.ObjectId(project)
+          }
+        }
+      ])
+        .then((emails: AccountEmailDocument[]) => {
           /* Check if user is already registered */
-          if (!userEmail) {
+          if (!emails || emails.length === 0) {
             return reject({
               boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
               boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
             });
           }
-          resolve(userEmail);
+          resolve(emails[0]);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Find user information by phone number
+   *
+   * @param phone
+   * @param project
+   * @returns
+   */
+  public fetchByPhone(phone: string, project: string): Promise<AccountPhoneDocument> {
+    return new Promise<AccountPhoneDocument>((resolve, reject) => {
+      /* Look for the user by email */
+      AccountPhoneModel.aggregate([
+        {
+          $lookup: {
+            from: "accounts",
+            localField: "account",
+            foreignField: "_id",
+            as: "account"
+          }
+        },
+        {
+          $match: {
+            phone: phone,
+            "account.project": mongoose.Types.ObjectId(project)
+          }
+        }
+      ])
+        .then((phones: AccountPhoneDocument[]) => {
+          /* Check if user is already registered */
+          if (!phones || phones.length === 0) {
+            return reject({
+              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
+              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
+            });
+          }
+          resolve(phones[0]);
         })
         .catch(reject);
     });
@@ -102,23 +151,17 @@ class Accounts extends CRUD<AccountDocument> {
    */
   public checkEmail(email: string, project: string, failIfExists = false) {
     return (req: Request, res: Response, next: NextFunction) => {
-      AccountEmailModel.findOne({ email: email })
-        .populate({
-          path: "account",
-          match: {
-            project: project
-          }
-        })
-        .then((userEmail: AccountEmailDocument) => {
+      this.fetchByEmail(email, project)
+        .then((email: AccountEmailDocument) => {
           /* Check if user is already registered */
-          if (userEmail && failIfExists) {
+          if (email && failIfExists) {
             return next({
               boError: AUTH_ERRORS.EMAIL_IN_USE,
               boStatus: HTTP_STATUS.HTTP_4XX_CONFLICT
             });
             return;
           }
-          res.locals["email"] = userEmail;
+          res.locals["email"] = email;
           next();
         })
         .catch(next);
@@ -135,13 +178,7 @@ class Accounts extends CRUD<AccountDocument> {
    */
   public checkPhone(phone: string, project: string, failIfExists = false) {
     return (req: Request, res: Response, next: NextFunction) => {
-      AccountPhoneModel.findOne({ phone: phone })
-        .populate({
-          path: "account",
-          match: {
-            project: project
-          }
-        })
+      this.fetchByPhone(phone, project)
         .then((userPhone: AccountPhoneDocument) => {
           /* Check if user is already registered */
           if (userPhone && failIfExists) {
@@ -453,52 +490,38 @@ class Accounts extends CRUD<AccountDocument> {
     project: ProjectDocument
   ): Promise<AccountEmailDocument> {
     return new Promise<AccountEmailDocument>((resolve, reject) => {
-      const update: any = { $inc: { "token.attempts": 1 } };
+      /* Look for the target email */
+      this.fetchByEmail(email, project.id)
+        .then((email: AccountEmailDocument) => {
+          const update: any = { $inc: { "token.attempts": 1 } };
 
-      AccountEmailModel.findOneAndUpdate({ email: email }, update, { new: true })
-        .populate({
-          path: "account",
-          match: {
-            project: project._id
-          }
-        })
-        .then((userEmail: AccountEmailDocument) => {
-          /* Check if user is already registered */
-          if (!userEmail) {
-            return reject({
-              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
-              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
-            });
-            return;
-          }
+          AccountEmailModel.findOneAndUpdate({ _id: email._id }, update, { new: true })
+            .populate("account")
+            .then((email: AccountEmailDocument) => {
+              /* Check if the user can authenticate using the user policy */
+              AccountAccessPolicy.canSignin(email.account as AccountDocument, project, email, false)
+                .then(() => {
+                  /* Check for the current email status */
+                  if (email.status === EMAIL_STATUS.CONFIRMED) {
+                    /* Email address don't need to be confirmed */
+                    return reject({
+                      boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                      boError: AUTH_ERRORS.ACCOUNT_ALREADY_CONFIRMED
+                    });
+                  }
 
-          /* Check if the user can authenticate using the user policy */
-          AccountAccessPolicy.canSignin(
-            userEmail.account as AccountDocument,
-            project,
-            userEmail,
-            false
-          )
-            .then(() => {
-              /* Check for the current email status */
-              if (userEmail.status === EMAIL_STATUS.CONFIRMED) {
-                /* Email address don't need to be confirmed */
-                return reject({
-                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-                  boError: AUTH_ERRORS.ACCOUNT_ALREADY_CONFIRMED
+                  this._doConfirmation(email, token, resolve, reject);
+                })
+                .catch((err: any) => {
+                  /* Reject the same error on errors diferente to email not confirmed */
+                  if (!err.boError || err.boError !== AUTH_ERRORS.EMAIL_NOT_CONFIRMED) {
+                    return reject(err);
+                  }
+
+                  this._doConfirmation(email, token, resolve, reject);
                 });
-              }
-
-              this._doConfirmation(userEmail, token, resolve, reject);
             })
-            .catch((err: any) => {
-              /* Reject the same error on errors diferente to email not confirmed */
-              if (!err.boError || err.boError !== AUTH_ERRORS.EMAIL_NOT_CONFIRMED) {
-                return reject(err);
-              }
-
-              this._doConfirmation(userEmail, token, resolve, reject);
-            });
+            .catch(reject);
         })
         .catch(reject);
     });
@@ -587,14 +610,9 @@ class Accounts extends CRUD<AccountDocument> {
 
       /* Look for the user by email */
       this.fetchByEmail(email, project.id)
-        .then((userEmail: AccountEmailDocument) => {
+        .then((email: AccountEmailDocument) => {
           /* Check if the user has allowed to signin */
-          AccountAccessPolicy.canSignin(
-            userEmail.account as AccountDocument,
-            project,
-            userEmail,
-            false
-          )
+          AccountAccessPolicy.canSignin(email.account as AccountDocument, project, email, false)
             .then(() => {
               /* Prepare the recover token */
               const token = recoverType === TOKEN_TYPE.CODE ? Tokens.short : Tokens.long;
@@ -609,12 +627,12 @@ class Accounts extends CRUD<AccountDocument> {
               };
 
               /* Register the reset token */
-              AccountEmailModel.findOneAndUpdate({ _id: userEmail._id }, update, {
+              AccountEmailModel.findOneAndUpdate({ _id: email._id }, update, {
                 new: true
               })
-                .populate({ path: "account" })
-                .then((userEmail: AccountEmailDocument) => {
-                  resolve(userEmail);
+                .populate("account")
+                .then((email: AccountEmailDocument) => {
+                  resolve(email);
                 })
                 .catch(reject);
             })
@@ -634,37 +652,36 @@ class Accounts extends CRUD<AccountDocument> {
    */
   public checkRecover(email: string, token: string, project: ProjectDocument): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      /* Look for the user by email */
-      AccountEmailModel.findOneAndUpdate(
-        {
-          email: email,
-          "token.token": token,
-          "token.status": TOKEN_STATUS.TO_RECOVER,
-          "token.expire": { $gt: Date.now() },
-          "token.attempts": { $lt: MAX_ATTEMPTS }
-        },
-        {
-          $set: {
-            "token.status": TOKEN_STATUS.PARTIAL_CONFIRMED
-          }
-        },
-        { new: true }
-      )
-        .populate({
-          path: "account",
-          match: {
-            project: project._id
-          }
-        })
-        .then((userEmail: AccountEmailDocument) => {
-          /* Check if user is already registered */
-          if (!userEmail) {
-            return reject({
-              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-              boError: AUTH_ERRORS.INVALID_CREDENTIALS
-            });
-          }
-          resolve();
+      this.fetchByEmail(email, project.id)
+        .then((email: AccountEmailDocument) => {
+          /* Look for the user by email */
+          AccountEmailModel.findOneAndUpdate(
+            {
+              _id: email._id,
+              "token.token": token,
+              "token.status": TOKEN_STATUS.TO_RECOVER,
+              "token.expire": { $gt: Date.now() },
+              "token.attempts": { $lt: MAX_ATTEMPTS }
+            },
+            {
+              $set: {
+                "token.status": TOKEN_STATUS.PARTIAL_CONFIRMED
+              }
+            },
+            { new: true }
+          )
+            .populate("account")
+            .then((email: AccountEmailDocument) => {
+              /* Check if user is already registered */
+              if (!email) {
+                return reject({
+                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                  boError: AUTH_ERRORS.INVALID_CREDENTIALS
+                });
+              }
+              resolve();
+            })
+            .catch(reject);
         })
         .catch(reject);
     });
@@ -686,99 +703,85 @@ class Accounts extends CRUD<AccountDocument> {
     project: ProjectDocument
   ): Promise<AccountEmailDocument> {
     return new Promise<AccountEmailDocument>((resolve, reject) => {
-      const update: any = { $inc: { "recover.attempts": 1 } };
-      /* Look for the user by email */
-      AccountEmailModel.findOneAndUpdate(
-        {
-          email: email
-        },
-        update,
-        { new: true }
-      )
-        .populate({
-          path: "account",
-          match: {
-            project: project._id
-          }
-        })
-        .then((userEmail: AccountEmailDocument) => {
-          /* Check if user is already registered */
-          if (!userEmail) {
-            return reject({
-              boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-              boError: AUTH_ERRORS.INVALID_CREDENTIALS
-            });
-          }
-
-          /* Check for user account policy */
-          AccountAccessPolicy.canSignin(
-            userEmail.account as AccountDocument,
-            project,
-            userEmail,
-            false
+      this.fetchByEmail(email, project.id)
+        .then((email: AccountEmailDocument) => {
+          const update: any = { $inc: { "recover.attempts": 1 } };
+          /* Look for the user by email */
+          AccountEmailModel.findOneAndUpdate(
+            {
+              _id: email._id
+            },
+            update,
+            { new: true }
           )
-            .then(() => {
-              /* Validate max attempts */
-              if (Objects.get(userEmail, "token.attempts", 1) > MAX_ATTEMPTS) {
-                reject({
-                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-                  boError: AUTH_ERRORS.MAX_ATTEMPTS
-                });
-                return;
-              }
-
-              /* Validate expiration time */
-              if (Objects.get(userEmail, "token.expire", 0) < Date.now()) {
-                return reject({
-                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-                  boError: AUTH_ERRORS.TOKEN_EXPIRED
-                });
-              }
-
-              /* Validate the confirm token */
-              if (
-                Objects.get(userEmail, "token.token", null) !== token ||
-                Objects.get(userEmail, "token.status", -1) !== TOKEN_STATUS.PARTIAL_CONFIRMED
-              ) {
-                return reject({
-                  boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-                  boError: AUTH_ERRORS.INVALID_TOKEN
-                });
-              }
-
-              /* Update the recover token */
-              AccountEmailModel.findOneAndUpdate(
-                {
-                  _id: userEmail.id
-                },
-                {
-                  $set: {
-                    "token.token": null,
-                    "token.status": TOKEN_STATUS.DISABLED,
-                    "token.expire": 0,
-                    "token.attempts": 0
+            .populate("account")
+            .then((email: AccountEmailDocument) => {
+              /* Check for user account policy */
+              AccountAccessPolicy.canSignin(email.account as AccountDocument, project, email, false)
+                .then(() => {
+                  /* Validate max attempts */
+                  if (Objects.get(email, "token.attempts", 1) > MAX_ATTEMPTS) {
+                    reject({
+                      boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                      boError: AUTH_ERRORS.MAX_ATTEMPTS
+                    });
+                    return;
                   }
-                },
-                {
-                  new: true
-                }
-              )
-                .populate({ path: "account" })
-                .then((userEmail: AccountEmailDocument) => {
-                  if (!userEmail) {
+
+                  /* Validate expiration time */
+                  if (Objects.get(email, "token.expire", 0) < Date.now()) {
+                    return reject({
+                      boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                      boError: AUTH_ERRORS.TOKEN_EXPIRED
+                    });
+                  }
+
+                  /* Validate the confirm token */
+                  if (
+                    Objects.get(email, "token.token", null) !== token ||
+                    Objects.get(email, "token.status", -1) !== TOKEN_STATUS.PARTIAL_CONFIRMED
+                  ) {
                     return reject({
                       boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
                       boError: AUTH_ERRORS.INVALID_TOKEN
                     });
                   }
 
-                  /* Update user account password */
-                  this.update(
-                    { _id: Objects.get(userEmail, "account._id") },
-                    { password: password }
+                  /* Update the recover token */
+                  AccountEmailModel.findOneAndUpdate(
+                    {
+                      _id: email.id
+                    },
+                    {
+                      $set: {
+                        "token.token": null,
+                        "token.status": TOKEN_STATUS.DISABLED,
+                        "token.expire": 0,
+                        "token.attempts": 0
+                      }
+                    },
+                    {
+                      new: true
+                    }
                   )
-                    .then(() => {
-                      resolve(userEmail);
+                    .populate("account")
+                    .then((email: AccountEmailDocument) => {
+                      if (!email) {
+                        return reject({
+                          boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
+                          boError: AUTH_ERRORS.INVALID_TOKEN
+                        });
+                      }
+
+                      /* Update user account password */
+                      this.update(
+                        { _id: Objects.get(email, "account._id") },
+                        { password: password }
+                      )
+                        .then(() => {
+                          resolve(email);
+                        })
+                        .catch(reject);
                     })
                     .catch(reject);
                 })
