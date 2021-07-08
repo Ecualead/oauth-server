@@ -11,6 +11,7 @@
  import { Joi } from "@ikoabo/server";
 
 export const ExternalAuthValidation = Joi.object().keys({
+  project: Joi.objectId().required(),
   external: Joi.objectId().required()
 });
 
