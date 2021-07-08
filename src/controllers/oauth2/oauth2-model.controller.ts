@@ -50,7 +50,8 @@ function prepareScope(scope?: string | string[]): string[] {
 }
 
 class OAuth2Model
-  implements PasswordModel, ClientCredentialsModel, AuthorizationCodeModel, RefreshTokenModel {
+  implements PasswordModel, ClientCredentialsModel, AuthorizationCodeModel, RefreshTokenModel
+{
   private static _instance: OAuth2Model;
   private _logger: Logger;
   private constructor() {
@@ -290,15 +291,17 @@ class OAuth2Model
             });
             return;
           }
-
-          /* Validate the user password */
-          (user.account as AccountDocument)
-            .validPassword(password)
-            .then(() => {
-              const tmpUser: any = user.account;
-              /* Set the used username */
-              tmpUser["username"] = authCredential[1];
-              resolve(tmpUser);
+          AccountCtrl.fetch({ _id: Objects.get(user, "account._id", user.account) })
+            .then((account: AccountDocument) => {
+              account
+                .validPassword(password)
+                .then(() => {
+                  const tmpUser: any = user.account;
+                  /* Set the used username */
+                  tmpUser["username"] = authCredential[1];
+                  resolve(tmpUser);
+                })
+                .catch(reject);
             })
             .catch(reject);
         })
