@@ -64,10 +64,10 @@ class ExternalAuth {
     throw "Invalid external auth schema";
   }
 
-  public doAuthenticate(request: ExternalAuthRequestDocument, options = {}) {
+  public doAuthenticate(project: string, request: ExternalAuthRequestDocument, options = {}) {
     return (req: Request, res: Response, next: NextFunction) => {
       /* Initialize the social network strategy */
-      this._setupSocialStrategy(request);
+      this._setupSocialStrategy(project, request);
 
       /* Authenticate against social network */
       passport.authenticate(request.id, options, (err, user, _info) => {
@@ -198,7 +198,7 @@ class ExternalAuth {
    *
    * @param request External auth request information
    */
-  private _setupSocialStrategy(request: ExternalAuthRequestDocument) {
+  private _setupSocialStrategy(project: string, request: ExternalAuthRequestDocument) {
     /* Handler strategy response function */
     const fnSocialStrategy = (
       req: Request,
@@ -220,7 +220,7 @@ class ExternalAuth {
     };
 
     /* Prepare the callback URI */
-    const callbackURI = `${process.env.AUTH_SERVER}/v1/oauth/external/${
+    const callbackURI = `${process.env.AUTH_SERVER}/v1/oauth/${project}/external/${
       (request.externalAuth as ProjectExternalAuthDocument).id
     }/success?`;
 

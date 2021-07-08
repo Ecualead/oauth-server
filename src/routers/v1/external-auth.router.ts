@@ -43,7 +43,7 @@ const router = Router({ mergeParams: true });
  *
  */
 router.get(
-  "/:external", 
+  "/:external",
   Validator.joi(ExternalAuthValidation, "params"),
   Validator.joi(ExternalAuthParamsValidation, "query"),
   (req: Request, res: Response, next: NextFunction) => {
@@ -62,6 +62,7 @@ router.get(
     );
     const token: string = Objects.get(req, "query.token", "").toString();
     const redirect: string = Objects.get(req, "query.redirect", "").toString();
+    const type: number = parseInt(Objects.get(req, "query.type", "0"));
 
     /* Check for project mismatch */
     const targetProject = Objects.get(
@@ -87,6 +88,7 @@ router.get(
     /* Temporally store request data to allow callback */
     ExternalAuthRequestModel.create({
       token: token,
+      type: type,
       application: appId,
       account: userId,
       redirect: redirect,
@@ -105,10 +107,14 @@ router.get(
   },
   (req: Request, res: Response, next: NextFunction) => {
     /* Calling social network authentication with callback reference */
-    ExternalAuthCtrl.doAuthenticate(Objects.get(res, "locals.request"), {
-      state: Objects.get(res, "locals.request.id"),
-      scope: Objects.get(res, "locals.request.externalAuth.scope")
-    })(req, res, next);
+    ExternalAuthCtrl.doAuthenticate(
+      Objects.get(res, "locals.project.id"),
+      Objects.get(res, "locals.request"),
+      {
+        state: Objects.get(res, "locals.request.id"),
+        scope: Objects.get(res, "locals.request.externalAuth.scope")
+      }
+    )(req, res, next);
   },
   ResponseHandler.errorParse,
   (err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -176,7 +182,7 @@ router.get(
 
         /* Calling social network authentication with callback reference */
         const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/external/${external}/fail`;
-        ExternalAuthCtrl.doAuthenticate(authRequest, {
+        ExternalAuthCtrl.doAuthenticate(Objects.get(res, "locals.project.id"), authRequest, {
           state: authRequest.id,
           failureRedirect: cbFailure
         })(req, res, next);
