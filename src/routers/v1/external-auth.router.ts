@@ -43,7 +43,7 @@ const router = Router({ mergeParams: true });
  *
  */
 router.get(
-  "/:external",
+  "/:external", 
   Validator.joi(ExternalAuthValidation, "params"),
   Validator.joi(ExternalAuthParamsValidation, "query"),
   (req: Request, res: Response, next: NextFunction) => {
