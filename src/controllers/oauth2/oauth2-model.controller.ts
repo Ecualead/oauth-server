@@ -291,12 +291,12 @@ class OAuth2Model
             });
             return;
           }
-          AccountCtrl.fetch({ _id: Objects.get(user, "account._id", user.account) })
+          AccountCtrl.fetch({ _id: Objects.get(user, "account.0._id", user.account) })
             .then((account: AccountDocument) => {
               account
                 .validPassword(password)
                 .then(() => {
-                  const tmpUser: any = user.account;
+                  const tmpUser: any = account;
                   /* Set the used username */
                   tmpUser["username"] = authCredential[1];
                   resolve(tmpUser);
