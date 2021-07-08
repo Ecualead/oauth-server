@@ -51,7 +51,7 @@ class Notification {
   ): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       /* Retrieve notifications handlers from settings */
-      const notifications: any = Objects.get(project, "events", {});
+      const notifications: any = Objects.get(project, "settings.events", {});
       let eventType: any;
 
       switch (type) {

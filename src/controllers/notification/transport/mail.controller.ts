@@ -18,7 +18,6 @@ interface IMailNotification {
   project: string;
   type: string;
   subject: string;
-  lang: string;
   account: any;
   token?: string;
 }
@@ -82,7 +81,7 @@ class MailNotification extends BaseNotification {
           token: data.token,
           email: data.account.email
         },
-        data.account.email,
+        [data.account.email],
         [],
         []
       ).finally(() => {
@@ -98,10 +97,9 @@ class MailNotification extends BaseNotification {
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project.id", profile.project),
+      project: Objects.get(profile, "project._id", profile.project),
       type: "account-register",
       subject: "Cuenta de usuario registrada",
-      lang: "es",
       account: this._getAccountData(profile, credential, payload),
       token: this._getToken(credential, payload)
     });
@@ -113,10 +111,9 @@ class MailNotification extends BaseNotification {
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project.id", profile.project),
+      project: Objects.get(profile, "project._id", profile.project),
       type: "account-confirm",
       subject: "Cuenta de usuario confirmada",
-      lang: "es",
       account: this._getAccountData(profile, credential, payload)
     });
   }
@@ -127,10 +124,9 @@ class MailNotification extends BaseNotification {
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project.id", profile.project),
+      project: Objects.get(profile, "project._id", profile.project),
       type: "account-login",
       subject: "Nuevo inicio de sesión",
-      lang: "es",
       account: this._getAccountData(profile, credential, payload)
     });
   }
@@ -141,10 +137,9 @@ class MailNotification extends BaseNotification {
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project.id", profile.project),
+      project: Objects.get(profile, "project._id", profile.project),
       type: "account-chpwd",
       subject: "Nuevo cambio de contraseña",
-      lang: "es",
       account: this._getAccountData(profile, credential, payload)
     });
   }
@@ -155,10 +150,9 @@ class MailNotification extends BaseNotification {
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project.id", profile.project),
+      project: Objects.get(profile, "project._id", profile.project),
       type: "account-recover",
       subject: "Recuperar cuenta de usuario",
-      lang: "es",
       account: this._getAccountData(profile, credential, payload),
       token: this._getToken(credential, payload)
     });
