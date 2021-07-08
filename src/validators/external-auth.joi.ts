@@ -17,7 +17,10 @@ export const ExternalAuthValidation = Joi.object().keys({
 
 export const ExternalAuthStateValidation = Joi.object().keys({
   state: Joi.objectId().required(),
-  code: Joi.string().allow("").optional()
+  code: Joi.string().allow("").optional(),
+  scope: Joi.string().allow("").optional(),
+  authuser: Joi.string().allow("").optional(),
+  prompt: Joi.string().allow("").optional(),
 });
 
 export const ExternalAuthParamsValidation = Joi.object().keys({
