@@ -181,7 +181,10 @@ router.get(
         res.locals["request"] = authRequest;
 
         /* Calling social network authentication with callback reference */
-        const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/external/${external}/fail`;
+        const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/${Objects.get(
+          res,
+          "locals.project.id"
+        )}external/${external}/fail`;
         ExternalAuthCtrl.doAuthenticate(Objects.get(res, "locals.project.id"), authRequest, {
           state: authRequest.id,
           failureRedirect: cbFailure
