@@ -33,6 +33,9 @@ export class ExternalAuthRequest extends BaseModel {
   @prop()
   referral?: string;
 
+  @prop()
+  type?: number;
+
   @prop({ required: true, ref: ProjectExternalAuth })
   externalAuth!: Ref<ProjectExternalAuth>;
 
@@ -51,6 +54,7 @@ export class ExternalAuthRequest extends BaseModel {
             return {
               id: ret.id,
               token: ret.token,
+              type: ret.type,
               application: ret.application,
               user: ret.user,
               redirect: ret.redirect,
