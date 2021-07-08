@@ -407,7 +407,11 @@ router.get(
           code: value.code,
           initials: value.initials,
           color1: value.color1,
-          color2: value.color2
+          color2: value.color2,
+          referral: value.referral,
+          type: value.type,
+          custom1: value.custom1,
+          custom2: value.custom2
         };
         next();
       })
