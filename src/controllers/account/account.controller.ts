@@ -159,12 +159,17 @@ class Accounts extends CRUD<AccountDocument> {
               boError: AUTH_ERRORS.EMAIL_IN_USE,
               boStatus: HTTP_STATUS.HTTP_4XX_CONFLICT
             });
-            return;
           }
           res.locals["email"] = email;
           next();
         })
-        .catch(next);
+        .catch((err)=>{
+          /* Check if user is already registered */
+          if (failIfExists) {
+            return next(err);
+          }
+          next();
+        });
     };
   }
 
