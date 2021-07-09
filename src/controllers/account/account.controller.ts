@@ -166,9 +166,9 @@ class Accounts extends CRUD<AccountDocument> {
         .catch((err)=>{
           /* Check if user is already registered */
           if (failIfExists) {
-            return next(err);
+            return next();
           }
-          next();
+          next(err);
         });
     };
   }
