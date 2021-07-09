@@ -243,8 +243,16 @@ router.post(
             });
           }
 
+          const email: string[] = req.body["username"].split(" ");
+          if (email.length !== 2) {
+            return next({
+              boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+              boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
+            });
+          }
+
           /* Call to resend confirmation */
-          AccountCtrl.requestConfirmation(req.body["username"], Objects.get(application, "project"))
+          AccountCtrl.requestConfirmation(email[1], Objects.get(application, "project"))
             .then((userEmail: AccountEmailDocument) => {
               /* Send the register notification */
               NotificationCtrl.doNotification(
