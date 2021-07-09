@@ -186,6 +186,24 @@ router.post(
   "/resend",
   checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
+    /* Extract project from requesting application */
+    const basic = req.headers.authorization.split(" ");
+    if (basic.length === 2 && basic[0].toUpperCase() === "BASIC") {
+      const buff = Buffer.from(basic[1], "base64");
+      const plain: string[] = buff.toString("ascii").split(":");
+      if (plain.length === 2) {
+        return ApplicationCtrl.fetch({ _id: plain[0] })
+          .then((application: ApplicationDocument) => {
+            const email = req.body["username"];
+            req.body["username"] = `${application.project} ${email}`;
+          })
+          .finally(() => {
+            next();
+          });
+      }
+    }
+  },
+  (req: Request, res: Response, next: NextFunction) => {
     const request = new ORequest(req);
     const response = new OResponse(res);
     OAuth2Ctrl.server
