@@ -259,7 +259,7 @@ router.post(
                 EVENT_TYPE.REGISTER,
                 userEmail.account as AccountDocument,
                 userEmail,
-                Objects.get(res, "locals.token.client.project"),
+                Objects.get(application, "project"),
                 {
                   token: Objects.get(userEmail, "token.token"),
                   email: Objects.get(userEmail, "email")
