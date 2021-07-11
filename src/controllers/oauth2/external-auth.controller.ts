@@ -11,21 +11,19 @@
 import { OAUTH2_TOKEN_TYPE } from "@/constants/oauth2.enum";
 import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
 import { AccountDocument } from "@/models/account/account.model";
-import {
-  AccountExternalAuthDocument,
-  AccountExternalAuthModel
-} from "@/models/account/external-auth.model";
+import { AccountEmailDocument } from "@/models/account/email.model";
+import { AccountExternalAuthDocument } from "@/models/account/external-auth.model";
 import {
   ExternalAuthRequestDocument,
   ExternalAuthRequestModel
 } from "@/models/oauth2/external-auth-request.model";
 import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
-import { externalAuthToStr } from "@/utils/external-auth.util";
 import { AUTH_ERRORS } from "@ikoabo/auth";
 import { Logger, HTTP_STATUS, Objects } from "@ikoabo/core";
 import { Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 import passport from "passport";
+import { AccountExternalCtrl } from "../account/account-external.controller";
 import { AccountCtrl } from "../account/account.controller";
 import { OAuth2ModelCtrl } from "./oauth2-model.controller";
 import { ExternalAuthSchema } from "./schemas/base.controller";
@@ -33,7 +31,7 @@ import { FacebookCtrl } from "./schemas/facebook.controller";
 import { GoogleCtrl } from "./schemas/google.controller";
 import { TwitterCtrl } from "./schemas/twitter.controller";
 
-class ExternalAuth {
+export class ExternalAuth {
   private static _instance: ExternalAuth;
   private _logger: Logger;
 
@@ -128,6 +126,7 @@ class ExternalAuth {
       /* Look for the user account profile */
       const client: any = Objects.get(request, "application");
       const user: any = Objects.get(request, "account");
+      // FIX ERROR HERE
       user["isSocial"] = true;
 
       /* Generate the access token */
@@ -276,41 +275,8 @@ class ExternalAuth {
         const authSchema = ExternalAuth.getByType(authType);
 
         /* Look for an user with the same social network id */
-        const userQuery = { type: authType, externalId: authSchema.id(profile) };
-        AccountExternalAuthModel.findOne(userQuery)
-          .populate({
-            path: "account",
-            match: {
-              project: project
-            }
-          })
+        AccountExternalCtrl.fetchById(authSchema.id(profile), authType, project)
           .then((account: AccountExternalAuthDocument) => {
-            /* Check if the user is not registered */
-            if (!account) {
-              /* Check if the user is attaching the social network account to an existent account */
-              if (request.account !== null) {
-                return this._attachAccount(
-                  authType,
-                  request.account as AccountDocument,
-                  accessToken,
-                  refreshToken,
-                  profile,
-                  done
-                );
-              }
-
-              /* Register new social account */
-              return this._createAccount(
-                authType,
-                project,
-                referral,
-                accessToken,
-                refreshToken,
-                profile,
-                done
-              );
-            }
-
             /* Check requets user match with found user */
             const tmpUser: AccountDocument = request.account as AccountDocument;
             if (tmpUser !== null && tmpUser.id !== Objects.get(account, "acount.id")) {
@@ -326,168 +292,91 @@ class ExternalAuth {
             }
 
             /* User authentication  */
-            this._updateAccount(authType, account, referral, accessToken, refreshToken, profile)
+            AccountExternalCtrl.updateAccount(
+              authType,
+              account,
+              referral,
+              accessToken,
+              refreshToken,
+              profile
+            )
               .then((account: AccountExternalAuthDocument) => {
                 done(null, account);
               })
               .catch(done);
           })
-          .catch(done);
+          .catch((err: any) => {
+            /* Check for error different on non registered */
+            if (
+              Objects.get(err, "boError.value", -1) !== AUTH_ERRORS.ACCOUNT_NOT_REGISTERED.value
+            ) {
+              return done(err);
+            }
+
+            /* Check if the user is attaching the social network account to an existent account */
+            if (request.account !== null) {
+              return AccountExternalCtrl.attachAccount(
+                authType,
+                request.account as AccountDocument,
+                accessToken,
+                refreshToken,
+                profile
+              )
+                .then((account: AccountExternalAuthDocument) => {
+                  done(null, account);
+                })
+                .catch(done);
+            }
+
+            /* Check if the user account can be attached by email address */
+            if (profile.emails && profile.emails.length > 0) {
+              return AccountCtrl.fetchByEmail(Objects.get(profile, "emails.0.value"), project)
+                .then((email: AccountEmailDocument) => {
+                  AccountExternalCtrl.attachAccount(
+                    authType,
+                    email.account as AccountDocument,
+                    accessToken,
+                    refreshToken,
+                    profile
+                  )
+                    .then((account: AccountExternalAuthDocument) => {
+                      done(null, account);
+                    })
+                    .catch(done);
+                })
+                .catch(() => {
+                  /* Register new social account */
+                  AccountExternalCtrl.createAccount(
+                    authType,
+                    project,
+                    referral,
+                    accessToken,
+                    refreshToken,
+                    profile
+                  )
+                    .then((account: AccountExternalAuthDocument) => {
+                      done(null, account);
+                    })
+                    .catch(done);
+                });
+            }
+
+            /* Register new social account */
+            AccountExternalCtrl.createAccount(
+              authType,
+              project,
+              referral,
+              accessToken,
+              refreshToken,
+              profile
+            )
+              .then((account: AccountExternalAuthDocument) => {
+                done(null, account);
+              })
+              .catch(done);
+          });
       })
       .catch(done);
-  }
-
-  /**
-   * Create new user account with the external auth information
-   *
-   * @param authType
-   * @param project
-   * @param referral
-   * @param accessToken
-   * @param refreshToken
-   * @param profile
-   * @param done
-   */
-  private _createAccount(
-    authType: EXTERNAL_AUTH_TYPE,
-    project: string,
-    referral: string,
-    accessToken: string,
-    refreshToken: string,
-    profile: any,
-    done: (error: any, user?: any) => void
-  ) {
-    this._logger.debug("Register external user account", {
-      type: externalAuthToStr(authType)
-    });
-
-    /* Get the current external auth schema */
-    const authSchema = ExternalAuth.getByType(authType);
-
-    /* Register the new user account */
-    const lastnames = authSchema.lastname(profile).split(" ");
-    AccountCtrl.registerExternalAuth(
-      authType,
-      {
-        project: project,
-        name: authSchema.name(profile),
-        lastname1: lastnames.length > 0 ? lastnames[0] : "",
-        lastname2: lastnames.length > 1 ? lastnames[1] : "",
-        referral: referral
-      },
-      profile,
-      authSchema.id(profile),
-      accessToken,
-      refreshToken
-    )
-      .then((account: AccountExternalAuthDocument) => {
-        /* TODO XXX Add support for email and phone auto registers */
-        done(null, account);
-      })
-      .catch(done);
-  }
-
-  /**
-   * Attach a external account to an existent user account
-   * Target user account is extracted from request token
-   *
-   * @param authType
-   * @param account
-   * @param accessToken
-   * @param refreshToken
-   * @param profile
-   * @param done
-   */
-  private _attachAccount(
-    authType: EXTERNAL_AUTH_TYPE,
-    account: AccountDocument,
-    accessToken: string,
-    refreshToken: string,
-    profile: any,
-    done: (error: any, user?: any) => void
-  ) {
-    this._logger.debug("Attach external account", {
-      account: account.id,
-      type: externalAuthToStr(authType)
-    });
-
-    /* Get the current external auth schema */
-    const authSchema = ExternalAuth.getByType(authType);
-
-    /* Register the external user account */
-    AccountExternalAuthModel.create({
-      account: account._id,
-      type: authType,
-      externalId: authSchema.id(profile),
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      profile: profile
-    })
-      .then((externalAuth: AccountExternalAuthDocument) => {
-        /* TODO XXX Add support for email and phone auto registers */
-        externalAuth.account = account;
-        done(null, externalAuth);
-      })
-      .catch(done);
-  }
-
-  /**
-   * Update the external account credentials for user authentication
-   * @param authType
-   * @param account
-   * @param referral
-   * @param accessToken
-   * @param refreshToken
-   * @param profile
-   * @returns
-   */
-  private _updateAccount(
-    authType: EXTERNAL_AUTH_TYPE,
-    account: AccountExternalAuthDocument,
-    referral: string,
-    accessToken: string,
-    refreshToken: string,
-    profile: any
-  ): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this._logger.debug("Store external auth credentials", {
-        account: account.id,
-        type: externalAuthToStr(authType),
-        referral: referral
-      });
-
-      /* External auth mismatch */
-      if (account.type !== authType) {
-        return reject({
-          boError: AUTH_ERRORS.USER_SOCIAL_MISMATCH,
-          boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
-        });
-      }
-
-      AccountExternalAuthModel.findOneAndUpdate(
-        { _id: account.id },
-        {
-          $set: {
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            profile: profile
-          }
-        },
-        { new: true }
-      )
-        .populate({ path: "account" })
-        .then((account: AccountExternalAuthDocument) => {
-          if (!account) {
-            return reject({
-              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
-              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
-            });
-          }
-
-          resolve(account);
-        })
-        .catch(reject);
-    });
   }
 }
 
