@@ -12,6 +12,7 @@ import passport from "passport";
 import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
 import { ExternalAuthSchema } from "@/controllers/oauth2/schemas/base.controller";
 import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
+import { Objects } from "@ikoabo/core";
 
 /**
  * Google social network startegy handler
@@ -67,9 +68,8 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
    *
    * @param profile
    */
-   public id(profile: any): string {
-    /* TODO XXX Handle External auth ID */
-    return "HandleID";
+  public id(profile: any): string {
+    return profile.id;
   }
 
   /**
@@ -77,8 +77,8 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
    *
    * @param profile
    */
-  public name(_profile: any): string {
-    return "Unknown";
+  public name(profile: any): string {
+    return Objects.get(profile, "name.givenName", profile.displayName.split(" ")[0] || "");
   }
 
   /**
@@ -86,8 +86,8 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
    *
    * @param profile
    */
-  public lastname(_profile: any): string {
-    return "Unknown";
+  public lastname(profile: any): string {
+    return Objects.get(profile, "name.familyName", profile.displayName.split(" ")[1] || "");
   }
 
   /**
@@ -95,8 +95,8 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
    *
    * @param profile
    */
-  public email(_profile: any): string {
-    return null;
+  public email(profile: any): string {
+    return Objects.get(profile, "emails.0.value");
   }
 
   /**
