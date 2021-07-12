@@ -273,26 +273,13 @@ class AccountExternal extends CRUD<AccountExternalAuthDocument> {
         });
       }
 
-      AccountExternalAuthModel.findOneAndUpdate(
-        { _id: account.id },
-        {
-          $set: {
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            profile: profile
-          }
-        },
-        { new: true }
+      AccountExternalCtrl.update(
+        { _id: account._id },
+        { accessToken: accessToken, refreshToken: refreshToken, profile: profile },
+        null,
+        { populate: ["account"] }
       )
-        .populate({ path: "account" })
         .then((account: AccountExternalAuthDocument) => {
-          if (!account) {
-            return reject({
-              boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
-              boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
-            });
-          }
-
           resolve(account);
         })
         .catch(reject);

@@ -117,7 +117,10 @@ export class ExternalAuth {
    * @param {AccountDocument} user
    * @returns {Promise<OAuth2Server.Token>}
    */
-  public authenticateSocialAccount(request: ExternalAuthRequestDocument): Promise<Token> {
+  public authenticateSocialAccount(
+    request: ExternalAuthRequestDocument,
+    user: any
+  ): Promise<Token> {
     return new Promise<Token>((resolve, reject) => {
       this._logger.debug("Authenticating user account", {
         account: Objects.get(request, "account.id")
@@ -125,7 +128,6 @@ export class ExternalAuth {
 
       /* Look for the user account profile */
       const client: any = Objects.get(request, "application");
-      const user: any = Objects.get(request, "account");
       user["isSocial"] = true;
 
       /* Generate the access token */
