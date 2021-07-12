@@ -248,7 +248,8 @@ class OAuth2Model
 
       // TODO XXX Check for scope scope
       /* Check if the user is registered into the application */
-      if (application.id !== user.id) {
+      if (application.id !== user.id && !user.isSocial) {
+        /* TODO XXX FIX SOCIAL ACCOUNT */
         return AccountCtrl.fetchByEmail(user["username"], Objects.get(application, "project.id"))
           .then((userEmail: AccountEmailDocument) => {
             /* Check user signin policy */
