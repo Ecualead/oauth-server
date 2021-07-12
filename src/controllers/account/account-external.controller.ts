@@ -118,7 +118,7 @@ class AccountExternal extends CRUD<AccountExternalAuthDocument> {
           }
         }
       ])
-        .then((accounts: AccountExternalAuthDocument[]) => {
+        .then((accounts: any[]) => {
           /* Check if user is already registered */
           if (!accounts || accounts.length === 0) {
             return reject({
@@ -126,6 +126,7 @@ class AccountExternal extends CRUD<AccountExternalAuthDocument> {
               boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
             });
           }
+          accounts[0].account = accounts[0].account[0];
           resolve(accounts[0]);
         })
         .catch(reject);
@@ -218,14 +219,21 @@ class AccountExternal extends CRUD<AccountExternalAuthDocument> {
       const authSchema = ExternalAuth.getByType(authType);
 
       /* Register the external user account */
-      AccountExternalAuthModel.create({
-        account: account._id,
-        type: authType,
-        externalId: authSchema.id(profile),
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        profile: profile
-      })
+      AccountExternalAuthModel.findOneAndUpdate(
+        {
+          account: account._id,
+          type: authType,
+          externalId: authSchema.id(profile)
+        },
+        {
+          $set: {
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            profile: profile
+          }
+        },
+        { new: true, upsert: true }
+      )
         .then((externalAuth: AccountExternalAuthDocument) => {
           externalAuth.account = account;
 
