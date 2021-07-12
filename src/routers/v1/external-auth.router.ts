@@ -207,6 +207,9 @@ router.get(
       return res.redirect(`${request.redirect}?status=${HTTP_STATUS.HTTP_2XX_OK}`);
     }
 
+    /* Set the new created user to the request */
+    request["account"] = req.user as any;
+
     /* Authenticate the user account with the OAuth2 server */
     ExternalAuthCtrl.authenticateSocialAccount(request)
       .then((token: Token) => {
