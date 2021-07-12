@@ -87,7 +87,7 @@ class Accounts extends CRUD<AccountDocument> {
           }
         }
       ])
-        .then((emails: AccountEmailDocument[]) => {
+        .then((emails: any[]) => {
           /* Check if user is already registered */
           if (!emails || emails.length === 0) {
             return reject({
@@ -95,6 +95,7 @@ class Accounts extends CRUD<AccountDocument> {
               boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND
             });
           }
+          emails[0].account = emails[0].account[0];
           resolve(emails[0]);
         })
         .catch(reject);
@@ -163,7 +164,7 @@ class Accounts extends CRUD<AccountDocument> {
           res.locals["email"] = email;
           next();
         })
-        .catch((err)=>{
+        .catch((err) => {
           /* Check if user is already registered */
           if (failIfExists) {
             return next();

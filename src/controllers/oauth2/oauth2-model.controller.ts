@@ -291,7 +291,7 @@ class OAuth2Model
             });
             return;
           }
-          AccountCtrl.fetch({ _id: Objects.get(user, "account.0._id", user.account) })
+          AccountCtrl.fetch({ _id: Objects.get(user, "account._id", user.account) })
             .then((account: AccountDocument) => {
               account
                 .validPassword(password)
