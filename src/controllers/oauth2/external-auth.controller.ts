@@ -128,12 +128,18 @@ export class ExternalAuth {
 
       /* Look for the user account profile */
       const client: any = Objects.get(request, "application");
-      user["isSocial"] = true;
+
+      /* Prepare user account */
+      const account: any = {
+        id: user.account.id,
+        project: user.account.project,
+        isSocial: true
+      };
 
       /* Generate the access token */
-      OAuth2ModelCtrl.generateAccessToken(client, user, []).then((accessToken: string) => {
+      OAuth2ModelCtrl.generateAccessToken(client, account, []).then((accessToken: string) => {
         /* Generate the refresh token */
-        OAuth2ModelCtrl.generateRefreshToken(client, user, [])
+        OAuth2ModelCtrl.generateRefreshToken(client, account, [])
           .then((refreshToken: string) => {
             /* Prepare the authentication token */
             const token: Token = {
@@ -152,7 +158,7 @@ export class ExternalAuth {
               type: OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH
             };
             /* Save the generated token */
-            OAuth2ModelCtrl.saveToken(token, client, user)
+            OAuth2ModelCtrl.saveToken(token, client, account)
               .then((token: Token) => {
                 resolve(token);
 
