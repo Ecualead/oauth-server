@@ -126,7 +126,6 @@ export class ExternalAuth {
       /* Look for the user account profile */
       const client: any = Objects.get(request, "application");
       const user: any = Objects.get(request, "account");
-      // FIX ERROR HERE
       user["isSocial"] = true;
 
       /* Generate the access token */
