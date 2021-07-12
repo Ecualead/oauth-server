@@ -207,7 +207,7 @@ export class ExternalAuth {
     ) => {
       this._doSocialNetwork(
         (request.externalAuth as ProjectExternalAuthDocument).type,
-        Objects.get(request, "application.project"),
+        project,
         request.referral,
         req,
         token,
