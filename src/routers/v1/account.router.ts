@@ -30,6 +30,7 @@ import { OAuth2ModelCtrl } from "@/controllers/oauth2/oauth2-model.controller";
 import { AccountEmailDocument } from "@/models/account/email.model";
 import { NotificationCtrl } from "@/controllers/notification/notification.controller";
 import { checkUrlProject } from "@/middlewares/project.middleware";
+import { AccountIconCtrl } from "@/controllers/account/icon.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -437,7 +438,63 @@ router.get(
           referral: value.referral,
           type: value.type,
           custom1: value.custom1,
-          custom2: value.custom2
+          custom2: value.custom2,
+          email: Objects.get(res.locals, "token.username", "")
+        };
+        next();
+      })
+      .catch(next);
+  },
+  OAuth2Ctrl.handleError,
+  ResponseHandler.success,
+  ResponseHandler.error
+);
+
+/**
+ * @api {put} /v1/oauth/:project/profile Update current user profile
+ * @apiVersion 2.0.0
+ * @apiName ProfileUserUpdate
+ * @apiGroup User Accounts
+ */
+router.put(
+  "/profile",
+  OAuth2Ctrl.authenticate("user"),
+  checkUrlProject,
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Prepare the user information */
+    const name = Objects.get(req, "body.name", "").trim();
+    const lastname1 = Objects.get(req, "body.lastname1", "").trim();
+    const lastname2 = Objects.get(req, "body.lastname2", "").trim();
+    const fullname = `${name} ${lastname1} ${lastname1}`;
+    const initials = AccountIconCtrl.getInitials(fullname);
+    const color1 = AccountIconCtrl.getColor(fullname);
+
+    /* Update user information */
+    AccountCtrl.update(
+      { _id: Objects.get(res.locals, "token.user._id") },
+      {
+        name: name,
+        lastname1: lastname1,
+        lastname2: lastname2,
+        initials: initials,
+        color1: color1
+      }
+    )
+      .then((value: AccountDocument) => {
+        res.locals["response"] = {
+          id: value.id,
+          name: value.name,
+          lastname1: value.lastname1,
+          lastname2: value.lastname2,
+          code: value.code,
+          initials: value.initials,
+          color1: value.color1,
+          color2: value.color2,
+          referral: value.referral,
+          type: value.type,
+          custom1: value.custom1,
+          custom2: value.custom2,
+          email: Objects.get(res.locals, "token.username", "")
         };
         next();
       })
@@ -488,7 +545,7 @@ router.get(
  * @apiName ProfileUser
  * @apiGroup User Accounts
  */
-router.put(
+router.post(
   "/password",
   Validator.joi(PassowrdChangeValidation),
   checkUrlProject,
