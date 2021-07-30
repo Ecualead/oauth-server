@@ -9,13 +9,48 @@
  * permission of the author.
  */
 import { Objects } from "@ikoabo/core";
-import { ResponseHandler } from "@ikoabo/server";
+import { ResponseHandler, ValidateObjectId, Validator } from "@ikoabo/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Token, Request as ORequest, Response as OResponse } from "oauth2-server";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
 import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
+import { AccountCtrl } from "@/controllers/account/account.controller";
+import { AccountDocument } from "@/models/account/account.model";
 
 const router = Router();
+
+/**
+ * @api {get} /v1/oauth/profile/:id Get user profile info
+ * @apiVersion 2.0.0
+ * @apiName ProfileUser
+ * @apiGroup User Accounts
+ */
+ router.get(
+  "/profile/:id",
+  Validator.joi(ValidateObjectId, "params"),
+  OAuth2Ctrl.authenticate(["non_user", "mod_ims_avatar_info"]),
+  (req: Request, res: Response, next: NextFunction) => {
+    /* Request a recover email */
+    AccountCtrl.fetch(req.params.id)
+      .then((value: AccountDocument) => {
+        res.locals["response"] = {
+          user: value.id,
+          name: value.name,
+          lastname1: value.lastname1,
+          lastname2: value.lastname2,
+          initials: value.initials,
+          color1: value.color1,
+          color2: value.color2,
+          code: value.code
+        };
+        next();
+      })
+      .catch(next);
+  },
+  OAuth2Ctrl.handleError,
+  ResponseHandler.success,
+  ResponseHandler.error
+);
 
 router.post(
   "/authenticate",
