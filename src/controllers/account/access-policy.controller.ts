@@ -80,7 +80,8 @@ export class AccountAccessPolicy {
             ) {
               return reject({
                 boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-                boError: AUTH_ERRORS.EMAIL_NOT_CONFIRMED
+                boError: AUTH_ERRORS.EMAIL_NOT_CONFIRMED,
+                boData: { id: Objects.get(user, "id", user) }
               });
             }
             break;
@@ -104,13 +105,15 @@ export class AccountAccessPolicy {
           case EMAIL_STATUS.NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH:
             return reject({
               boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-              boError: AUTH_ERRORS.EMAIL_NOT_CONFIRMED
+              boError: AUTH_ERRORS.EMAIL_NOT_CONFIRMED,
+              boData: { id: Objects.get(user, "id", user) }
             });
           case EMAIL_STATUS.NEEDS_CONFIRM_EMAIL_CAN_AUTH:
             if (confirmationExpires < Date.now()) {
               return reject({
                 boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
-                boError: AUTH_ERRORS.EMAIL_NOT_CONFIRMED
+                boError: AUTH_ERRORS.EMAIL_NOT_CONFIRMED,
+                boData: { id: Objects.get(user, "id", user) }
               });
             }
         }
