@@ -1,10 +1,9 @@
 /**
- * Copyright (C) 2020-2021 IKOA Business Opportunity
+ * Copyright (C) 2020-2022 ECUALEAD
  * All Rights Reserved
- * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the IKOA Business Opportunity
- * Authentication Service.
+ * This file is part of the Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -15,7 +14,7 @@ import { ProjectCtrl } from "@/controllers/project/project.controller";
 import {
   TokenLifetimeValidation,
   EmailConfirmationValidation,
-  PasswordPolicyValidation,
+  PasswordPolicyValidation
 } from "@/validators/project.joi";
 import { ProjectDocument } from "@/models/project/project.model";
 import { Objects } from "@ikoabo/core";

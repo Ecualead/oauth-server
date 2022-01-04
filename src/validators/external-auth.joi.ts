@@ -1,10 +1,9 @@
 /**
- * Copyright (C) 2020-2021 IKOA Business Opportunity
+ * Copyright (C) 2020-2022 ECUALEAD
  * All Rights Reserved
- * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the IKOA Business Opportunity
- * Authentication Service.
+ * This file is part of the Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -20,7 +19,7 @@ export const ExternalAuthStateValidation = Joi.object().keys({
   code: Joi.string().allow("").optional(),
   scope: Joi.string().allow("").optional(),
   authuser: Joi.string().allow("").optional(),
-  prompt: Joi.string().allow("").optional(),
+  prompt: Joi.string().allow("").optional()
 });
 
 export const ExternalAuthParamsValidation = Joi.object().keys({

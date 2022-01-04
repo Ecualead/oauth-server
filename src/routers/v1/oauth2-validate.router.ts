@@ -1,10 +1,9 @@
 /**
- * Copyright (C) 2020-2021 IKOA Business Opportunity
+ * Copyright (C) 2020-2022 ECUALEAD
  * All Rights Reserved
- * Author: Reinier Millo Sánchez <millo@ikoabo.com>
+ * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the IKOA Business Opportunity
- * Authentication Service.
+ * This file is part of the Authentication Service.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -25,7 +24,7 @@ const router = Router();
  * @apiName ProfileUser
  * @apiGroup User Accounts
  */
- router.get(
+router.get(
   "/profile/:id",
   Validator.joi(ValidateObjectId, "params"),
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_avatar_info"]),
