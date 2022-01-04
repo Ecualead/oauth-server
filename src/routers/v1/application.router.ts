@@ -7,8 +7,13 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Objects, SERVER_STATUS } from "@ikoabo/core";
-import { Validator, ValidateObjectId, ResponseHandler } from "@ikoabo/server";
+import {
+  Validator,
+  ValidateObjectId,
+  ResponseHandler,
+  Objects,
+  SERVER_STATUS
+} from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { ApplicationCtrl } from "@/controllers/application/application.controller";
 import {

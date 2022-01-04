@@ -11,7 +11,7 @@ import {
   ProjectRestrictIpDocument,
   ProjectRestrictIpModel
 } from "@/models/project/restrict-ip.model";
-import { CRUD } from "@ikoabo/server";
+import { CRUD } from "@ecualead/server";
 
 class ProjectRestrictIp extends CRUD<ProjectRestrictIpDocument> {
   private static _instance: ProjectRestrictIp;

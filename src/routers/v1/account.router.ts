@@ -7,9 +7,8 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { Objects, HTTP_STATUS } from "@ikoabo/core";
-import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { Validator, ResponseHandler, ValidateObjectId, Objects, HTTP_STATUS } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Request as ORequest, Response as OResponse, Token } from "oauth2-server";
 import { AccountCtrl } from "@/controllers/account/account.controller";

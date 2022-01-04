@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { DomainModel, DomainDocument } from "@/models/domain/domain.model";
-import { CRUD } from "@ikoabo/server";
+import { CRUD } from "@ecualead/server";
 
 class Domains extends CRUD<DomainDocument> {
   private static _instance: Domains;

@@ -11,7 +11,7 @@ import passport from "passport";
 import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
 import { ExternalAuthSchema } from "@/controllers/oauth2/schemas/base.controller";
 import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
-import { Objects } from "@ikoabo/core";
+import { Objects } from "@ecualead/server";
 
 /**
  * Google social network startegy handler

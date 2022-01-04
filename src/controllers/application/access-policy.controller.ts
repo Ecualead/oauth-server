@@ -8,8 +8,8 @@
  * permission of the author.
  */
 import { URL } from "url";
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { Logger, HTTP_STATUS, SERVER_ERRORS } from "@ikoabo/core";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { Logger, HTTP_STATUS, SERVER_ERRORS } from "@ecualead/server";
 import { Request } from "express";
 import { APPLICATION_TYPE } from "@/constants/application.enum";
 import { ApplicationCtrl } from "./application.controller";

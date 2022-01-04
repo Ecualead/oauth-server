@@ -7,8 +7,8 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { Logger, Arrays, HTTP_STATUS, Tokens, Objects } from "@ikoabo/core";
+import { AUTH_ERRORS, OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
+import { Logger, Arrays, HTTP_STATUS, Tokens, Objects } from "@ecualead/server";
 import {
   AuthorizationCode,
   AuthorizationCodeModel,
@@ -29,7 +29,7 @@ import { APPLICATION_TYPE } from "@/constants/application.enum";
 import { ApplicationDocument } from "@/models/application/application.model";
 import { OAuth2CodeDocument, OAuth2CodeModel } from "@/models/oauth2/oauth2-code.model";
 import { OAuth2TokenModel, OAuth2TokenDocument } from "@/models/oauth2/oauth2-token.model";
-import { OAUTH2_TOKEN_TYPE, DEFAULT_SCOPES } from "@/constants/oauth2.enum";
+import { DEFAULT_SCOPES } from "@/constants/oauth2.enum";
 import { LIFETIME_TYPE } from "@/constants/project.enum";
 import { AccountEmailDocument, AccountEmailModel } from "@/models/account/email.model";
 

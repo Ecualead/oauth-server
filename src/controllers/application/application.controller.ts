@@ -7,11 +7,10 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Arrays, Tokens, SERVER_STATUS } from "@ikoabo/core";
+import { Arrays, Tokens, SERVER_STATUS, CRUD } from "@ecualead/server";
 import { ApplicationDocument, ApplicationModel } from "@/models/application/application.model";
 import { ProjectCtrl } from "@/controllers/project/project.controller";
 import { ProjectDocument } from "@/models/project/project.model";
-import { CRUD } from "@ikoabo/server";
 
 export class Applications extends CRUD<ApplicationDocument> {
   private static _instance: Applications;

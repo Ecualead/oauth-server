@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { ResponseHandler, Validator, ValidateObjectId } from "@ikoabo/server";
+import { ResponseHandler, Validator, ValidateObjectId, Objects } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
 import { ProjectCtrl } from "@/controllers/project/project.controller";
@@ -17,7 +17,6 @@ import {
   PasswordPolicyValidation
 } from "@/validators/project.joi";
 import { ProjectDocument } from "@/models/project/project.model";
-import { Objects } from "@ikoabo/core";
 import { EMAIL_CONFIRMATION, LIFETIME_TYPE } from "@/constants/project.enum";
 
 const router = Router();

@@ -14,9 +14,8 @@ import {
   AccountExternalAuthModel
 } from "@/models/account/external-auth.model";
 import { externalAuthToStr } from "@/utils/external-auth.util";
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { HTTP_STATUS, Objects } from "@ikoabo/core";
-import { CRUD } from "@ikoabo/server";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { HTTP_STATUS, Objects, CRUD } from "@ecualead/server";
 import { mongoose } from "@typegoose/typegoose";
 import { ExternalAuth } from "../oauth2/external-auth.controller";
 import { AccountCtrl } from "./account.controller";
@@ -112,7 +111,7 @@ class AccountExternal extends CRUD<AccountExternalAuthDocument> {
           $match: {
             externalId: id,
             type: type,
-            "account.project": mongoose.Types.ObjectId(project)
+            "account.project": new mongoose.Types.ObjectId(project)
           }
         }
       ])

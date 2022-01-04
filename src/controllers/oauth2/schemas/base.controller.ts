@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Logger } from "@ikoabo/core";
+import { Logger } from "@ecualead/server";
 import passport from "passport";
 import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
 

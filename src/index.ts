@@ -8,8 +8,7 @@
  * permission of the author.
  */
 import "module-alias/register";
-import { ClusterServer } from "@ikoabo/server";
-import { Logger } from "@ikoabo/core";
+import { ClusterServer, Logger } from "@ecualead/server";
 import AsyncLock from "async-lock";
 /* Base components routes */
 import AccountRouter from "@/routers/v1/account.router";
@@ -24,7 +23,7 @@ import ProjectRestrictIpRouter from "@/routers/v1/project/restrict-ip.router";
 import ProjectKeyRouter from "@/routers/v1/project/key.router";
 import ProjectSettingsRouter from "@/routers/v1/project/setting.router";
 import { AccountCodeCtrl } from "@/controllers/account/code.controller";
-import { AuthenticationCtrl } from "@ikoabo/auth";
+import { AuthenticationCtrl } from "@ecualead/auth";
 import { MailCtrl } from "@ikoabo/mailer";
 
 /* Initialize cluster server */
@@ -38,7 +37,12 @@ const logger = new Logger("Service");
  */
 function requestCredentials(): Promise<void> {
   return new Promise<void>((resolve) => {
-    AuthenticationCtrl.setup(process.env.AUTH_SERVER, process.env.AUTH_PROJECT);
+    AuthenticationCtrl.setup(
+      process.env.AUTH_SERVER,
+      process.env.AUTH_PROJECT,
+      process.env.AUTH_AUDIENCE,
+      process.env.AUTH_KEY
+    );
     AuthenticationCtrl.authService(process.env.AUTH_ID, process.env.AUTH_SECRET)
       .catch((err) => {
         logger.error("Invalid authentication configuration", err);

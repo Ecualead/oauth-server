@@ -7,14 +7,13 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Objects } from "@ikoabo/core";
-import { BaseModel } from "@ikoabo/server";
+import { BaseModel, Objects } from "@ecualead/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { Token, RefreshToken } from "oauth2-server";
 import { Account } from "@/models/account/account.model";
 import { Application } from "@/models/application/application.model";
-import { OAUTH2_TOKEN_TYPE } from "@/constants/oauth2.enum";
+import { OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
 
 @index({ accessToken: 1 })
 @index({ accessTokenExpiresAt: 1 })

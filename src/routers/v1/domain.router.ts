@@ -7,8 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Objects, SERVER_STATUS, Streams } from "@ikoabo/core";
-import { Validator, ResponseHandler, ValidateObjectId } from "@ikoabo/server";
+import { Validator, ResponseHandler, ValidateObjectId, Objects, SERVER_STATUS, Streams } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { DomainCtrl } from "@/controllers/domain/domain.controller";
 import { DomainDocument } from "@/models/domain/domain.model";

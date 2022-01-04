@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { ProjectDocument, ProjectModel } from "@/models/project/project.model";
-import { CRUD } from "@ikoabo/server";
+import { CRUD } from "@ecualead/server";
 
 class Project extends CRUD<ProjectDocument> {
   private static _instance: Project;

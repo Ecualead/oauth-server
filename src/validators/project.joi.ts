@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Joi } from "@ikoabo/server";
+import { Joi } from "@ecualead/server";
 import { LIFETIME_TYPE, EMAIL_CONFIRMATION, EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
 
 /*******

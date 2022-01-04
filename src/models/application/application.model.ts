@@ -9,8 +9,7 @@
  */
 import { APPLICATION_TYPE } from "@/constants/application.enum";
 import { LIFETIME_TYPE } from "@/constants/project.enum";
-import { Objects } from "@ikoabo/core";
-import { BaseModel } from "@ikoabo/server";
+import { BaseModel, Objects } from "@ecualead/server";
 import { getModelForClass, prop, pre, DocumentType, index, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { Client } from "oauth2-server";

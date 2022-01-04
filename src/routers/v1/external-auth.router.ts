@@ -26,9 +26,8 @@ import {
   ExternalAuthStateValidation,
   ExternalAuthValidation
 } from "@/validators/external-auth.joi";
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { HTTP_STATUS, Objects } from "@ikoabo/core";
-import { Validator, ResponseHandler } from "@ikoabo/server";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { Validator, ResponseHandler, HTTP_STATUS, Objects } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 

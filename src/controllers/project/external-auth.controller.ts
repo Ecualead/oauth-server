@@ -11,7 +11,7 @@ import {
   ProjectExternalAuthDocument,
   ProjectExternalAuthModel
 } from "@/models/project/external-auth.model";
-import { CRUD } from "@ikoabo/server";
+import { CRUD } from "@ecualead/server";
 
 class ProjectExternalAuth extends CRUD<ProjectExternalAuthDocument> {
   private static _instance: ProjectExternalAuth;

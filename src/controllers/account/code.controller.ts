@@ -9,8 +9,8 @@
  */
 import fs from "fs";
 import path from "path";
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { HTTP_STATUS, Logger } from "@ikoabo/core";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { HTTP_STATUS, Logger } from "@ecualead/server";
 import AsyncLock from "async-lock";
 import RoaringBitmap32 from "roaring/RoaringBitmap32";
 
@@ -202,7 +202,7 @@ class AccountCode {
     let map: any;
     if (fs.existsSync(name)) {
       const data = fs.readFileSync(name);
-      map = RoaringBitmap32.deserialize(data);
+      map = RoaringBitmap32.deserialize(data, false);
     } else {
       map = new RoaringBitmap32();
     }

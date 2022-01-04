@@ -7,8 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Objects } from "@ikoabo/core";
-import { ResponseHandler, ValidateObjectId, Validator } from "@ikoabo/server";
+import { ResponseHandler, ValidateObjectId, Validator, Objects } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Token, Request as ORequest, Response as OResponse } from "oauth2-server";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";

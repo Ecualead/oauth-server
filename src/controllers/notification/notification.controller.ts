@@ -13,7 +13,7 @@ import { AccountDocument } from "@/models/account/account.model";
 import { AccountEmailDocument } from "@/models/account/email.model";
 import { AccountPhoneDocument } from "@/models/account/phone.model";
 import { ProjectDocument } from "@/models/project/project.model";
-import { Objects, Logger } from "@ikoabo/core";
+import { Objects, Logger } from "@ecualead/server";
 import { MailNotificationCtrl } from "./transport/mail.controller";
 
 class Notification {

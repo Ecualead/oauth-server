@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Logger } from "@ikoabo/core";
+import { Logger } from "@ecualead/server";
 import random from "random";
 import randomColor from "randomcolor";
 const gender = require("gender-detection");

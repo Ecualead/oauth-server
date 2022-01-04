@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Joi } from "@ikoabo/server";
+import { Joi } from "@ecualead/server";
 
 export const DomainCreate = Joi.object().keys({
   name: Joi.string().required(),

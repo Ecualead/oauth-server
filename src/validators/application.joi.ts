@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Joi } from "@ikoabo/server";
+import { Joi } from "@ecualead/server";
 import { APPLICATION_TYPE } from "@/constants/application.enum";
 
 export const ApplicationCreateValidation = Joi.object().keys({

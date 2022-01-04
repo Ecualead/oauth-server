@@ -11,8 +11,8 @@ import {
   ProjectExternalAuthDocument,
   ProjectExternalAuthModel
 } from "@/models/project/external-auth.model";
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { HTTP_STATUS, Objects } from "@ikoabo/core";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { HTTP_STATUS, Objects } from "@ecualead/server";
 import { NextFunction, Request, Response } from "express";
 
 export function checkExternal(req: Request, res: Response, next: NextFunction) {

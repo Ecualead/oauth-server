@@ -7,8 +7,8 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { Objects, HTTP_STATUS } from "@ikoabo/core";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { Objects, HTTP_STATUS } from "@ecualead/server";
 import { ACCOUNT_STATUS, EMAIL_STATUS } from "@/constants/account.enum";
 import { ProjectDocument } from "@/models/project/project.model";
 import { AccountDocument } from "@/models/account/account.model";

@@ -8,8 +8,7 @@
  * permission of the author.
  */
 import "module-alias/register";
-import { Logger, LOG_LEVEL, Tokens } from "@ikoabo/core";
-import { HttpServer } from "@ikoabo/server";
+import { HttpServer, Logger, LOG_LEVEL, Tokens } from "@ecualead/server";
 import { DomainCtrl } from "@/controllers/domain/domain.controller";
 import { DomainDocument } from "@/models/domain/domain.model";
 import { ProjectCtrl } from "@/controllers/project/project.controller";

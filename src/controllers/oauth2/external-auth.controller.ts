@@ -7,7 +7,6 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { OAUTH2_TOKEN_TYPE } from "@/constants/oauth2.enum";
 import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
 import { AccountDocument } from "@/models/account/account.model";
 import { AccountEmailDocument } from "@/models/account/email.model";
@@ -17,8 +16,8 @@ import {
   ExternalAuthRequestModel
 } from "@/models/oauth2/external-auth-request.model";
 import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { Logger, HTTP_STATUS, Objects } from "@ikoabo/core";
+import { AUTH_ERRORS, OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
+import { Logger, HTTP_STATUS, Objects } from "@ecualead/server";
 import { Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 import passport from "passport";

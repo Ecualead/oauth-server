@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { BaseModel } from "@ikoabo/server";
+import { BaseModel } from "@ecualead/server";
 import { prop, index, Ref, getModelForClass, DocumentType, Severity } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { Account } from "@/models/account/account.model";

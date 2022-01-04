@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Objects } from "@ikoabo/core";
+import { Objects } from "@ecualead/server";
 import { MailCtrl } from "@ikoabo/mailer";
 import { BaseNotification } from "@/controllers/notification/base.controller";
 import { AccountDocument } from "@/models/account/account.model";

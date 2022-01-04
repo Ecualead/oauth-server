@@ -15,6 +15,7 @@ import {
   LIFETIME_TYPE,
   EMAIL_CONFIRMATION
 } from "@/constants/project.enum";
+import { BaseModel } from "@ecualead/server";
 
 /**
  * Project related external links

@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Logger } from "@ikoabo/core";
+import { Logger } from "@ecualead/server";
 import { EVENT_TYPE } from "@/constants/account.enum";
 import { AccountEmailDocument } from "@/models/account/email.model";
 import { AccountPhoneDocument } from "@/models/account/phone.model";

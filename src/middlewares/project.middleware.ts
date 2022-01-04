@@ -9,7 +9,7 @@
  */
 import { ProjectCtrl } from "@/controllers/project/project.controller";
 import { ProjectDocument } from "@/models/project/project.model";
-import { Objects } from "@ikoabo/core";
+import { Objects } from "@ecualead/server";
 import { NextFunction, Request, Response } from "express";
 
 /**

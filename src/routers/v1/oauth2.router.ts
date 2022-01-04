@@ -7,8 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Objects } from "@ikoabo/core";
-import { ResponseHandler } from "@ikoabo/server";
+import { ResponseHandler } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import {
   AuthorizationCode,

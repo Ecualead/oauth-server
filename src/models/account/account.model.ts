@@ -7,13 +7,12 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { BaseModel } from "@ikoabo/server";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { BaseModel, HTTP_STATUS } from "@ecualead/server";
 import { prop, pre, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import { hash, compare } from "bcrypt";
 import mongoose from "mongoose";
 import { Project } from "@/models/project/project.model";
-import { HTTP_STATUS } from "@ikoabo/core";
 
 @pre<Account>("save", function (next) {
   if (!this.isModified("password")) {

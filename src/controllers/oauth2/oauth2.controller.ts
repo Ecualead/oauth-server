@@ -7,8 +7,8 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ikoabo/auth";
-import { HTTP_STATUS, Objects } from "@ikoabo/core";
+import { AUTH_ERRORS } from "@ecualead/auth";
+import { HTTP_STATUS, Objects } from "@ecualead/server";
 import { Request, Response, NextFunction } from "express";
 import OAuth2Server, {
   Token,

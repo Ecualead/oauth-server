@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { ResponseHandler, Validator, ValidateObjectId } from "@ikoabo/server";
+import { ResponseHandler, Validator, ValidateObjectId, Objects, SERVER_STATUS, Streams } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
 import { ProjectCtrl } from "@/controllers/project/project.controller";
@@ -17,7 +17,6 @@ import {
   ProjectRelatedStatusValidation
 } from "@/validators/project.joi";
 import { ProjectExternalAuthCtrl } from "@/controllers/project/external-auth.controller";
-import { Objects, SERVER_STATUS, Streams } from "@ikoabo/core";
 import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
 import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
 

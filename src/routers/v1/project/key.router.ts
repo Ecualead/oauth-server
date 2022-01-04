@@ -7,7 +7,15 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { ResponseHandler, Validator, ValidateObjectId } from "@ikoabo/server";
+import {
+  ResponseHandler,
+  Validator,
+  ValidateObjectId,
+  Objects,
+  SERVER_STATUS,
+  Streams,
+  Tokens
+} from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
 import { ProjectCtrl } from "@/controllers/project/project.controller";
@@ -16,7 +24,6 @@ import {
   ProjectRelatedParamsValidation,
   ProjectRelatedStatusValidation
 } from "@/validators/project.joi";
-import { Objects, SERVER_STATUS, Streams, Tokens } from "@ikoabo/core";
 import { ProjectKeyCtrl } from "@/controllers/project/key.controller";
 import { ProjectKeyDocument } from "@/models/project/key.model";
 import { ScopeValidation } from "@/validators/base.joi";
