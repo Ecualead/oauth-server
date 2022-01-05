@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -11,14 +11,14 @@ import { BaseModel } from "@ecualead/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { AuthorizationCode } from "oauth2-server";
-import { Account } from "@/models/account/account.model";
-import { Application } from "@/models/application/application.model";
+import { Account } from "../../models/account/account.model";
+import { Application } from "../../models/application/application.model";
 
 @index({ code: 1 })
 @index({ expiresAt: 1 })
 @index({ application: 1 })
 @index({ user: 1 })
-export class OAuth2Code extends BaseModel {
+export class Code extends BaseModel {
   @prop()
   code: string;
 
@@ -58,7 +58,7 @@ export class OAuth2Code extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(OAuth2Code, {
+    return getModelForClass(Code, {
       schemaOptions: {
         collection: "oauth2.codes",
         timestamps: true,
@@ -85,5 +85,5 @@ export class OAuth2Code extends BaseModel {
   }
 }
 
-export type OAuth2CodeDocument = DocumentType<OAuth2Code>;
-export const OAuth2CodeModel: mongoose.Model<OAuth2CodeDocument> = OAuth2Code.shared;
+export type CodeDocument = DocumentType<Code>;
+export const CodeModel: mongoose.Model<CodeDocument> = Code.shared;

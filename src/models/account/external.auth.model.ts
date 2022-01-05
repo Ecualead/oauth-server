@@ -3,21 +3,21 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { BaseModel } from "@ecualead/server";
 import { prop, index, Ref, getModelForClass, DocumentType, Severity } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { Account } from "@/models/account/account.model";
-import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
+import { Account } from "./account.model";
+import { EXTERNAL_AUTH_TYPE } from "../../constants/project.enum";
 
 @index({ account: 1 })
 @index({ type: 1 })
 @index({ externalId: 1 })
 @index({ account: 1, type: 1, externalId: 1 }, { unique: true })
-export class AccountExternalAuth extends BaseModel {
+export class ExternalAuth extends BaseModel {
   @prop({ type: mongoose.Types.ObjectId, required: true, ref: Account })
   account!: Ref<Account>;
 
@@ -40,9 +40,9 @@ export class AccountExternalAuth extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(AccountExternalAuth, {
+    return getModelForClass(ExternalAuth, {
       schemaOptions: {
-        collection: "accounts.externalAuth",
+        collection: "oauth2.accounts.external",
         timestamps: true,
         toJSON: {
           virtuals: true,
@@ -63,6 +63,5 @@ export class AccountExternalAuth extends BaseModel {
   }
 }
 
-export type AccountExternalAuthDocument = DocumentType<AccountExternalAuth>;
-export const AccountExternalAuthModel: mongoose.Model<AccountExternalAuthDocument> =
-  AccountExternalAuth.shared;
+export type ExternalAuthDocument = DocumentType<ExternalAuth>;
+export const ExternalAuthModel: mongoose.Model<ExternalAuthDocument> = ExternalAuth.shared;

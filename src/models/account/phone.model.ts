@@ -3,43 +3,39 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { BaseModel } from "@ecualead/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { EMAIL_STATUS } from "@/constants/account.enum";
-import { Account } from "@/models/account/account.model";
-import { AccountToken } from "@/models/account/email.model";
+import { VALIDATION_STATUS } from "../../constants/account.enum";
+import { Account } from "./account.model";
+import { ValidationToken } from "./validation.token.model";
 
 @index({ account: 1 })
-@index({ phone: 1 })
-@index({ phone: 1, account: 1 }, { unique: true })
-export class AccountPhone extends BaseModel {
+@index({ phone: 1 }, { unique: true })
+export class Phone extends BaseModel {
   @prop({ ref: Account })
   account?: Ref<Account>;
-
-  @prop()
-  description?: string;
 
   @prop({ required: true })
   phone!: string;
 
-  @prop({ enum: EMAIL_STATUS, required: true, default: EMAIL_STATUS.REGISTERED })
-  status!: EMAIL_STATUS;
+  @prop({ enum: VALIDATION_STATUS, required: true, default: VALIDATION_STATUS.REGISTERED })
+  status!: VALIDATION_STATUS;
 
-  @prop()
-  token?: AccountToken;
+  @prop({ required: true })
+  validation!: ValidationToken;
 
   /**
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(AccountPhone, {
+    return getModelForClass(Phone, {
       schemaOptions: {
-        collection: "accounts.phones",
+        collection: "oauth2.accounts.phones",
         timestamps: true,
         toJSON: {
           virtuals: true,
@@ -48,7 +44,6 @@ export class AccountPhone extends BaseModel {
             return {
               id: ret.id,
               account: ret.account,
-              description: ret.description,
               phone: ret.phone,
               status: ret.status,
               createdAt: ret.createdAt,
@@ -62,5 +57,5 @@ export class AccountPhone extends BaseModel {
   }
 }
 
-export type AccountPhoneDocument = DocumentType<AccountPhone>;
-export const AccountPhoneModel: mongoose.Model<AccountPhoneDocument> = AccountPhone.shared;
+export type PhoneDocument = DocumentType<Phone>;
+export const PhoneModel: mongoose.Model<PhoneDocument> = Phone.shared;

@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -12,7 +12,20 @@ import { BaseModel, HTTP_STATUS } from "@ecualead/server";
 import { prop, pre, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import { hash, compare } from "bcrypt";
 import mongoose from "mongoose";
-import { Project } from "@/models/project/project.model";
+
+@index({ token: 1 })
+@index({ status: 1 })
+@index({ expire: 1 })
+export class AccountReferral {
+  @prop({ required: true })
+  code!: string;
+
+  @prop()
+  parent?: string;
+
+  @prop({ type: String, default: [] })
+  tree?: string[];
+}
 
 @pre<Account>("save", function (next) {
   if (!this.isModified("password")) {
@@ -44,13 +57,9 @@ import { Project } from "@/models/project/project.model";
     next();
   });
 })
-@index({ project: 1 })
 @index({ code: 1 })
 @index({ project: 1, code: 1 }, { unique: true })
 export class Account extends BaseModel {
-  @prop({ required: true, ref: Project })
-  project!: Ref<Project>;
-
   @prop()
   name?: string;
 
@@ -69,9 +78,6 @@ export class Account extends BaseModel {
   @prop()
   color2?: string;
 
-  @prop({ required: true })
-  code!: string;
-
   @prop()
   password?: string;
 
@@ -81,26 +87,14 @@ export class Account extends BaseModel {
   @prop()
   confirmationExpires?: number;
 
-  @prop()
-  referral?: string;
-
-  @prop({ ref: Account })
-  parent?: Ref<Account>;
-
-  @prop({ type: String, default: [] })
-  tree?: string[];
-
   @prop({ default: 0 })
   type?: number;
 
-  @prop()
-  custom1?: string;
-
-  @prop()
-  custom2?: string;
-
   @prop({ type: String })
   scope?: string[];
+
+  @prop()
+  referral?: AccountReferral;
 
   /**
    * Get the mongoose data model
@@ -108,7 +102,7 @@ export class Account extends BaseModel {
   static get shared() {
     return getModelForClass(Account, {
       schemaOptions: {
-        collection: "accounts",
+        collection: "oauth2.accounts",
         timestamps: true,
         toJSON: {
           virtuals: true,
@@ -119,7 +113,6 @@ export class Account extends BaseModel {
               name: ret.name,
               lastname1: ret.lastname1,
               lastname2: ret.lastname2,
-              code: ret.code,
               referral: ret.referral,
               status: ret.status,
               createdAt: ret.createdAt,

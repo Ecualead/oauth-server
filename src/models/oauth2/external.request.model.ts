@@ -3,20 +3,43 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { EXTERNAL_AUTH_TYPE } from "../../constants/project.enum";
 import { BaseModel } from "@ecualead/server";
 import { prop, Ref, index, getModelForClass, DocumentType } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { Account } from "../account/account.model";
 import { Application } from "../application/application.model";
-import { ProjectExternalAuth } from "../project/external-auth.model";
+
+export class ExternalAuthSettings {
+  @prop({ required: true })
+  name!: string;
+
+  @prop({ required: true, enum: EXTERNAL_AUTH_TYPE })
+  type!: EXTERNAL_AUTH_TYPE;
+
+  @prop({ required: true })
+  clientId!: string;
+
+  @prop({ required: true })
+  clientSecret!: string;
+
+  @prop()
+  scope?: string;
+
+  @prop({ type: String })
+  profile?: string[];
+
+  @prop({ type: String })
+  redirect?: string[];
+}
 
 @index({ application: 1 })
 @index({ user: 1 })
-export class ExternalAuthRequest extends BaseModel {
+export class ExternalRequest extends BaseModel {
   @prop({ required: true })
   token!: string;
 
@@ -35,16 +58,16 @@ export class ExternalAuthRequest extends BaseModel {
   @prop()
   type?: number;
 
-  @prop({ required: true, ref: ProjectExternalAuth })
-  externalAuth!: Ref<ProjectExternalAuth>;
+  @prop({ required: true })
+  settings!: ExternalAuthSettings;
 
   /**
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(ExternalAuthRequest, {
+    return getModelForClass(ExternalRequest, {
       schemaOptions: {
-        collection: "oauth2.external-auth",
+        collection: "oauth2.external-requests",
         timestamps: true,
         toJSON: {
           virtuals: true,
@@ -58,7 +81,7 @@ export class ExternalAuthRequest extends BaseModel {
               user: ret.user,
               redirect: ret.redirect,
               referral: ret.referral,
-              externalAuth: ret.externalAuth,
+              settings: ret.settings,
               status: ret.status,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt
@@ -71,6 +94,5 @@ export class ExternalAuthRequest extends BaseModel {
   }
 }
 
-export type ExternalAuthRequestDocument = DocumentType<ExternalAuthRequest>;
-export const ExternalAuthRequestModel: mongoose.Model<ExternalAuthRequestDocument> =
-  ExternalAuthRequest.shared;
+export type ExternalRequestDocument = DocumentType<ExternalRequest>;
+export const ExternalRequestModel: mongoose.Model<ExternalRequestDocument> = ExternalRequest.shared;

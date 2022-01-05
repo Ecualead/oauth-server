@@ -3,17 +3,45 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { BaseModel, Objects } from "@ecualead/server";
+import { BaseModel } from "@ecualead/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { Token, RefreshToken } from "oauth2-server";
-import { Account } from "@/models/account/account.model";
-import { Application } from "@/models/application/application.model";
+import { Token as OAuth2Token, RefreshToken } from "oauth2-server";
+import { Account } from "../../models/account/account.model";
+import { Application } from "../../models/application/application.model";
 import { OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
+
+function fillTokenTypeScope(token: any, scope: string[]): string[] {
+  /* Check for invalid token */
+  if (!token || !token.client || !token.user) {
+    return [];
+  }
+
+  /* Check for valid scope array */
+  if (!scope) {
+    scope = [];
+  }
+  scope.push("default");
+
+  /* Check if the token belongs to user or application */
+  if (token.client?.id === token.user?.id) {
+    scope.push("application");
+    scope.push("non_user");
+  } else {
+    scope.push("user");
+  }
+
+  /* Check for external auth token */
+  if (token?.type === OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH) {
+    scope.push("external_auth");
+  }
+
+  return scope;
+}
 
 @index({ accessToken: 1 })
 @index({ accessTokenExpiresAt: 1 })
@@ -21,7 +49,7 @@ import { OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
 @index({ refreshTokenExpiresAt: 1 })
 @index({ application: 1 })
 @index({ user: 1 })
-export class OAuth2Token extends BaseModel {
+export class Token extends BaseModel {
   @prop({ required: true })
   accessToken!: string;
 
@@ -55,7 +83,7 @@ export class OAuth2Token extends BaseModel {
   /**
    * Convert the document into Access Token
    */
-  public toToken(): Token {
+  public toToken(): OAuth2Token {
     const token = {
       accessToken: this.accessToken,
       accessTokenExpiresAt: this.accessTokenExpiresAt,
@@ -70,35 +98,7 @@ export class OAuth2Token extends BaseModel {
       createdAt: this.createdAt
     };
 
-    let applicationOwner, projectOwner, user: any;
-    token.scope.push("default");
-    switch (token.type) {
-      case OAUTH2_TOKEN_TYPE.APPLICATION:
-        token.scope.push("non_user");
-        token.scope.push("application");
-        break;
-      case OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH:
-        token.scope.push("external_auth");
-      // eslint-disable-next-line no-fallthrough
-      case OAUTH2_TOKEN_TYPE.USER:
-        /* Get application parameters */
-        applicationOwner = Objects.get(token.client, "owner", "").toString();
-        projectOwner = Objects.get(token.client, "project.owner", "").toString();
-        user = Objects.get(token.user, "id", this.user).toString();
-
-        /* Check if the user is the application owner */
-        if (applicationOwner === user) {
-          token.scope.push("application_owner");
-        }
-
-        /* Check if the user is the project owner */
-        if (projectOwner === user) {
-          token.scope.push("project_owner");
-        }
-
-        token.scope.push("user");
-        break;
-    }
+    token.scope = fillTokenTypeScope(token, token.scope);
     return token;
   }
 
@@ -112,12 +112,13 @@ export class OAuth2Token extends BaseModel {
       scope: this.scope || [],
       client: <any>this.application,
       user: <any>(this.user ? this.user : this.application),
+      type: this.type,
       keep: this.keep,
       username: this.username,
       createdAt: this.createdAt
     };
-    token.scope.push(token.client.id === token.user.id ? "application" : "user");
-    token.scope.push("default");
+
+    token.scope = fillTokenTypeScope(token, token.scope);
     return token;
   }
 
@@ -125,7 +126,7 @@ export class OAuth2Token extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(OAuth2Token, {
+    return getModelForClass(Token, {
       schemaOptions: {
         collection: "oauth2.tokens",
         timestamps: true,
@@ -141,12 +142,13 @@ export class OAuth2Token extends BaseModel {
               scope: ret.scope || [],
               client: ret.application,
               user: ret.user ? ret.user : ret.application,
+              type: ret.type,
               keep: ret.keep,
               username: ret.username,
               createdAt: ret.createdAt
             };
-            token.scope.push(token.client.id === token.user.id ? "application" : "user");
-            token.scope.push("default");
+
+            token.scope = fillTokenTypeScope(token, token.scope);
             return token;
           }
         }
@@ -156,5 +158,5 @@ export class OAuth2Token extends BaseModel {
   }
 }
 
-export type OAuth2TokenDocument = DocumentType<OAuth2Token>;
-export const OAuth2TokenModel: mongoose.Model<OAuth2TokenDocument> = OAuth2Token.shared;
+export type TokenDocument = DocumentType<Token>;
+export const TokenModel: mongoose.Model<TokenDocument> = Token.shared;
