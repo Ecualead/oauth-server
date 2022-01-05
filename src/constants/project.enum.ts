@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -53,5 +53,5 @@ export enum EXTERNAL_AUTH_TYPE {
   YAHOO = 5,
   LINKEDIN = 6,
   TELEGRAM = 7,
-  OAUTH2 = 8,
+  OAUTH2 = 8
 }

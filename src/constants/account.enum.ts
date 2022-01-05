@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -36,7 +36,7 @@ export enum EVENT_TYPE {
   RECOVER = 5
 }
 
-export enum EMAIL_STATUS {
+export enum VALIDATION_STATUS {
   DISABLED_BY_ADMIN = -3,
   TEMPORALLY_BLOCKED = -2,
   CANCELLED = -1,
@@ -45,20 +45,9 @@ export enum EMAIL_STATUS {
   ENABLED = 2,
   REGISTERED = 3,
   CONFIRMED = 4,
-  NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH = 5,
-  NEEDS_CONFIRM_EMAIL_CAN_AUTH = 6
+  NEEDS_CONFIRM_CAN_NOT_AUTH = 5,
+  NEEDS_CONFIRM_CAN_AUTH = 6
 }
-
-export const PROTECTED_PROJECT_FIELDS: string[] = [
-  "_id",
-  "__v",
-  "updatedAt",
-  "createdAt",
-  "account",
-  "scope",
-  "social",
-  "status"
-];
 
 export const DEFAULT_SCOPES: string[] = [];
 
@@ -71,17 +60,6 @@ export const SCP_DOMAIN_DEFAULT: string[] = [
   "prj_create",
   "prj_remove",
   "prj_update",
-  "app_create",
-  "app_remove",
-  "app_update",
-  "usr_register"
-];
-
-/**
- * Default scope handled by all projects
- */
-export const SCP_PRJ_DEFAULT: string[] = [
-  "prj_admin",
   "app_create",
   "app_remove",
   "app_update",
