@@ -3,14 +3,14 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import passport from "passport";
 import { Strategy as TwitterStrategy } from "passport-twitter";
-import { ExternalAuthSchema } from "@/controllers/oauth2/schemas/base.controller";
-import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
+import { ExternalAuthSchema } from "./base.controller";
+import { IExternalAuth } from "../../../settings";
 
 /**
  * Twitter social network startegy handler
@@ -37,16 +37,8 @@ class ExternalAuthTwitter extends ExternalAuthSchema {
 
   /**
    * Setup the passport strategy
-   *
-   * @param socialNetwork
-   * @param cbUri
-   * @param fn
    */
-  public setup(
-    socialNetwork: ProjectExternalAuthDocument,
-    cbUri: string,
-    fn: any
-  ): passport.Strategy {
+  public setup(socialNetwork: IExternalAuth, cbUri: string, fn: any): passport.Strategy {
     this._logger.debug("Initialize new passport strategy", socialNetwork);
 
     return new TwitterStrategy(
@@ -62,8 +54,6 @@ class ExternalAuthTwitter extends ExternalAuthSchema {
 
   /**
    * Get social profile id
-   *
-   * @param profile
    */
   public id(profile: any): string {
     /* TODO XXX Handle External auth ID */
@@ -72,8 +62,6 @@ class ExternalAuthTwitter extends ExternalAuthSchema {
 
   /**
    * Get social profile first name
-   *
-   * @param profile
    */
   public name(_profile: any): string {
     return "Unknown";
@@ -81,8 +69,6 @@ class ExternalAuthTwitter extends ExternalAuthSchema {
 
   /**
    * Get social profile last name
-   *
-   * @param profile
    */
   public lastname(_profile: any): string {
     return "Unknown";
@@ -90,8 +76,6 @@ class ExternalAuthTwitter extends ExternalAuthSchema {
 
   /**
    * Get social profile email
-   *
-   * @param profile
    */
   public email(_profile: any): string {
     return null;
@@ -99,7 +83,6 @@ class ExternalAuthTwitter extends ExternalAuthSchema {
 
   /**
    * Get social profile phone
-   * @param profile
    */
   public phone(_profile: any): string {
     return null;

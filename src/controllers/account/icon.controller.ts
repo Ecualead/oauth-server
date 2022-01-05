@@ -3,33 +3,33 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { Logger } from "@ecualead/server";
 import random from "random";
 import randomColor from "randomcolor";
-const gender = require("gender-detection");
-const nameInitials = require("name-initials");
+import gender from "gender-detection";
+import nameInitials from "name-initials";
 
 const MALE_COLORS: any[] = ["red", "brown", "green", "blue"];
 const FEMALE_COLORS: any[] = ["orange", "yellow", "purple", "pink"];
 const RandomCtrl = random;
 
-class AccountIcon {
-  private static _instance: AccountIcon;
+export class Icon {
+  private static _instance: Icon;
   private _logger: Logger;
 
   private constructor() {
-    this._logger = new Logger("AccountIcon");
+    this._logger = new Logger("Account:Icon");
   }
 
-  public static get shared(): AccountIcon {
-    if (!AccountIcon._instance) {
-      AccountIcon._instance = new AccountIcon();
+  public static get shared(): Icon {
+    if (!Icon._instance) {
+      Icon._instance = new Icon();
     }
-    return AccountIcon._instance;
+    return Icon._instance;
   }
 
   public getInitials(name: string): string {
@@ -50,4 +50,4 @@ class AccountIcon {
   }
 }
 
-export const AccountIconCtrl = AccountIcon.shared;
+export const IconCtrl = Icon.shared;

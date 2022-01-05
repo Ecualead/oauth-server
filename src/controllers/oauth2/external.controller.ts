@@ -3,48 +3,48 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
-import { AccountDocument } from "@/models/account/account.model";
-import { AccountEmailDocument } from "@/models/account/email.model";
-import { AccountExternalAuthDocument } from "@/models/account/external-auth.model";
 import {
-  ExternalAuthRequestDocument,
-  ExternalAuthRequestModel
-} from "@/models/oauth2/external-auth-request.model";
-import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
+  ExternalRequestDocument,
+  ExternalRequestModel
+} from "../../models/oauth2/external.request.model";
+import { EmailDocument } from "../../models/account/email.model";
+import { ExternalAuthDocument } from "../../models/account/external.auth.model";
+import { EXTERNAL_AUTH_TYPE } from "../../constants/project.enum";
+import { AccountDocument } from "../../models/account/account.model";
+import { IExternalAuth } from "../../settings";
 import { AUTH_ERRORS, OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
 import { Logger, HTTP_STATUS, Objects } from "@ecualead/server";
 import { Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 import passport from "passport";
-import { AccountExternalCtrl } from "../account/account-external.controller";
-import { AccountCtrl } from "../account/account.controller";
-import { OAuth2ModelCtrl } from "./oauth2-model.controller";
+import { Emails } from "../account/email.controller";
+import { ExternalsAuth } from "../account/external.auth.controller";
+import { OAuth2ModelCtrl } from "./oauth2.model.controller";
 import { ExternalAuthSchema } from "./schemas/base.controller";
 import { FacebookCtrl } from "./schemas/facebook.controller";
 import { GoogleCtrl } from "./schemas/google.controller";
 import { TwitterCtrl } from "./schemas/twitter.controller";
 
-export class ExternalAuth {
-  private static _instance: ExternalAuth;
+export class External {
+  private static _instance: External;
   private _logger: Logger;
 
   private constructor() {
-    this._logger = new Logger("ExternalAuth");
+    this._logger = new Logger("OAuth:External");
   }
 
   /**
    * Get singleton class instance
    */
-  public static get shared(): ExternalAuth {
-    if (!ExternalAuth._instance) {
-      ExternalAuth._instance = new ExternalAuth();
+  public static get shared(): External {
+    if (!External._instance) {
+      External._instance = new External();
     }
-    return ExternalAuth._instance;
+    return External._instance;
   }
 
   public static getByType(type: EXTERNAL_AUTH_TYPE): ExternalAuthSchema {
@@ -60,7 +60,7 @@ export class ExternalAuth {
     throw "Invalid external auth schema";
   }
 
-  public doAuthenticate(project: string, request: ExternalAuthRequestDocument, options = {}) {
+  public doAuthenticate(project: string, request: ExternalRequestDocument, options = {}) {
     return (req: Request, res: Response, next: NextFunction) => {
       /* Initialize the social network strategy */
       this._setupSocialStrategy(project, request);
@@ -115,10 +115,7 @@ export class ExternalAuth {
    * @param {AccountDocument} user
    * @returns {Promise<OAuth2Server.Token>}
    */
-  public authenticateSocialAccount(
-    request: ExternalAuthRequestDocument,
-    user: any
-  ): Promise<Token> {
+  public authenticateSocialAccount(request: ExternalRequestDocument, user: any): Promise<Token> {
     return new Promise<Token>((resolve, reject) => {
       this._logger.debug("Authenticating user account", {
         account: Objects.get(request, "account.id")
@@ -181,8 +178,8 @@ export class ExternalAuth {
     });
 
     /* Remove the social network request */
-    ExternalAuthRequestModel.findOneAndRemove({ _id: request }).then(
-      (value: ExternalAuthRequestDocument) => {
+    ExternalRequestModel.findOneAndRemove({ _id: request }).then(
+      (value: ExternalRequestDocument) => {
         if (value) {
           try {
             passport.unuse(request);
@@ -202,7 +199,7 @@ export class ExternalAuth {
    *
    * @param request External auth request information
    */
-  private _setupSocialStrategy(project: string, request: ExternalAuthRequestDocument) {
+  private _setupSocialStrategy(project: string, request: ExternalRequestDocument) {
     /* Handler strategy response function */
     const fnSocialStrategy = (
       req: Request,
@@ -212,8 +209,7 @@ export class ExternalAuth {
       done: (error: any, user?: any) => void
     ) => {
       this._doSocialNetwork(
-        (request.externalAuth as ProjectExternalAuthDocument).type,
-        project,
+        (request.settings as IExternalAuth).type,
         request.referral,
         req,
         token,
@@ -224,14 +220,14 @@ export class ExternalAuth {
     };
 
     /* Prepare the callback URI */
-    const callbackURI = `${process.env.AUTH_SERVER}/v1/oauth/${project}/external/${
-      (request.externalAuth as ProjectExternalAuthDocument).id
+    const callbackURI = `${process.env.AUTH_SERVER}/v1/oauth/external/${
+      (request.settings as IExternalAuth).type
     }/success`;
 
     /* Initialize the passport strategy for the given network type */
-    const strategy: passport.Strategy = ExternalAuth.getByType(
-      (request.externalAuth as ProjectExternalAuthDocument).type
-    ).setup(request.externalAuth as ProjectExternalAuthDocument, callbackURI, fnSocialStrategy);
+    const strategy: passport.Strategy = External.getByType(
+      (request.settings as IExternalAuth).type
+    ).setup(request.settings as IExternalAuth, callbackURI, fnSocialStrategy);
 
     /* Register the passport strategy */
     passport.use(request.id, strategy);
@@ -252,7 +248,6 @@ export class ExternalAuth {
    */
   private _doSocialNetwork(
     authType: EXTERNAL_AUTH_TYPE,
-    project: string,
     referral: string,
     req: Request,
     accessToken: string,
@@ -262,10 +257,10 @@ export class ExternalAuth {
   ) {
     /* Find the request state */
     const state = Objects.get(req, "query.state", "").toString();
-    ExternalAuthRequestModel.findById(state)
+    ExternalRequestModel.findById(state)
       .populate("account")
       .populate("externalAuth")
-      .then((request: ExternalAuthRequestDocument) => {
+      .then((request: ExternalRequestDocument) => {
         if (
           !request ||
           Objects.get(request, "externalAuth.type", EXTERNAL_AUTH_TYPE.UNKNOWN) !== authType
@@ -277,11 +272,12 @@ export class ExternalAuth {
         }
 
         /* Get the current external auth schema */
-        const authSchema = ExternalAuth.getByType(authType);
+        const authSchema = External.getByType(authType);
 
         /* Look for an user with the same social network id */
-        AccountExternalCtrl.fetchById(authSchema.id(profile), authType, project)
-          .then((account: AccountExternalAuthDocument) => {
+        ExternalsAuth.shared
+          .fetchById(authSchema.id(profile), authType)
+          .then((account: ExternalAuthDocument) => {
             /* Check requets user match with found user */
             const tmpUser: AccountDocument = request.account as AccountDocument;
             if (tmpUser !== null && tmpUser.id !== Objects.get(account, "acount.id")) {
@@ -297,37 +293,25 @@ export class ExternalAuth {
             }
 
             /* User authentication  */
-            AccountExternalCtrl.updateAccount(
-              authType,
-              account,
-              referral,
-              accessToken,
-              refreshToken,
-              profile
-            )
-              .then((account: AccountExternalAuthDocument) => {
+            ExternalsAuth.shared
+              .updateAccount(authType, account, referral, accessToken, refreshToken, profile)
+              .then((account: ExternalAuthDocument) => {
                 done(null, account);
               })
               .catch(done);
           })
           .catch((err: any) => {
-            /* Check for error different on non registered */
-            if (
-              Objects.get(err, "boError.value", -1) !== AUTH_ERRORS.ACCOUNT_NOT_REGISTERED.value
-            ) {
-              return done(err);
-            }
-
             /* Check if the user is attaching the social network account to an existent account */
             if (request.account !== null) {
-              return AccountExternalCtrl.attachAccount(
-                authType,
-                request.account as AccountDocument,
-                accessToken,
-                refreshToken,
-                profile
-              )
-                .then((account: AccountExternalAuthDocument) => {
+              return ExternalsAuth.shared
+                .attachAccount(
+                  authType,
+                  request.account as AccountDocument,
+                  accessToken,
+                  refreshToken,
+                  profile
+                )
+                .then((account: ExternalAuthDocument) => {
                   done(null, account);
                 })
                 .catch(done);
@@ -335,31 +319,27 @@ export class ExternalAuth {
 
             /* Check if the user account can be attached by email address */
             if (profile.emails && profile.emails.length > 0) {
-              return AccountCtrl.fetchByEmail(Objects.get(profile, "emails.0.value"), project)
-                .then((email: AccountEmailDocument) => {
-                  AccountExternalCtrl.attachAccount(
-                    authType,
-                    email.account as AccountDocument,
-                    accessToken,
-                    refreshToken,
-                    profile
-                  )
-                    .then((account: AccountExternalAuthDocument) => {
+              return Emails.shared
+                .fetchByEmail(Objects.get(profile, "emails.0.value"))
+                .then((email: EmailDocument) => {
+                  ExternalsAuth.shared
+                    .attachAccount(
+                      authType,
+                      email.account as AccountDocument,
+                      accessToken,
+                      refreshToken,
+                      profile
+                    )
+                    .then((account: ExternalAuthDocument) => {
                       done(null, account);
                     })
                     .catch(done);
                 })
                 .catch(() => {
                   /* Register new social account */
-                  AccountExternalCtrl.createAccount(
-                    authType,
-                    project,
-                    referral,
-                    accessToken,
-                    refreshToken,
-                    profile
-                  )
-                    .then((account: AccountExternalAuthDocument) => {
+                  ExternalsAuth.shared
+                    .createAccount(authType, referral, accessToken, refreshToken, profile)
+                    .then((account: ExternalAuthDocument) => {
                       done(null, account);
                     })
                     .catch(done);
@@ -367,15 +347,9 @@ export class ExternalAuth {
             }
 
             /* Register new social account */
-            AccountExternalCtrl.createAccount(
-              authType,
-              project,
-              referral,
-              accessToken,
-              refreshToken,
-              profile
-            )
-              .then((account: AccountExternalAuthDocument) => {
+            ExternalsAuth.shared
+              .createAccount(authType, referral, accessToken, refreshToken, profile)
+              .then((account: ExternalAuthDocument) => {
                 done(null, account);
               })
               .catch(done);
@@ -385,4 +359,4 @@ export class ExternalAuth {
   }
 }
 
-export const ExternalAuthCtrl = ExternalAuth.shared;
+export const ExternalCtrl = External.shared;

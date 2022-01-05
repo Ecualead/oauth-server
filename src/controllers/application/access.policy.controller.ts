@@ -3,34 +3,34 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { URL } from "url";
 import { AUTH_ERRORS } from "@ecualead/auth";
-import { Logger, HTTP_STATUS, SERVER_ERRORS } from "@ecualead/server";
+import { Logger, HTTP_STATUS } from "@ecualead/server";
 import { Request } from "express";
-import { APPLICATION_TYPE } from "@/constants/application.enum";
+import { APPLICATION_TYPE } from "../../constants/application.enum";
 import { ApplicationCtrl } from "./application.controller";
-import { ApplicationDocument } from "@/models/application/application.model";
+import { ApplicationDocument } from "../../models/application/application.model";
 
-class ApplicationAccessPolicy {
-  private static _instance: ApplicationAccessPolicy;
+class AccessPolicy {
+  private static _instance: AccessPolicy;
   private _logger: Logger;
 
   private constructor() {
-    this._logger = new Logger("ApplicationAccessPolicy");
+    this._logger = new Logger("Application:AccessPolicy");
   }
 
   /**
    * Get the singleton class instance
    */
-  public static get shared(): ApplicationAccessPolicy {
-    if (!ApplicationAccessPolicy._instance) {
-      ApplicationAccessPolicy._instance = new ApplicationAccessPolicy();
+  public static get shared(): AccessPolicy {
+    if (!AccessPolicy._instance) {
+      AccessPolicy._instance = new AccessPolicy();
     }
-    return ApplicationAccessPolicy._instance;
+    return AccessPolicy._instance;
   }
 
   private _validate(req: Request, type: number, restriction: string[], resolve: any, reject: any) {
@@ -114,4 +114,4 @@ class ApplicationAccessPolicy {
   }
 }
 
-export const ApplicationAccessPolicyCtrl = ApplicationAccessPolicy.shared;
+export const AccessPolicyCtrl = AccessPolicy.shared;

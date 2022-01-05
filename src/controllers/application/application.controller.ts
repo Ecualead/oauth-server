@@ -3,14 +3,12 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { Arrays, Tokens, SERVER_STATUS, CRUD } from "@ecualead/server";
-import { ApplicationDocument, ApplicationModel } from "@/models/application/application.model";
-import { ProjectCtrl } from "@/controllers/project/project.controller";
-import { ProjectDocument } from "@/models/project/project.model";
+import { Tokens, SERVER_STATUS, CRUD } from "@ecualead/server";
+import { ApplicationDocument, ApplicationModel } from "../../models/application/application.model";
 
 export class Applications extends CRUD<ApplicationDocument> {
   private static _instance: Applications;
@@ -34,23 +32,12 @@ export class Applications extends CRUD<ApplicationDocument> {
 
   public create(data: any): Promise<ApplicationDocument> {
     return new Promise<ApplicationDocument>((resolve, reject) => {
-      /* Find the parent project */
-      ProjectCtrl.fetch(data.project.toString())
-        .then((project: ProjectDocument) => {
-          /* Set the project owning */
-          data.project = project.id;
+      /* Generate application secret */
+      data.secret = Tokens.long;
 
-          /* Intersect scope with project scope */
-          data.scope = Arrays.intersect(data.scope, project.scope);
-
-          /* Generate application secret */
-          data.secret = Tokens.long;
-
-          super
-            .create(data)
-            .then((application: ApplicationDocument) => resolve(application))
-            .catch(reject);
-        })
+      super
+        .create(data)
+        .then((application: ApplicationDocument) => resolve(application))
         .catch(reject);
     });
   }

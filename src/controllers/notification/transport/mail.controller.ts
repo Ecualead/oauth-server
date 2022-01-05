@@ -3,18 +3,17 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { Objects } from "@ecualead/server";
 import { MailCtrl } from "@ikoabo/mailer";
-import { BaseNotification } from "@/controllers/notification/base.controller";
-import { AccountDocument } from "@/models/account/account.model";
-import { AccountEmailDocument } from "@/models/account/email.model";
+import { BaseNotification } from "../../../controllers/notification/base.controller";
+import { AccountDocument } from "../../../models/account/account.model";
+import { EmailDocument } from "../../../models/account/email.model";
 
 interface IMailNotification {
-  project: string;
   type: string;
   subject: string;
   account: any;
@@ -38,11 +37,7 @@ class MailNotification extends BaseNotification {
     return MailNotification._instance;
   }
 
-  private _getAccountData(
-    profile: AccountDocument,
-    credential: AccountEmailDocument,
-    payload?: any
-  ): any {
+  private _getAccountData(profile: AccountDocument, credential: EmailDocument, payload?: any): any {
     /* Fetch the account notification data */
     return {
       name: Objects.get(profile, "name", ""),
@@ -54,7 +49,7 @@ class MailNotification extends BaseNotification {
     };
   }
 
-  private _getToken(credential: AccountEmailDocument, payload?: any): string {
+  private _getToken(credential: EmailDocument, payload?: any): string {
     /* Fetch the user account token to be sent */
     let token: string = Objects.get(payload, "token");
     const email: string = Objects.get(payload, "email");
@@ -68,7 +63,7 @@ class MailNotification extends BaseNotification {
     return new Promise<void>((resolve) => {
       /* Send mail notification about the account creation */
       MailCtrl.send(
-        data.project,
+        "",
         data.subject,
         null,
         data.type,
@@ -92,11 +87,10 @@ class MailNotification extends BaseNotification {
 
   public doRegister(
     profile: AccountDocument,
-    credential: AccountEmailDocument,
+    credential: EmailDocument,
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project._id", profile.project),
       type: "account-register",
       subject: "Cuenta de usuario registrada",
       account: this._getAccountData(profile, credential, payload),
@@ -106,11 +100,10 @@ class MailNotification extends BaseNotification {
 
   public doConfirm(
     profile: AccountDocument,
-    credential: AccountEmailDocument,
+    credential: EmailDocument,
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project._id", profile.project),
       type: "account-confirm",
       subject: "Cuenta de usuario confirmada",
       account: this._getAccountData(profile, credential, payload)
@@ -119,11 +112,10 @@ class MailNotification extends BaseNotification {
 
   public doLogin(
     profile: AccountDocument,
-    credential: AccountEmailDocument,
+    credential: EmailDocument,
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project._id", profile.project),
       type: "account-login",
       subject: "Nuevo inicio de sesión",
       account: this._getAccountData(profile, credential, payload)
@@ -132,11 +124,10 @@ class MailNotification extends BaseNotification {
 
   public doChPwd(
     profile: AccountDocument,
-    credential: AccountEmailDocument,
+    credential: EmailDocument,
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project._id", profile.project),
       type: "account-chpwd",
       subject: "Nuevo cambio de contraseña",
       account: this._getAccountData(profile, credential, payload)
@@ -145,11 +136,10 @@ class MailNotification extends BaseNotification {
 
   public doRecover(
     profile: AccountDocument,
-    credential: AccountEmailDocument,
+    credential: EmailDocument,
     payload?: any
   ): Promise<void> {
     return this.sendMail({
-      project: Objects.get(profile, "project._id", profile.project),
       type: "account-recover",
       subject: "Recuperar cuenta de usuario",
       account: this._getAccountData(profile, credential, payload),

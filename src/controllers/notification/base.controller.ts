@@ -3,42 +3,42 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { Logger } from "@ecualead/server";
-import { EVENT_TYPE } from "@/constants/account.enum";
-import { AccountEmailDocument } from "@/models/account/email.model";
-import { AccountPhoneDocument } from "@/models/account/phone.model";
-import { AccountDocument } from "@/models/account/account.model";
+import { EVENT_TYPE } from "../../constants/account.enum";
+import { EmailDocument } from "../../models/account/email.model";
+import { PhoneDocument } from "../../models/account/phone.model";
+import { AccountDocument } from "../../models/account/account.model";
 
 export abstract class BaseNotification {
   protected _logger: Logger;
 
   abstract doRegister(
     profile: AccountDocument,
-    credential: AccountEmailDocument | AccountPhoneDocument,
+    credential: EmailDocument | PhoneDocument,
     payload?: any
   ): Promise<void>;
   abstract doConfirm(
     profile: AccountDocument,
-    credential: AccountEmailDocument | AccountPhoneDocument,
+    credential: EmailDocument | PhoneDocument,
     payload?: any
   ): Promise<void>;
   abstract doLogin(
     profile: AccountDocument,
-    credential: AccountEmailDocument | AccountPhoneDocument,
+    credential: EmailDocument | PhoneDocument,
     payload?: any
   ): Promise<void>;
   abstract doChPwd(
     profile: AccountDocument,
-    credential: AccountEmailDocument | AccountPhoneDocument,
+    credential: EmailDocument | PhoneDocument,
     payload?: any
   ): Promise<void>;
   abstract doRecover(
     profile: AccountDocument,
-    credential: AccountEmailDocument | AccountPhoneDocument,
+    credential: EmailDocument | PhoneDocument,
     payload?: any
   ): Promise<void>;
 
@@ -49,7 +49,7 @@ export abstract class BaseNotification {
   public doNotification(
     type: EVENT_TYPE,
     profile: AccountDocument,
-    credential: AccountEmailDocument | AccountPhoneDocument,
+    credential: EmailDocument | PhoneDocument,
     payload?: any
   ): Promise<void> {
     /* Validate notification by event type */

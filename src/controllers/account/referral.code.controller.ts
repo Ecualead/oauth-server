@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -19,25 +19,25 @@ const USER_CODE_SIZE = 8;
 
 const lock = new AsyncLock();
 
-class AccountCode {
-  private static _instance: AccountCode;
+class ReferralCode {
+  private static _instance: ReferralCode;
   private _logger: Logger;
 
   /**
    * Allow singleton class instance
    */
   private constructor() {
-    this._logger = new Logger("UserCode");
+    this._logger = new Logger("Account:ReferralCode");
   }
 
   /**
    * Return singleton instance for the class
    */
-  static get shared(): AccountCode {
-    if (!AccountCode._instance) {
-      AccountCode._instance = new AccountCode();
+  static get shared(): ReferralCode {
+    if (!ReferralCode._instance) {
+      ReferralCode._instance = new ReferralCode();
     }
-    return AccountCode._instance;
+    return ReferralCode._instance;
   }
 
   /**
@@ -50,19 +50,19 @@ class AccountCode {
       let leftValue: number;
       let rightValue: number;
 
-      const topLeft = AccountCode._genValue();
+      const topLeft = ReferralCode._genValue();
       leftValue = topLeft;
       do {
         /* Get the code left map component */
         filename = `${USER_CODE_FILE}${leftValue}.map`;
-        bitmap = AccountCode._readMap(filename);
+        bitmap = ReferralCode._readMap(filename);
 
         /* Look for the right value */
-        rightValue = AccountCode._fetchEmpty(bitmap);
+        rightValue = ReferralCode._fetchEmpty(bitmap);
 
         /* If the right component is full search for the next left component */
         if (rightValue < 0) {
-          leftValue = AccountCode._inc(leftValue);
+          leftValue = ReferralCode._inc(leftValue);
 
           /* Data is full. This never must happend (2251875390625) */
           if (topLeft === leftValue) {
@@ -80,8 +80,8 @@ class AccountCode {
         /* Save the code map */
         bitmap.runOptimize();
         bitmap.shrinkToFit();
-        AccountCode._saveMap(filename, bitmap);
-        const code = `${AccountCode._toString(leftValue)}${AccountCode._toString(rightValue)}`;
+        ReferralCode._saveMap(filename, bitmap);
+        const code = `${ReferralCode._toString(leftValue)}${ReferralCode._toString(rightValue)}`;
         this._logger.debug("Generated new user code", { code: code });
         resolve(code);
       } catch (err) {
@@ -155,10 +155,10 @@ class AccountCode {
    * Look for empty value into bitmap
    */
   private static _fetchEmpty(bitmap: any): number {
-    const topValue = AccountCode._genValue();
+    const topValue = ReferralCode._genValue();
     let value = topValue;
     while (bitmap.has(value)) {
-      value = AccountCode._inc(value);
+      value = ReferralCode._inc(value);
 
       if (value === topValue) {
         return -1;
@@ -228,4 +228,4 @@ class AccountCode {
   }
 }
 
-export const AccountCodeCtrl = AccountCode.shared;
+export const ReferralCodeCtrl = ReferralCode.shared;

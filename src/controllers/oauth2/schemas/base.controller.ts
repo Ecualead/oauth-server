@@ -3,13 +3,13 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
+import { IExternalAuth } from "../../../settings";
 import { Logger } from "@ecualead/server";
 import passport from "passport";
-import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
 
 export abstract class ExternalAuthSchema {
   private _name: string;
@@ -20,11 +20,7 @@ export abstract class ExternalAuthSchema {
     this._logger = new Logger(`ExternalAuth:${name}`);
   }
 
-  public abstract setup(
-    externalAuth: ProjectExternalAuthDocument,
-    cbUri: string,
-    fn: any
-  ): passport.Strategy;
+  public abstract setup(externalAuth: IExternalAuth, cbUri: string, fn: any): passport.Strategy;
   public abstract id(profile: any): string;
   public abstract name(profile: any): string;
   public abstract lastname(profile: any): string;

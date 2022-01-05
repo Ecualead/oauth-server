@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -16,7 +16,7 @@ import OAuth2Server, {
   Response as OResponse,
   OAuthError
 } from "oauth2-server";
-import { OAuth2ModelCtrl } from "@/controllers/oauth2/oauth2-model.controller";
+import { OAuth2ModelCtrl } from "./oauth2.model.controller";
 
 class OAuth2 {
   private static _instance: OAuth2;

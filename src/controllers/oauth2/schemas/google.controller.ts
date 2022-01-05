@@ -3,14 +3,14 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import passport from "passport";
 import { OAuth2Strategy as GoogleStrategy } from "passport-google-oauth";
-import { ExternalAuthSchema } from "@/controllers/oauth2/schemas/base.controller";
-import { ProjectExternalAuthDocument } from "@/models/project/external-auth.model";
+import { ExternalAuthSchema } from "./base.controller";
+import { IExternalAuth } from "../../../settings";
 import { Objects } from "@ecualead/server";
 
 /**
@@ -38,16 +38,8 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
 
   /**
    * Setup the passport strategy
-   *
-   * @param socialNetwork
-   * @param cbUri
-   * @param fn
    */
-  public setup(
-    socialNetwork: ProjectExternalAuthDocument,
-    cbUri: string,
-    fn: any
-  ): passport.Strategy {
+  public setup(socialNetwork: IExternalAuth, cbUri: string, fn: any): passport.Strategy {
     this._logger.debug("Initialize new passport strategy", socialNetwork);
 
     return new GoogleStrategy(
@@ -64,8 +56,6 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
 
   /**
    * Get social profile id
-   *
-   * @param profile
    */
   public id(profile: any): string {
     return profile.id;
@@ -73,8 +63,6 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
 
   /**
    * Get social profile first name
-   *
-   * @param profile
    */
   public name(profile: any): string {
     return Objects.get(profile, "name.givenName", profile.displayName.split(" ")[0] || "");
@@ -82,8 +70,6 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
 
   /**
    * Get social profile last name
-   *
-   * @param profile
    */
   public lastname(profile: any): string {
     return Objects.get(profile, "name.familyName", profile.displayName.split(" ")[1] || "");
@@ -91,8 +77,6 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
 
   /**
    * Get social profile email
-   *
-   * @param profile
    */
   public email(profile: any): string {
     return Objects.get(profile, "emails.0.value");
@@ -100,7 +84,6 @@ class ExternalAuthGoogle extends ExternalAuthSchema {
 
   /**
    * Get social profile phone
-   * @param profile
    */
   public phone(_profile: any): string {
     return null;

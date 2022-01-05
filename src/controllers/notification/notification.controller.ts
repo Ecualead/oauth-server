@@ -3,25 +3,38 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { EVENT_TYPE } from "@/constants/account.enum";
-import { NOTIFICATION_TYPE } from "@/constants/project.enum";
-import { AccountDocument } from "@/models/account/account.model";
-import { AccountEmailDocument } from "@/models/account/email.model";
-import { AccountPhoneDocument } from "@/models/account/phone.model";
-import { ProjectDocument } from "@/models/project/project.model";
-import { Objects, Logger } from "@ecualead/server";
+import { EVENT_TYPE } from "../../constants/account.enum";
+import { NOTIFICATION_TYPE } from "../../constants/project.enum";
+import { AccountDocument } from "../../models/account/account.model";
+import { EmailDocument } from "../../models/account/email.model";
+import { PhoneDocument } from "../../models/account/phone.model";
+import { Logger } from "@ecualead/server";
 import { MailNotificationCtrl } from "./transport/mail.controller";
+import { IOauth2Settings } from "../../settings";
 
-class Notification {
+export class Notification {
   private static _instance: Notification;
   private _logger: Logger;
+  private _settings: IOauth2Settings;
 
   private constructor() {
     this._logger = new Logger("Notifications");
+  }
+
+  /**
+   * Setup the user account controller
+   */
+  public static setup(settings: IOauth2Settings) {
+    if (!Notification._instance) {
+      Notification._instance = new Notification();
+      Notification._instance._settings = settings;
+    } else {
+      throw new Error("Notifications already configured");
+    }
   }
 
   /**
@@ -29,7 +42,7 @@ class Notification {
    */
   public static get shared(): Notification {
     if (!Notification._instance) {
-      Notification._instance = new Notification();
+      throw new Error("Notifications isn't configured");
     }
     return Notification._instance;
   }
@@ -44,39 +57,38 @@ class Notification {
   public doNotification(
     type: EVENT_TYPE,
     profile: AccountDocument,
-    credential: AccountEmailDocument | AccountPhoneDocument,
-    project: ProjectDocument,
+    credential: EmailDocument | PhoneDocument,
     payload?: any
   ): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       /* Retrieve notifications handlers from settings */
-      const notifications: any = Objects.get(project, "settings.events", {});
+
       let eventType: any;
 
       switch (type) {
         case EVENT_TYPE.REGISTER:
-          if (notifications.register) {
-            eventType = notifications.register.type;
+          if (this._settings.emailNotifications.registerEvent) {
+            eventType = NOTIFICATION_TYPE.EMAIL;
           }
           break;
         case EVENT_TYPE.LOGIN:
-          if (notifications.login) {
-            eventType = notifications.login.type;
+          if (this._settings.emailNotifications.loginEvent) {
+            eventType = NOTIFICATION_TYPE.EMAIL;
           }
           break;
         case EVENT_TYPE.CONFIRM:
-          if (notifications.confirm) {
-            eventType = notifications.confirm.type;
+          if (this._settings.emailNotifications.confirmEvent) {
+            eventType = NOTIFICATION_TYPE.EMAIL;
           }
           break;
         case EVENT_TYPE.CHPWD:
-          if (notifications.chPwd) {
-            eventType = notifications.chPwd.type;
+          if (this._settings.emailNotifications.chPwdEvent) {
+            eventType = NOTIFICATION_TYPE.EMAIL;
           }
           break;
         case EVENT_TYPE.RECOVER:
-          if (notifications.recover) {
-            eventType = notifications.recover.type;
+          if (this._settings.emailNotifications.recoverEvent) {
+            eventType = NOTIFICATION_TYPE.EMAIL;
           }
           break;
       }
@@ -111,7 +123,7 @@ class Notification {
     type: NOTIFICATION_TYPE,
     event: EVENT_TYPE,
     profile: AccountDocument,
-    credential: AccountEmailDocument | AccountPhoneDocument,
+    credential: EmailDocument | PhoneDocument,
     payload?: any
   ): Promise<void> {
     /* Trigger notification checking notification type */
@@ -129,5 +141,3 @@ class Notification {
     }
   }
 }
-
-export const NotificationCtrl = Notification.shared;

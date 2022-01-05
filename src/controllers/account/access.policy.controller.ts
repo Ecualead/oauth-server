@@ -3,39 +3,65 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { AUTH_ERRORS } from "@ecualead/auth";
 import { Objects, HTTP_STATUS } from "@ecualead/server";
-import { ACCOUNT_STATUS, EMAIL_STATUS } from "@/constants/account.enum";
-import { ProjectDocument } from "@/models/project/project.model";
-import { AccountDocument } from "@/models/account/account.model";
-import { EMAIL_CONFIRMATION } from "@/constants/project.enum";
-import { AccountEmailDocument } from "@/models/account/email.model";
+import { ACCOUNT_STATUS, VALIDATION_STATUS } from "../../constants/account.enum";
+import { AccountDocument } from "../../models/account/account.model";
+import { EMAIL_CONFIRMATION } from "../../constants/project.enum";
+import { EmailDocument } from "../../models/account/email.model";
+import { IOauth2Settings } from "../../settings";
 
 export class AccountAccessPolicy {
+  private static _instance: AccountAccessPolicy;
+  private _settings: IOauth2Settings;
+
+  /**
+   * Private constructor
+   */
+  private constructor() {}
+
+  /**
+   * Settup the user account controller
+   */
+  public static setup(settings: IOauth2Settings) {
+    if (!AccountAccessPolicy._instance) {
+      AccountAccessPolicy._instance = new AccountAccessPolicy();
+      AccountAccessPolicy._instance._settings = settings;
+    } else {
+      throw new Error("AccountAccessPolicy already configured");
+    }
+  }
+
+  /**
+   * Get the singleton class instance
+   */
+  public static get shared(): AccountAccessPolicy {
+    if (!AccountAccessPolicy._instance) {
+      throw new Error("AccountAccessPolicy isn't configured");
+    }
+    return AccountAccessPolicy._instance;
+  }
+
   /**
    * Check if an user can signin in the given project
-   *
-   * @param user
-   * @param project
-   * @param checkLocal
    */
-  public static canSignin(
+  public canSignin(
     user: AccountDocument,
-    project: ProjectDocument,
-    email: AccountEmailDocument,
+    email: EmailDocument,
     social?: boolean
   ): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       /* Fetch confirmation policy */
       const confirmationPolicy = Objects.get(
-        project,
-        "settings.emailConfirmation.type",
+        this._settings,
+        "emailPolicy.type",
         EMAIL_CONFIRMATION.NOT_REQUIRED
       );
+
       /* Fetch user confirmation expiration */
       const confirmationExpires = Objects.get(user, "confirmationExpires", 0);
 
@@ -71,7 +97,7 @@ export class AccountAccessPolicy {
 
         /* Check the current user email state */
         switch (email.status) {
-          case EMAIL_STATUS.REGISTERED:
+          case VALIDATION_STATUS.REGISTERED:
             if (
               confirmationPolicy === EMAIL_CONFIRMATION.REQUIRED ||
               (confirmationPolicy === EMAIL_CONFIRMATION.REQUIRED_BY_TIME &&
@@ -84,30 +110,30 @@ export class AccountAccessPolicy {
               });
             }
             break;
-          case EMAIL_STATUS.TEMPORALLY_BLOCKED:
+          case VALIDATION_STATUS.TEMPORALLY_BLOCKED:
             return reject({
               boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
               boError: AUTH_ERRORS.ACCOUNT_BLOCKED
             });
 
-          case EMAIL_STATUS.CANCELLED:
+          case VALIDATION_STATUS.CANCELLED:
             return reject({
               boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
               boError: AUTH_ERRORS.ACCOUNT_CANCELLED
             });
-          case EMAIL_STATUS.DISABLED_BY_ADMIN:
+          case VALIDATION_STATUS.DISABLED_BY_ADMIN:
             return reject({
               boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
               boError: AUTH_ERRORS.ACCOUNT_DISABLED
             });
 
-          case EMAIL_STATUS.NEEDS_CONFIRM_EMAIL_CAN_NOT_AUTH:
+          case VALIDATION_STATUS.NEEDS_CONFIRM_CAN_NOT_AUTH:
             return reject({
               boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
               boError: AUTH_ERRORS.EMAIL_NOT_CONFIRMED,
               boData: { id: Objects.get(user, "_id", user) }
             });
-          case EMAIL_STATUS.NEEDS_CONFIRM_EMAIL_CAN_AUTH:
+          case VALIDATION_STATUS.NEEDS_CONFIRM_CAN_AUTH:
             if (confirmationExpires < Date.now()) {
               return reject({
                 boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,

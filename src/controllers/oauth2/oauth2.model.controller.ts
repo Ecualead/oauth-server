@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -21,17 +21,18 @@ import {
   Token,
   User
 } from "oauth2-server";
-import { AccountAccessPolicy } from "@/controllers/account/access-policy.controller";
-import { AccountCtrl } from "@/controllers/account/account.controller";
-import { AccountDocument, AccountModel } from "@/models/account/account.model";
-import { ApplicationCtrl } from "@/controllers/application/application.controller";
-import { APPLICATION_TYPE } from "@/constants/application.enum";
-import { ApplicationDocument } from "@/models/application/application.model";
-import { OAuth2CodeDocument, OAuth2CodeModel } from "@/models/oauth2/oauth2-code.model";
-import { OAuth2TokenModel, OAuth2TokenDocument } from "@/models/oauth2/oauth2-token.model";
-import { DEFAULT_SCOPES } from "@/constants/oauth2.enum";
-import { LIFETIME_TYPE } from "@/constants/project.enum";
-import { AccountEmailDocument, AccountEmailModel } from "@/models/account/email.model";
+import { AccountAccessPolicy } from "../account/access.policy.controller";
+import { Accounts } from "../account/account.controller";
+import { Emails } from "../account/email.controller";
+import { AccountDocument } from "../../models/account/account.model";
+import { ApplicationCtrl } from "../application/application.controller";
+import { APPLICATION_TYPE } from "../../constants/application.enum";
+import { ApplicationDocument } from "../../models/application/application.model";
+import { CodeDocument, CodeModel } from "../../models/oauth2/code.model";
+import { TokenModel, TokenDocument } from "../../models/oauth2/token.model";
+import { DEFAULT_SCOPES } from "../../constants/account.enum";
+import { LIFETIME_TYPE } from "../../constants/project.enum";
+import { EmailDocument } from "../../models/account/email.model";
 
 function prepareScope(scope?: string | string[]): string[] {
   /* Check for valid value */
@@ -80,7 +81,8 @@ class OAuth2Model
     return new Promise<string[]>((resolve, reject) => {
       if (user && user.id !== application.id) {
         /* Search for user project profile scope */
-        AccountCtrl.fetch({ _id: user.id })
+        Accounts.shared
+          .fetch(user.id)
           .then((value: AccountDocument) => {
             if (!scope || scope.length === 0) {
               scope = value.scope;
@@ -107,11 +109,11 @@ class OAuth2Model
   getAuthorizationCode(code: string): Promise<AuthorizationCode> {
     return new Promise<AuthorizationCode>((resolve, reject) => {
       this._logger.debug(`Looking for authorization code ${code}`);
-      OAuth2CodeModel.findOne({ code: code })
+      CodeModel.findOne({ code: code })
         .populate("application")
         .populate("user")
         .exec()
-        .then((value: OAuth2CodeDocument) => {
+        .then((value: CodeDocument) => {
           if (!value || !value.application) {
             reject({
               boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
@@ -134,12 +136,12 @@ class OAuth2Model
   revokeAuthorizationCode(code: AuthorizationCode): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
       this._logger.debug(`Revoking authorization code ${code.authorizationCode}`);
-      OAuth2CodeModel.findOneAndRemove({
+      CodeModel.findOneAndRemove({
         code: code.authorizationCode,
         application: code.client.id,
         expiresAt: code.expiresAt
       })
-        .then((value: OAuth2CodeDocument) => {
+        .then((value: CodeDocument) => {
           resolve(value !== null);
         })
         .catch(reject);
@@ -189,7 +191,7 @@ class OAuth2Model
       OAuth2Model.matchScope(application, user, scopes)
         .then((validScope: string[]) => {
           /* Save the authorization code into database */
-          OAuth2CodeModel.create({
+          CodeModel.create({
             code: code.authorizationCode,
             expiresAt: code.expiresAt,
             redirectUri: code.redirectUri,
@@ -197,7 +199,7 @@ class OAuth2Model
             application: <any>application.id,
             user: "id" in user && user.id !== application.id ? user.id : null
           })
-            .then((value: OAuth2CodeDocument) => {
+            .then((value: CodeDocument) => {
               value.application = <any>application;
               resolve(value.toAuthCode());
             })
@@ -249,15 +251,12 @@ class OAuth2Model
       /* Check if the user is registered into the application */
       if (application.id !== user.id && !user.isSocial) {
         /* TODO XXX FIX SOCIAL ACCOUNT */
-        return AccountCtrl.fetchByEmail(user["username"], Objects.get(application, "project.id"))
-          .then((userEmail: AccountEmailDocument) => {
+        return Emails.shared
+          .fetchByEmail(user["username"])
+          .then((userEmail: EmailDocument) => {
             /* Check user signin policy */
-            AccountAccessPolicy.canSignin(
-              userEmail.account as AccountDocument,
-              Objects.get(application, "project"),
-              userEmail,
-              user["isSocial"]
-            )
+            AccountAccessPolicy.shared
+              .canSignin(userEmail.account as AccountDocument, userEmail, user["isSocial"])
               .then(() => {
                 /* Generate access token */
                 resolve(accessToken);
@@ -282,8 +281,9 @@ class OAuth2Model
     return new Promise<User>((resolve, reject) => {
       const authCredential = username.split(" ");
       /* Look for the target user */
-      AccountCtrl.fetchByEmail(authCredential[1], authCredential[0])
-        .then((user: AccountEmailDocument) => {
+      Emails.shared
+        .fetchByEmail(authCredential[1])
+        .then((user: EmailDocument) => {
           if (!user || !user.account) {
             reject({
               boStatus: HTTP_STATUS.HTTP_4XX_NOT_FOUND,
@@ -291,7 +291,8 @@ class OAuth2Model
             });
             return;
           }
-          AccountCtrl.fetch({ _id: Objects.get(user, "account._id", user.account) })
+          Accounts.shared
+            .fetch(Objects.get(user, "account._id", user.account))
             .then((account: AccountDocument) => {
               account
                 .validPassword(password)
@@ -424,7 +425,7 @@ class OAuth2Model
       OAuth2Model.matchScope(application, user, scopes)
         .then((validScope: string[]) => {
           /* Save the authorization code into database */
-          OAuth2TokenModel.create({
+          TokenModel.create({
             accessToken: token.accessToken,
             accessTokenExpiresAt: token.accessTokenExpiresAt,
             refreshToken: token.refreshToken,
@@ -436,7 +437,7 @@ class OAuth2Model
             user: user.id !== application.id ? user.id : null,
             username: user.id !== application.id ? user["username"] : null
           })
-            .then((accessToken: OAuth2TokenDocument) => {
+            .then((accessToken: TokenDocument) => {
               accessToken.application = <any>application;
               accessToken.user = <any>user;
 
@@ -462,11 +463,11 @@ class OAuth2Model
   getAccessToken(accessToken: string): Promise<Token> {
     return new Promise<Token>((resolve, reject) => {
       this._logger.debug(`Looking for token ${accessToken}`);
-      OAuth2TokenModel.findOne({
+      TokenModel.findOne({
         accessToken: accessToken
       })
         .populate("user")
-        .then((token: OAuth2TokenDocument) => {
+        .then((token: TokenDocument) => {
           if (!token) {
             reject({
               boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED,
@@ -509,18 +510,16 @@ class OAuth2Model
 
               /* Check if the user is registered into the application */
               if (token.user) {
-                return AccountCtrl.fetchByEmail(
-                  token.username,
-                  Objects.get(token, "application.project.id")
-                )
-                  .then((userEmail: AccountEmailDocument) => {
+                return Emails.shared
+                  .fetchByEmail(token.username)
+                  .then((userEmail: EmailDocument) => {
                     /* Check user signin policy */
-                    AccountAccessPolicy.canSignin(
-                      userEmail.account as AccountDocument,
-                      Objects.get(token, "application.project"),
-                      userEmail,
-                      token.type === OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH
-                    )
+                    AccountAccessPolicy.shared
+                      .canSignin(
+                        userEmail.account as AccountDocument,
+                        userEmail,
+                        token.type === OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH
+                      )
                       .then(() => {
                         resolve(token.toToken());
                       })
@@ -582,12 +581,12 @@ class OAuth2Model
       if (token.accessToken) {
         token = token as Token;
         this._logger.debug(`Revoking access token ${token.accessToken}`);
-        OAuth2TokenModel.findOneAndRemove({
+        TokenModel.findOneAndRemove({
           accessToken: token.accessToken,
           application: token.client.id,
           user: token.user.id
         })
-          .then((token) => {
+          .then((token: TokenDocument) => {
             resolve(token !== null);
             return;
           })
@@ -595,7 +594,7 @@ class OAuth2Model
       } else {
         token = token as RefreshToken;
         this._logger.debug(`Revoking refresh token ${token.refreshToken}`);
-        OAuth2TokenModel.findOneAndUpdate(
+        TokenModel.findOneAndUpdate(
           {
             refreshToken: token.refreshToken,
             application: token.client.id,
@@ -606,7 +605,7 @@ class OAuth2Model
             refreshTokenExpiresAt: null
           }
         )
-          .then((token) => {
+          .then((token: TokenDocument) => {
             resolve(token !== null);
             return;
           })
@@ -624,12 +623,12 @@ class OAuth2Model
   getRefreshToken(refreshToken: string): Promise<RefreshToken> {
     return new Promise<RefreshToken>((resolve, reject) => {
       this._logger.debug(`Looking for token ${refreshToken}`);
-      OAuth2TokenModel.findOne({
+      TokenModel.findOne({
         refreshToken: refreshToken
       })
         .populate({ path: "application", populate: { path: "project" } })
         .populate("user")
-        .then((token: OAuth2TokenDocument) => {
+        .then((token: TokenDocument) => {
           if (!token) {
             reject({
               boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
