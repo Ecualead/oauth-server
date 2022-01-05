@@ -3,12 +3,12 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 
-import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
+import { EXTERNAL_AUTH_TYPE } from "../constants/project.enum";
 
 export function externalAuthToInt(auth: string): EXTERNAL_AUTH_TYPE {
   auth = auth.toLowerCase();
