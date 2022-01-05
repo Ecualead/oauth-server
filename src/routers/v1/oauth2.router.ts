@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
@@ -15,11 +15,10 @@ import {
   Request as ORequest,
   Response as OResponse
 } from "oauth2-server";
-import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
-import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
-import { ApplicationCtrl } from "@/controllers/application/application.controller";
-import { ApplicationDocument } from "@/models/application/application.model";
-import { checkUrlProject } from "@/middlewares/project.middleware";
+import { OAuth2Ctrl } from "../../controllers/oauth2/oauth2.controller";
+import { AccessPolicyCtrl } from "../../controllers/application/access.policy.controller";
+import { ApplicationCtrl } from "../../controllers/application/application.controller";
+import { ApplicationDocument } from "../../models/application/application.model";
 
 const router = Router({ mergeParams: true });
 
@@ -34,7 +33,6 @@ const options = {
 
 router.post(
   "/authorize",
-  checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
     const request = new ORequest(req);
     const response = new OResponse(res);
@@ -42,7 +40,7 @@ router.post(
       .authorize(request, response, options)
       .then((code: AuthorizationCode) => {
         /* Validate application restrictions */
-        ApplicationAccessPolicyCtrl.canAccess(req, code.client.toString())
+        AccessPolicyCtrl.canAccess(req, code.client.toString())
           .then(() => {
             res.locals["response"] = {
               authorizationCode: code.authorizationCode,
@@ -64,7 +62,6 @@ router.post(
 
 router.post(
   "/login",
-  checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
     /* Extract project from requesting application */
     const basic = req.headers.authorization.split(" ");
@@ -73,10 +70,7 @@ router.post(
       const plain: string[] = buff.toString("ascii").split(":");
       if (plain.length === 2) {
         return ApplicationCtrl.fetch({ _id: plain[0] })
-          .then((application: ApplicationDocument) => {
-            const email = req.body["username"];
-            req.body["username"] = `${application.project} ${email}`;
-          })
+          .then((application: ApplicationDocument) => {})
           .finally(() => {
             next();
           });
@@ -90,7 +84,7 @@ router.post(
       .token(request, response)
       .then((token: Token) => {
         /* Validate application restrictions */
-        ApplicationAccessPolicyCtrl.canAccess(req, token.client.toString())
+        AccessPolicyCtrl.canAccess(req, token.client.toString())
           .then(() => {
             /* Return the access token */
             res.locals["token"] = token;

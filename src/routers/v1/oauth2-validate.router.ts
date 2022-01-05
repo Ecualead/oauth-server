@@ -3,17 +3,17 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { ResponseHandler, ValidateObjectId, Validator, Objects } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Token, Request as ORequest, Response as OResponse } from "oauth2-server";
-import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
-import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
-import { AccountCtrl } from "@/controllers/account/account.controller";
-import { AccountDocument } from "@/models/account/account.model";
+import { OAuth2Ctrl } from "../../controllers/oauth2/oauth2.controller";
+import { AccessPolicyCtrl } from "../../controllers/application/access.policy.controller";
+import { Accounts } from "../../controllers/account/account.controller";
+import { AccountDocument } from "../../models/account/account.model";
 
 const router = Router();
 
@@ -29,7 +29,8 @@ router.get(
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_avatar_info"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
-    AccountCtrl.fetch(req.params.id)
+    Accounts.shared
+      .fetch(req.params.id)
       .then((value: AccountDocument) => {
         res.locals["response"] = {
           user: value.id,
@@ -38,8 +39,7 @@ router.get(
           lastname2: value.lastname2,
           initials: value.initials,
           color1: value.color1,
-          color2: value.color2,
-          code: value.code
+          color2: value.color2
         };
         next();
       })
@@ -60,7 +60,7 @@ router.post(
       .then((token: Token) => {
         const project = Objects.get(token, "client.project.id", null);
         /* Validate application restrictions */
-        ApplicationAccessPolicyCtrl.canAccess(req, Objects.get(token, "client.id", null))
+        AccessPolicyCtrl.canAccess(req, Objects.get(token, "client.id", null))
           .then(() => {
             /* Set basic application information into the response */
             res.locals["response"] = {

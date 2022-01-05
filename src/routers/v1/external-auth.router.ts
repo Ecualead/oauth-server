@@ -3,29 +3,23 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { EXTERNAL_AUTH_TYPE } from "@/constants/project.enum";
-import { ApplicationAccessPolicyCtrl } from "@/controllers/application/access-policy.controller";
-import { ExternalAuthCtrl } from "@/controllers/oauth2/external-auth.controller";
-import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
-import { checkExternal } from "@/middlewares/external-auth.middleware";
-import { checkUrlProject } from "@/middlewares/project.middleware";
+import { EXTERNAL_AUTH_TYPE } from "../../constants/project.enum";
+import { AccessPolicyCtrl } from "../../controllers/application/access.policy.controller";
+import { ExternalCtrl } from "../../controllers/oauth2/external.controller";
+import { OAuth2Ctrl } from "../../controllers/oauth2/oauth2.controller";
 import {
-  ExternalAuthRequestDocument,
-  ExternalAuthRequestModel
-} from "@/models/oauth2/external-auth-request.model";
-import {
-  ProjectExternalAuthDocument,
-  ProjectExternalAuthModel
-} from "@/models/project/external-auth.model";
+  ExternalRequestDocument,
+  ExternalRequestModel
+} from "../../models/oauth2/external.request.model";
 import {
   ExternalAuthParamsValidation,
   ExternalAuthStateValidation,
   ExternalAuthValidation
-} from "@/validators/external-auth.joi";
+} from "../../validators/external.auth.joi";
 import { AUTH_ERRORS } from "@ecualead/auth";
 import { Validator, ResponseHandler, HTTP_STATUS, Objects } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
@@ -50,8 +44,6 @@ router.get(
     req.headers.authorization = `Bearer ${token}`;
     OAuth2Ctrl.authenticate()(req, res, next);
   },
-  checkUrlProject,
-  checkExternal,
   (req: Request, res: Response, next: NextFunction) => {
     const authType: EXTERNAL_AUTH_TYPE = Objects.get(
       res,
@@ -84,7 +76,7 @@ router.get(
     }
 
     /* Temporally store request data to allow callback */
-    ExternalAuthRequestModel.create({
+    ExternalRequestModel.create({
       token: token,
       type: type,
       application: appId,
@@ -92,10 +84,10 @@ router.get(
       redirect: redirect,
       externalAuth: Objects.get(res, "locals.external._id")
     })
-      .then((request: ExternalAuthRequestDocument) => {
+      .then((request: ExternalRequestDocument) => {
         request.application = Objects.get(res, "locals.token.client");
         request.account = Objects.get(res, "locals.token.user");
-        request.externalAuth = Objects.get(res, "locals.external");
+        request.settings = Objects.get(res, "locals.external");
 
         /* Pass the object to the next middleware */
         res.locals["request"] = request;
@@ -105,7 +97,7 @@ router.get(
   },
   (req: Request, res: Response, next: NextFunction) => {
     /* Calling social network authentication with callback reference */
-    ExternalAuthCtrl.doAuthenticate(
+    ExternalCtrl.doAuthenticate(
       Objects.get(res, "locals.project.id"),
       Objects.get(res, "locals.request"),
       {
@@ -117,7 +109,7 @@ router.get(
   ResponseHandler.errorParse,
   (err: any, _req: Request, res: Response, next: NextFunction) => {
     /* Get the social network request */
-    const request: ExternalAuthRequestDocument = Objects.get(res, "locals.request");
+    const request: ExternalRequestDocument = Objects.get(res, "locals.request");
     if (!request) {
       return next({
         boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -144,8 +136,6 @@ router.get(
   "/:external/success",
   Validator.joi(ExternalAuthValidation, "params"),
   Validator.joi(ExternalAuthStateValidation, "query"),
-  checkUrlProject,
-  checkExternal,
   (req: Request, res: Response, next: NextFunction) => {
     const authType: EXTERNAL_AUTH_TYPE = Objects.get(
       res,
@@ -156,10 +146,10 @@ router.get(
     const external: string = Objects.get(req, "params.external", "").toString();
 
     /* Find the authentication state */
-    ExternalAuthRequestModel.findById(state)
+    ExternalRequestModel.findById(state)
       .populate("externalAuth")
       .populate({ path: "application", populate: { path: "project" } })
-      .then((authRequest: ExternalAuthRequestDocument) => {
+      .then((authRequest: ExternalRequestDocument) => {
         if (!authRequest) {
           return next({
             boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -183,7 +173,7 @@ router.get(
           res,
           "locals.project.id"
         )}external/${external}/fail`;
-        ExternalAuthCtrl.doAuthenticate(Objects.get(res, "locals.project.id"), authRequest, {
+        ExternalCtrl.doAuthenticate(Objects.get(res, "locals.project.id"), authRequest, {
           state: authRequest.id,
           failureRedirect: cbFailure
         })(req, res, next);
@@ -192,7 +182,7 @@ router.get(
   },
   (req: Request, res: Response, next: NextFunction) => {
     /* Get the social network request */
-    const request: ExternalAuthRequestDocument = Objects.get(res, "locals.request");
+    const request: ExternalRequestDocument = Objects.get(res, "locals.request");
     if (!request) {
       return next({
         boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -206,10 +196,10 @@ router.get(
     }
 
     /* Authenticate the user account with the OAuth2 server */
-    ExternalAuthCtrl.authenticateSocialAccount(request, req.user)
+    ExternalCtrl.authenticateSocialAccount(request, req.user)
       .then((token: Token) => {
         /* Validate application restrictions */
-        ApplicationAccessPolicyCtrl.canAccess(req, token.client.id)
+        AccessPolicyCtrl.canAccess(req, token.client.id)
           .then(() => {
             /* Return the access token */
             return res.redirect(
@@ -222,7 +212,7 @@ router.get(
   },
   (err: any, _req: Request, res: Response, next: NextFunction) => {
     /* Get the social network request */
-    const request: ExternalAuthRequestDocument = Objects.get(res, "locals.request");
+    const request: ExternalRequestDocument = Objects.get(res, "locals.request");
     if (!request) {
       return next({
         boError: AUTH_ERRORS.INVALID_CREDENTIALS,
@@ -250,8 +240,6 @@ router.get(
   "/:external/fail",
   Validator.joi(ExternalAuthValidation, "params"),
   Validator.joi(ExternalAuthStateValidation, "query"),
-  checkUrlProject,
-  checkExternal,
   (req: Request, res: Response, next: NextFunction) => {
     const authType: EXTERNAL_AUTH_TYPE = Objects.get(
       res,
@@ -261,10 +249,10 @@ router.get(
     const state: string = Objects.get(req, "query.state", "").toString();
 
     /* Find the authentication state */
-    ExternalAuthRequestModel.findById(state)
+    ExternalRequestModel.findById(state)
       .populate({ path: "application", populate: { path: "project" } })
       .populate("account")
-      .then((request: ExternalAuthRequestDocument) => {
+      .then((request: ExternalRequestDocument) => {
         if (!request) {
           return next({
             boError: AUTH_ERRORS.INVALID_CREDENTIALS,

@@ -3,32 +3,39 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
 import { AUTH_ERRORS } from "@ecualead/auth";
-import { Validator, ResponseHandler, ValidateObjectId, Objects, HTTP_STATUS } from "@ecualead/server";
+import {
+  Validator,
+  ResponseHandler,
+  ValidateObjectId,
+  Objects,
+  HTTP_STATUS
+} from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Request as ORequest, Response as OResponse, Token } from "oauth2-server";
-import { AccountCtrl } from "@/controllers/account/account.controller";
-import { EVENT_TYPE } from "@/constants/account.enum";
+import { Accounts } from "../../controllers/account/account.controller";
+import { EVENT_TYPE } from "../../constants/account.enum";
 import {
   RegisterValidation,
   AccountValidation,
   EmailValidation,
   RecoverValidation,
   PassowrdChangeValidation
-} from "@/validators/account.joi";
-import { AccountDocument } from "@/models/account/account.model";
-import { ApplicationCtrl } from "@/controllers/application/application.controller";
-import { ApplicationDocument } from "@/models/application/application.model";
-import { OAuth2Ctrl } from "@/controllers/oauth2/oauth2.controller";
-import { OAuth2ModelCtrl } from "@/controllers/oauth2/oauth2-model.controller";
-import { AccountEmailDocument } from "@/models/account/email.model";
-import { NotificationCtrl } from "@/controllers/notification/notification.controller";
-import { checkUrlProject } from "@/middlewares/project.middleware";
-import { AccountIconCtrl } from "@/controllers/account/icon.controller";
+} from "../../validators/account.joi";
+import { AccountDocument } from "../../models/account/account.model";
+import { ApplicationCtrl } from "../../controllers/application/application.controller";
+import { ApplicationDocument } from "../../models/application/application.model";
+import { OAuth2Ctrl } from "../../controllers/oauth2/oauth2.controller";
+import { OAuth2ModelCtrl } from "../../controllers/oauth2/oauth2.model.controller";
+import { EmailDocument } from "../../models/account/email.model";
+import { Notification } from "../../controllers/notification/notification.controller";
+import { IconCtrl } from "../../controllers/account/icon.controller";
+import { Emails } from "../../controllers/account/email.controller";
+import { Phones } from "../../controllers/account/phone.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -41,15 +48,10 @@ const router = Router({ mergeParams: true });
 router.post(
   "/register",
   Validator.joi(RegisterValidation),
-  checkUrlProject,
-  OAuth2Ctrl.authenticate(["non_user", "mod_ims_register_user"]),
+  OAuth2Ctrl.authenticate(["non_user"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Validate if user email is registered */
-    AccountCtrl.checkEmail(
-      Objects.get(req, "body.email"),
-      Objects.get(res, "locals.token.client.project._id"),
-      true
-    )(req, res, next);
+    Emails.shared.check(Objects.get(req, "body.email"), true)(req, res, next);
   },
   (req: Request, res: Response, next: NextFunction) => {
     const phone = Objects.get(req, "body.phone");
@@ -60,11 +62,7 @@ router.post(
     }
 
     /* Validate if user phone number is registered */
-    AccountCtrl.checkPhone(phone, Objects.get(res, "locals.token.client.project._id"), true)(
-      req,
-      res,
-      next
-    );
+    Phones.shared.check(phone, true)(req, res, next);
   },
   (req: Request, res: Response, next: NextFunction) => {
     // TODO XXX Add password policy
@@ -72,19 +70,18 @@ router.post(
 
     /* Initialize the account data */
     const data: any = {
-      project: Objects.get(res, "locals.token.client.project._id"),
       name: Objects.get(req, "body.name"),
       lastname1: Objects.get(req, "body.lastname1"),
       lastname2: Objects.get(req, "body.lastname2"),
       password: Objects.get(req, "body.password"),
       type: Objects.get(req, "body.type", 0),
       custom1: Objects.get(req, "body.custom1"),
-      custom2: Objects.get(req, "body.custom2"),
-      referral: Objects.get(req, "body.referral")
+      custom2: Objects.get(req, "body.custom2")
     };
 
     /* Register the new user account */
-    AccountCtrl.registerAccount(data, Objects.get(res, "locals.token.client.project"))
+    Accounts.shared
+      .register(data, Objects.get(req, "body.referral"))
       .then((account: AccountDocument) => {
         res.locals["account"] = account;
         res.locals["response"] = { id: account.id };
@@ -94,26 +91,18 @@ router.post(
   },
   (req: Request, res: Response, next: NextFunction) => {
     /* Register the user email address */
-    AccountCtrl.registerEmail(
-      Objects.get(req, "body.email"),
-      Objects.get(res, "locals.token.client.project"),
-      "Register email",
-      Objects.get(res, "locals.account._id")
-    )
-      .then((email: AccountEmailDocument) => {
+    Emails.shared
+      .register(Objects.get(req, "body.email"), Objects.get(res, "locals.account._id"))
+      .then((email: EmailDocument) => {
         /* Send the register notification */
-        NotificationCtrl.doNotification(
-          EVENT_TYPE.REGISTER,
-          Objects.get(res, "locals.account"),
-          email,
-          Objects.get(res, "locals.token.client.project"),
-          {
+        Notification.shared
+          .doNotification(EVENT_TYPE.REGISTER, Objects.get(res, "locals.account"), email, {
             token: Objects.get(email, "token.token"),
             email: Objects.get(email, "email")
-          }
-        ).finally(() => {
-          next();
-        });
+          })
+          .finally(() => {
+            next();
+          });
       })
       .catch(next);
   },
@@ -124,7 +113,8 @@ router.post(
       return next();
     }
 
-    AccountCtrl.registerPhone(phone, "Register phone", Objects.get(res, "locals.account._id"))
+    Phones.shared
+      .register(phone, Objects.get(res, "locals.account._id"))
       .then(() => {
         next();
       })
@@ -144,29 +134,21 @@ router.post(
 router.post(
   "/confirm",
   Validator.joi(AccountValidation),
-  checkUrlProject,
-  OAuth2Ctrl.authenticate(["application", "mod_ims_confirm_account"]),
+  OAuth2Ctrl.authenticate(["application"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Confirm the user account */
-    AccountCtrl.confirmEmail(
-      req.body["email"],
-      req.body["token"],
-      Objects.get(res.locals, "token.client.project")
-    )
-      .then((userEmail: AccountEmailDocument) => {
+    Accounts.shared
+      .confirmEmail(req.body["email"], req.body["token"])
+      .then((userEmail: EmailDocument) => {
         /* Send the register notification */
-        NotificationCtrl.doNotification(
-          EVENT_TYPE.CONFIRM,
-          userEmail.account as AccountDocument,
-          userEmail,
-          Objects.get(res, "locals.token.client.project"),
-          {
+        Notification.shared
+          .doNotification(EVENT_TYPE.CONFIRM, userEmail.account as AccountDocument, userEmail, {
             email: Objects.get(userEmail, "email")
-          }
-        ).finally(() => {
-          res.locals["response"] = { email: req.body["email"] };
-          next();
-        });
+          })
+          .finally(() => {
+            res.locals["response"] = { email: req.body["email"] };
+            next();
+          });
       })
       .catch(next);
   },
@@ -183,7 +165,7 @@ router.post(
  */
 router.post(
   "/resend",
-  checkUrlProject,
+
   (req: Request, res: Response, next: NextFunction) => {
     /* Extract project from requesting application */
     const basic = req.headers.authorization.split(" ");
@@ -194,7 +176,7 @@ router.post(
         return ApplicationCtrl.fetch({ _id: plain[0] })
           .then((application: ApplicationDocument) => {
             const email = req.body["username"];
-            req.body["username"] = `${application.project} ${email}`;
+            req.body["username"] = `${email}`;
           })
           .finally(() => {
             next();
@@ -251,22 +233,24 @@ router.post(
           }
 
           /* Call to resend confirmation */
-          AccountCtrl.requestConfirmation(email[1], Objects.get(application, "project"))
-            .then((userEmail: AccountEmailDocument) => {
+          Accounts.shared
+            .requestConfirmation(email[1])
+            .then((userEmail: EmailDocument) => {
               /* Send the register notification */
-              NotificationCtrl.doNotification(
-                EVENT_TYPE.REGISTER,
-                userEmail.account as AccountDocument,
-                userEmail,
-                Objects.get(application, "project"),
-                {
-                  token: Objects.get(userEmail, "token.token"),
-                  email: Objects.get(userEmail, "email")
-                }
-              ).finally(() => {
-                res.locals["response"] = { email: req.body["username"] };
-                next();
-              });
+              Notification.shared
+                .doNotification(
+                  EVENT_TYPE.REGISTER,
+                  userEmail.account as AccountDocument,
+                  userEmail,
+                  {
+                    token: Objects.get(userEmail, "token.token"),
+                    email: Objects.get(userEmail, "email")
+                  }
+                )
+                .finally(() => {
+                  res.locals["response"] = { email: req.body["username"] };
+                  next();
+                });
             })
             .catch(next);
         })
@@ -288,26 +272,22 @@ router.post(
 router.post(
   "/recover/request",
   Validator.joi(EmailValidation),
-  checkUrlProject,
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_account"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
-    AccountCtrl.requestRecover(req.body["email"], Objects.get(res.locals, "token.client.project"))
-      .then((userEmail: AccountEmailDocument) => {
+    Accounts.shared
+      .requestRecover(req.body["email"])
+      .then((userEmail: EmailDocument) => {
         /* Send the account confirmation notification */
-        NotificationCtrl.doNotification(
-          EVENT_TYPE.RECOVER,
-          userEmail.account as AccountDocument,
-          userEmail,
-          Objects.get(res, "locals.token.client.project"),
-          {
+        Notification.shared
+          .doNotification(EVENT_TYPE.RECOVER, userEmail.account as AccountDocument, userEmail, {
             token: Objects.get(userEmail, "token.token"),
             email: Objects.get(userEmail, "email")
-          }
-        ).finally(() => {
-          res.locals["response"] = { email: req.body["email"] };
-          next();
-        });
+          })
+          .finally(() => {
+            res.locals["response"] = { email: req.body["email"] };
+            next();
+          });
       })
       .catch(next);
   },
@@ -325,15 +305,11 @@ router.post(
 router.post(
   "/recover/validate",
   Validator.joi(AccountValidation),
-  checkUrlProject,
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_validate"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Validate the recover token */
-    AccountCtrl.checkRecover(
-      req.body["email"],
-      req.body["token"],
-      Objects.get(res.locals, "token.client.project")
-    )
+    Accounts.shared
+      .checkRecover(req.body["email"], req.body["token"])
       .then(() => {
         res.locals["response"] = { email: req.body["email"] };
         next();
@@ -354,30 +330,21 @@ router.post(
 router.post(
   "/recover/store",
   Validator.joi(RecoverValidation),
-  checkUrlProject,
   OAuth2Ctrl.authenticate(["non_user", "mod_ims_recover_change"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Recover the user account */
-    AccountCtrl.doRecover(
-      req.body["email"],
-      req.body["token"],
-      req.body["password"],
-      Objects.get(res.locals, "token.client.project")
-    )
-      .then((userEmail: AccountEmailDocument) => {
+    Accounts.shared
+      .doRecover(req.body["email"], req.body["token"], req.body["password"])
+      .then((userEmail: EmailDocument) => {
         /* Send the account confirmation notification */
-        NotificationCtrl.doNotification(
-          EVENT_TYPE.CHPWD,
-          userEmail.account as AccountDocument,
-          userEmail,
-          Objects.get(res, "locals.token.client.project"),
-          {
+        Notification.shared
+          .doNotification(EVENT_TYPE.CHPWD, userEmail.account as AccountDocument, userEmail, {
             email: Objects.get(userEmail, "email")
-          }
-        ).finally(() => {
-          res.locals["response"] = { email: req.body["email"] };
-          next();
-        });
+          })
+          .finally(() => {
+            res.locals["response"] = { email: req.body["email"] };
+            next();
+          });
       })
       .catch(next);
   },
@@ -395,7 +362,6 @@ router.post(
 router.post(
   "/logout",
   OAuth2Ctrl.authenticate(),
-  checkUrlProject,
   (_req: Request, res: Response, next: NextFunction) => {
     /* Revoke the access token */
     OAuth2ModelCtrl.revokeToken(res.locals["token"])
@@ -419,24 +385,21 @@ router.post(
 router.get(
   "/profile",
   OAuth2Ctrl.authenticate("user"),
-  checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
-    AccountCtrl.fetch(Objects.get(res.locals, "token.user._id"))
+    Accounts.shared
+      .fetch(Objects.get(res.locals, "token.user._id"))
       .then((value: AccountDocument) => {
         res.locals["response"] = {
           id: value.id,
           name: value.name,
           lastname1: value.lastname1,
           lastname2: value.lastname2,
-          code: value.code,
           initials: value.initials,
           color1: value.color1,
           color2: value.color2,
           referral: value.referral,
           type: value.type,
-          custom1: value.custom1,
-          custom2: value.custom2,
           email: Objects.get(res.locals, "token.username", "")
         };
         next();
@@ -457,41 +420,38 @@ router.get(
 router.put(
   "/profile",
   OAuth2Ctrl.authenticate("user"),
-  checkUrlProject,
   (req: Request, res: Response, next: NextFunction) => {
     /* Prepare the user information */
     const name = Objects.get(req, "body.name", "").trim();
     const lastname1 = Objects.get(req, "body.lastname1", "").trim();
     const lastname2 = Objects.get(req, "body.lastname2", "").trim();
     const fullname = `${name} ${lastname1} ${lastname1}`;
-    const initials = AccountIconCtrl.getInitials(fullname);
-    const color1 = AccountIconCtrl.getColor(fullname);
+    const initials = IconCtrl.getInitials(fullname);
+    const color1 = IconCtrl.getColor(fullname);
 
     /* Update user information */
-    AccountCtrl.update(
-      { _id: Objects.get(res.locals, "token.user._id") },
-      {
-        name: name,
-        lastname1: lastname1,
-        lastname2: lastname2,
-        initials: initials,
-        color1: color1
-      }
-    )
+    Accounts.shared
+      .update(
+        { _id: Objects.get(res.locals, "token.user._id") },
+        {
+          name: name,
+          lastname1: lastname1,
+          lastname2: lastname2,
+          initials: initials,
+          color1: color1
+        }
+      )
       .then((value: AccountDocument) => {
         res.locals["response"] = {
           id: value.id,
           name: value.name,
           lastname1: value.lastname1,
           lastname2: value.lastname2,
-          code: value.code,
           initials: value.initials,
           color1: value.color1,
           color2: value.color2,
           referral: value.referral,
           type: value.type,
-          custom1: value.custom1,
-          custom2: value.custom2,
           email: Objects.get(res.locals, "token.username", "")
         };
         next();
@@ -512,32 +472,29 @@ router.put(
 router.post(
   "/password",
   Validator.joi(PassowrdChangeValidation),
-  checkUrlProject,
   OAuth2Ctrl.authenticate(["user"]),
   (req: Request, res: Response, next: NextFunction) => {
     /* Request a recover email */
-    AccountCtrl.fetch(Objects.get(res.locals, "token.user._id"))
+    Accounts.shared
+      .fetch(Objects.get(res.locals, "token.user._id"))
       .then((value: AccountDocument) => {
-        AccountCtrl.changePassword(
-          value,
-          req.body["oldPassword"],
-          req.body["newPassword"],
-          Objects.get(res.locals, "token.username")
-        )
-          .then((userEmail: AccountEmailDocument) => {
+        Accounts.shared
+          .changePassword(
+            value,
+            req.body["oldPassword"],
+            req.body["newPassword"],
+            Objects.get(res.locals, "token.username")
+          )
+          .then((userEmail: EmailDocument) => {
             /* Send the account change password notification */
-            NotificationCtrl.doNotification(
-              EVENT_TYPE.CHPWD,
-              userEmail.account as AccountDocument,
-              userEmail,
-              Objects.get(res, "locals.token.client.project"),
-              {
+            Notification.shared
+              .doNotification(EVENT_TYPE.CHPWD, userEmail.account as AccountDocument, userEmail, {
                 email: Objects.get(userEmail, "email")
-              }
-            ).finally(() => {
-              res.locals["response"] = { email: req.body["email"] };
-              next();
-            });
+              })
+              .finally(() => {
+                res.locals["response"] = { email: req.body["email"] };
+                next();
+              });
           })
           .catch(next);
       })
