@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { EMAIL_CONFIRMATION, EXTERNAL_AUTH_TYPE, TOKEN_TYPE } from "./constants/project.enum";
+import { EMAIL_CONFIRMATION, EXTERNAL_AUTH_TYPE, TOKEN_TYPE } from "./constants/oauth2.enum";
 
 export interface IExternalAuth {
   name: string;
@@ -34,8 +34,10 @@ export interface ITokenPolicy {
 }
 
 export interface ISignKeys {
-  privateKey: string;
-  publicKey: string;
+  privateKey?: string;
+  publicKey?: string;
+  issuer: string;
+  audience: string;
 }
 
 export interface IEmailPolicy {
@@ -63,4 +65,5 @@ export interface IOauth2Settings {
   emailNotifications: IEmailNotifications;
 
   externalAuth?: IExternalAuth[];
+  signKeys: ISignKeys;
 }

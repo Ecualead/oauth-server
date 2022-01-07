@@ -3,101 +3,112 @@
  * All Rights Reserved
  * Author: Reinier Millo Sánchez <rmillo@ecualead.com>
  *
- * This file is part of the Authentication Service.
+ * This file is part of the ECUALEAD OAuth2 Server API.
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import "module-alias/register";
-import { ClusterServer, Logger } from "@ecualead/server";
-import AsyncLock from "async-lock";
-/* Base components routes */
-import AccountRouter from "@/routers/v1/account.router";
-import ApplicationRouter from "@/routers/v1/application.router";
-import DomainRouter from "@/routers/v1/domain.router";
-import OAuth2ValidateRouter from "@/routers/v1/oauth2-validate.router";
-import OAuth2Router from "@/routers/v1/oauth2.router";
-import ExternalAuthRouter from "@/routers/v1/external-auth.router";
-import ProjectRouter from "@/routers/v1/project/project.router";
-import ProjectExternalAuthRouter from "@/routers/v1/project/external-auth.router";
-import ProjectRestrictIpRouter from "@/routers/v1/project/restrict-ip.router";
-import ProjectKeyRouter from "@/routers/v1/project/key.router";
-import ProjectSettingsRouter from "@/routers/v1/project/setting.router";
-import { AccountCodeCtrl } from "@/controllers/account/code.controller";
-import { AuthenticationCtrl } from "@ecualead/auth";
-import { MailCtrl } from "@ikoabo/mailer";
 
-/* Initialize cluster server */
-const clusterServer = ClusterServer.setup({ running: requestCredentials }, { worker: runWorker });
-/* Initialize componentes before import routes */
-const lock = new AsyncLock();
-const logger = new Logger("Service");
+/* Export constants */
+export {
+  ACCOUNT_STATUS,
+  TOKEN_STATUS,
+  EVENT_TYPE,
+  VALIDATION_STATUS,
+  SCOPE_PREVENT,
+  APPLICATION_TYPE,
+  NOTIFICATION_TYPE,
+  LIFETIME_TYPE,
+  EMAIL_CONFIRMATION,
+  TOKEN_TYPE,
+  EXTERNAL_AUTH_TYPE
+} from "./constants/oauth2.enum";
 
-/**
- * Authenticate against auth service
- */
-function requestCredentials(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    AuthenticationCtrl.setup(
-      process.env.AUTH_SERVER,
-      process.env.AUTH_PROJECT,
-      process.env.AUTH_AUDIENCE,
-      process.env.AUTH_KEY
-    );
-    AuthenticationCtrl.authService(process.env.AUTH_ID, process.env.AUTH_SECRET)
-      .catch((err) => {
-        logger.error("Invalid authentication configuration", err);
-      })
-      .finally(() => {
-        /* Initialize mail component */
-        MailCtrl.setup(process.env.NOTIFICATIONS_SERVER, AuthenticationCtrl.token);
-        resolve();
-      });
-  });
-}
+/* Export controllers */
+export {
+  AccessPolicy as AccountAccessPolicy,
+  AccessPolicyCtrl as AccountAccessPolicyCtrl
+} from "./controllers/account/access.policy.controller";
+export { Accounts, AccountCtrl } from "./controllers/account/account.controller";
+export { Emails, EmailCtrl } from "./controllers/account/email.controller";
+export { ExternalsAuth, ExternalAuthCtrl } from "./controllers/account/external.auth.controller";
+export { Icon, IconCtrl } from "./controllers/account/icon.controller";
+export { Phones, PhoneCtrl } from "./controllers/account/phone.controller";
+export { ReferralCodeCtrl } from "./controllers/account/referral.code.controller";
+export { AccessPolicyCtrl } from "./controllers/application/access.policy.controller";
+export { Applications, ApplicationCtrl } from "./controllers/application/application.controller";
+export { MailNotificationCtrl } from "./controllers/notification/transport/mail.controller";
+export { BaseNotification } from "./controllers/notification/base.controller";
+export { Notification, NotificationCtrl } from "./controllers/notification/notification.controller";
+export { ExternalAuthSchema } from "./controllers/oauth2/schemas/base.controller";
+export { FacebookCtrl } from "./controllers/oauth2/schemas/facebook.controller";
+export { GoogleCtrl } from "./controllers/oauth2/schemas/google.controller";
+export { TwitterCtrl } from "./controllers/oauth2/schemas/twitter.controller";
+export { External, ExternalCtrl } from "./controllers/oauth2/external.controller";
+export { OAuth2Ctrl } from "./controllers/oauth2/oauth2.controller";
+export { OAuth2ModelCtrl } from "./controllers/oauth2/oauth2.model.controller";
+export { JWT, JWTCtrl } from "./controllers/jwt.controller";
+export { Settings } from "./controllers/settings.controller";
 
-/**
- * Handle message code from cluster process
- */
-function runWorker(worker: any): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    // Receive messages from this worker and handle them in the master process.
-    worker.on("message", (msg: any) => {
-      switch (msg.action) {
-        case "get/code":
-          lock.acquire(
-            "request-code",
-            (done) => {
-              /* Generate the new vCode */
-              AccountCodeCtrl.code
-                .then((value: string) => {
-                  done(null, value);
-                })
-                .catch(done);
-            },
-            (err, value: string) => {
-              /* Send response to slave service */
-              worker.send({ action: "get/code", err: err, code: value });
-              resolve();
-            }
-          );
-          break;
-      }
-    });
-  });
-}
+/* Export module setings */
+export {
+  IOauth2Settings,
+  IEmailNotifications,
+  IEmailPolicy,
+  IExternalAuth,
+  IPasswordPolicy,
+  ISignKeys,
+  ITokenPolicy
+} from "./settings";
 
-/* Run cluster with base routes */
-clusterServer.run({
-  "/v1/admin/domain": DomainRouter,
-  "/v1/admin/project": [
-    ProjectRouter,
-    ProjectExternalAuthRouter,
-    ProjectRestrictIpRouter,
-    ProjectKeyRouter,
-    ProjectSettingsRouter
-  ],
-  "/v1/admin/application": ApplicationRouter,
-  "/v1/oauth": OAuth2ValidateRouter,
-  "/v1/oauth/:project": [AccountRouter, OAuth2Router],
-  "/v1/oauth/:project/external": ExternalAuthRouter
-});
+/* Export data models */
+export {
+  Account,
+  AccountDocument,
+  AccountModel,
+  AccountReferral
+} from "./models/account/account.model";
+export { Email, EmailDocument, EmailModel } from "./models/account/email.model";
+export {
+  ExternalAuth,
+  ExternalAuthDocument,
+  ExternalAuthModel
+} from "./models/account/external.auth.model";
+export { Phone, PhoneDocument, PhoneModel } from "./models/account/phone.model";
+export { ValidationToken } from "./models/account/validation.token.model";
+export {
+  Application,
+  ApplicationDocument,
+  ApplicationModel
+} from "./models/application/application.model";
+export { Code, CodeDocument, CodeModel } from "./models/oauth2/code.model";
+export {
+  ExternalRequest,
+  ExternalRequestDocument,
+  ExternalRequestModel,
+  ExternalAuthSettings
+} from "./models/oauth2/external.request.model";
+export { Token, TokenDocument, TokenModel } from "./models/oauth2/token.model";
+
+/* Export middlewares */
+export { middleware as FormUrlEncoded } from "./middlewares/from.urlencoded";
+
+/* Export routers */
+export * as OAuthRoutes from "./routers";
+
+/* Export utils */
+export { externalAuthToInt, externalAuthToStr } from "./utils/external.auth.util";
+
+/* Export validators */
+export {
+  AccountValidation,
+  EmailValidation,
+  PassowrdChangeValidation,
+  RecoverValidation,
+  RegisterValidation
+} from "./validators/account.joi";
+export { RestrictionValidation, ScopeValidation, StatusValidation } from "./validators/base.joi";
+export {
+  ExternalAuthValidation,
+  ExternalAuthStateValidation,
+  ExternalAuthParamsValidation
+} from "./validators/external.auth.joi";

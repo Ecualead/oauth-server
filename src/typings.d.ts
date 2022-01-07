@@ -8,13 +8,11 @@
  * permission of the author.
  */
 declare module "gender-detection" {
-  const component: {
-    detect: (name: string) => string;
-  };
+  const component: any;
   export default component;
 }
 
 declare module "name-initials" {
-  const component: (name: string) => string;
+  const component: any;
   export default component;
 }
