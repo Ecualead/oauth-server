@@ -81,6 +81,7 @@ class OAuth2 {
               return;
             }
           }
+
           res.locals["token"] = token;
           next();
         })

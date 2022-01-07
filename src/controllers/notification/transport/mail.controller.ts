@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { Objects } from "@ecualead/server";
-import { MailCtrl } from "@ikoabo/mailer";
+import { MailCtrl } from "@ecualead/msg";
 import { BaseNotification } from "../../../controllers/notification/base.controller";
 import { AccountDocument } from "../../../models/account/account.model";
 import { EmailDocument } from "../../../models/account/email.model";
@@ -63,7 +63,6 @@ class MailNotification extends BaseNotification {
     return new Promise<void>((resolve) => {
       /* Send mail notification about the account creation */
       MailCtrl.send(
-        "",
         data.subject,
         null,
         data.type,
@@ -78,10 +77,16 @@ class MailNotification extends BaseNotification {
         [data.account.email],
         [],
         []
-      ).finally(() => {
-        this._logger.debug("Sending mail notification", data);
-        resolve();
-      });
+      )
+        .catch((err: any) => {
+          this._logger.error("There were some errors sending the mail notification", {
+            error: err
+          });
+        })
+        .finally(() => {
+          this._logger.debug("Sending mail notification", data);
+          resolve();
+        });
     });
   }
 

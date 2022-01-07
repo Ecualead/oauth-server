@@ -9,15 +9,14 @@
  */
 import { AUTH_ERRORS } from "@ecualead/auth";
 import { Objects, HTTP_STATUS } from "@ecualead/server";
-import { ACCOUNT_STATUS, VALIDATION_STATUS } from "../../constants/account.enum";
+import { ACCOUNT_STATUS, VALIDATION_STATUS, EMAIL_CONFIRMATION } from "../../constants/oauth2.enum";
 import { AccountDocument } from "../../models/account/account.model";
-import { EMAIL_CONFIRMATION } from "../../constants/project.enum";
 import { EmailDocument } from "../../models/account/email.model";
 import { IOauth2Settings } from "../../settings";
+import { Settings } from "../settings.controller";
 
-export class AccountAccessPolicy {
-  private static _instance: AccountAccessPolicy;
-  private _settings: IOauth2Settings;
+export class AccessPolicy {
+  private static _instance: AccessPolicy;
 
   /**
    * Private constructor
@@ -25,29 +24,17 @@ export class AccountAccessPolicy {
   private constructor() {}
 
   /**
-   * Settup the user account controller
-   */
-  public static setup(settings: IOauth2Settings) {
-    if (!AccountAccessPolicy._instance) {
-      AccountAccessPolicy._instance = new AccountAccessPolicy();
-      AccountAccessPolicy._instance._settings = settings;
-    } else {
-      throw new Error("AccountAccessPolicy already configured");
-    }
-  }
-
-  /**
    * Get the singleton class instance
    */
-  public static get shared(): AccountAccessPolicy {
-    if (!AccountAccessPolicy._instance) {
-      throw new Error("AccountAccessPolicy isn't configured");
+  public static get shared(): AccessPolicy {
+    if (!AccessPolicy._instance) {
+      AccessPolicy._instance = new AccessPolicy();
     }
-    return AccountAccessPolicy._instance;
+    return AccessPolicy._instance;
   }
 
   /**
-   * Check if an user can signin in the given project
+   * Check if an user can signin
    */
   public canSignin(
     user: AccountDocument,
@@ -57,7 +44,7 @@ export class AccountAccessPolicy {
     return new Promise<boolean>((resolve, reject) => {
       /* Fetch confirmation policy */
       const confirmationPolicy = Objects.get(
-        this._settings,
+        Settings.shared.value,
         "emailPolicy.type",
         EMAIL_CONFIRMATION.NOT_REQUIRED
       );
@@ -148,3 +135,5 @@ export class AccountAccessPolicy {
     });
   }
 }
+
+export const AccessPolicyCtrl = AccessPolicy.shared;

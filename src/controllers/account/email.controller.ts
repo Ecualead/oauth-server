@@ -11,13 +11,16 @@ import { AUTH_ERRORS } from "@ecualead/auth";
 import { Tokens, CRUD, HTTP_STATUS } from "@ecualead/server";
 import { EmailDocument, EmailModel } from "../../models/account/email.model";
 import { Request, Response, NextFunction } from "express";
-import { TOKEN_STATUS, VALIDATION_STATUS } from "../../constants/account.enum";
-import { LIFETIME_TYPE, TOKEN_TYPE } from "../../constants/project.enum";
-import { IOauth2Settings } from "../../settings";
+import {
+  TOKEN_STATUS,
+  VALIDATION_STATUS,
+  LIFETIME_TYPE,
+  TOKEN_TYPE
+} from "../../constants/oauth2.enum";
+import { Settings } from "../settings.controller";
 
 export class Emails extends CRUD<EmailDocument> {
   private static _instance: Emails;
-  private _settings: IOauth2Settings;
 
   /**
    * Private constructor
@@ -27,23 +30,11 @@ export class Emails extends CRUD<EmailDocument> {
   }
 
   /**
-   * Settup the user account controller
-   */
-  public static setup(settings: IOauth2Settings) {
-    if (!Emails._instance) {
-      Emails._instance = new Emails();
-      Emails._instance._settings = settings;
-    } else {
-      throw new Error("Emails already configured");
-    }
-  }
-
-  /**
    * Get the singleton class instance
    */
   public static get shared(): Emails {
     if (!Emails._instance) {
-      throw new Error("Emails isn't configured");
+      Emails._instance = new Emails();
     }
     return Emails._instance;
   }
@@ -54,9 +45,7 @@ export class Emails extends CRUD<EmailDocument> {
   public fetchByEmail(email: string): Promise<EmailDocument> {
     return new Promise<EmailDocument>((resolve, reject) => {
       /* Look for the user by email */
-      this.fetch({ email: email }, { populate: ["account"] })
-        .then(resolve)
-        .catch(reject);
+      this.fetch({ email: email }, {}, ["account"]).then(resolve).catch(reject);
     });
   }
 
@@ -93,7 +82,7 @@ export class Emails extends CRUD<EmailDocument> {
   public register(email: string, account?: string): Promise<EmailDocument> {
     return new Promise<EmailDocument>((resolve, reject) => {
       /* Set the confirmation token information if its necessary */
-      const tokenType = this._settings.emailNotifications.token;
+      const tokenType = Settings.shared.value?.emailNotifications?.token;
 
       const validationToken: any = {
         token: null,
@@ -123,3 +112,5 @@ export class Emails extends CRUD<EmailDocument> {
     });
   }
 }
+
+export const EmailCtrl = Emails.shared;

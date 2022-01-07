@@ -9,28 +9,27 @@
  */
 import { AUTH_ERRORS } from "@ecualead/auth";
 import { Objects, Tokens, Arrays, HTTP_STATUS, CRUD } from "@ecualead/server";
-import { AccountAccessPolicy } from "./access.policy.controller";
+import { AccessPolicyCtrl } from "./access.policy.controller";
 import { IconCtrl } from "./icon.controller";
 import { ReferralCodeCtrl } from "./referral.code.controller";
 import {
+  EMAIL_CONFIRMATION,
+  TOKEN_TYPE,
+  LIFETIME_TYPE,
   ACCOUNT_STATUS,
   TOKEN_STATUS,
-  SCP_ACCOUNT_DEFAULT,
-  SCP_PREVENT,
-  SCP_NON_INHERITABLE,
+  SCOPE_PREVENT,
   VALIDATION_STATUS
-} from "../../constants/account.enum";
+} from "../../constants/oauth2.enum";
 import { AccountDocument, AccountModel } from "../../models/account/account.model";
-import { EMAIL_CONFIRMATION, TOKEN_TYPE, LIFETIME_TYPE } from "../../constants/project.enum";
-import { IOauth2Settings } from "../../settings";
-import { Emails } from "./email.controller";
+import { EmailCtrl } from "./email.controller";
 import { EmailDocument } from "../../models/account/email.model";
+import { Settings } from "../settings.controller";
 
 const MAX_ATTEMPTS = 5;
 
 export class Accounts extends CRUD<AccountDocument> {
   private static _instance: Accounts;
-  private _settings: IOauth2Settings;
 
   /**
    * Private constructor to allow singleton instance
@@ -40,23 +39,11 @@ export class Accounts extends CRUD<AccountDocument> {
   }
 
   /**
-   * Setup the user account controller
-   */
-  public static setup(settings: IOauth2Settings) {
-    if (!Accounts._instance) {
-      Accounts._instance = new Accounts();
-      Accounts._instance._settings = settings;
-    } else {
-      throw new Error("Accounts already configured");
-    }
-  }
-
-  /**
    * Get the singleton class instance
    */
   public static get shared(): Accounts {
     if (!Accounts._instance) {
-      throw new Error("Accounts isn't configured");
+      Accounts._instance = new Accounts();
     }
     return Accounts._instance;
   }
@@ -66,7 +53,7 @@ export class Accounts extends CRUD<AccountDocument> {
    */
   public fetchReferral(referral?: string): Promise<AccountDocument | null> {
     return new Promise<AccountDocument | null>((resolve) => {
-      if (!referral || !this._settings.handleReferral) {
+      if (!referral || !Settings.shared.value?.handleReferral) {
         return resolve(null);
       }
 
@@ -88,7 +75,7 @@ export class Accounts extends CRUD<AccountDocument> {
     return new Promise<AccountDocument>((resolve, reject) => {
       /* Get initial user status by email confirmation policy */
       const confirmationPolicy = Objects.get(
-        this._settings,
+        Settings.shared.value,
         "emailPolicy.type",
         EMAIL_CONFIRMATION.NOT_REQUIRED
       );
@@ -109,7 +96,7 @@ export class Accounts extends CRUD<AccountDocument> {
       /* Set the confirmation expiration */
       if (emailStatus === VALIDATION_STATUS.NEEDS_CONFIRM_CAN_AUTH) {
         profile["confirmationExpires"] =
-          Date.now() + Objects.get(this._settings, "emailPolicy.ttl", 0);
+          Date.now() + Objects.get(Settings.shared.value, "emailPolicy.ttl", 0);
       }
 
       /* Initialize avatar metadata */
@@ -118,14 +105,16 @@ export class Accounts extends CRUD<AccountDocument> {
       profile["color1"] = IconCtrl.getColor(fullname);
 
       /* Set the new user scope using default values and application scope */
-      profile["scope"] = Arrays.initialize(SCP_ACCOUNT_DEFAULT, [], SCP_NON_INHERITABLE);
-      profile["scope"] = profile["scope"].filter((scope: string) => SCP_PREVENT.indexOf(scope) < 0);
+      profile["scope"] = Arrays.initialize([], [], []);
+      profile["scope"] = profile["scope"].filter(
+        (scope: string) => SCOPE_PREVENT.indexOf(scope) < 0
+      );
 
       /* Register the new user */
       this.create(profile)
         .then((account: AccountDocument) => {
           /* Check if use referral is active */
-          if (!this._settings.handleReferral) {
+          if (!Settings.shared.value?.handleReferral) {
             return resolve(account);
           }
 
@@ -194,19 +183,18 @@ export class Accounts extends CRUD<AccountDocument> {
       });
     }
 
-    Emails.shared
-      .update(
-        email._id,
-        {
-          status: VALIDATION_STATUS.CONFIRMED,
-          "validation.token": null,
-          "validation.status": TOKEN_STATUS.DISABLED,
-          "validation.expire": 0,
-          "validation.attempts": 0
-        },
-        null,
-        { populate: ["account"] }
-      )
+    EmailCtrl.update(
+      email._id,
+      {
+        status: VALIDATION_STATUS.CONFIRMED,
+        "validation.token": null,
+        "validation.status": TOKEN_STATUS.DISABLED,
+        "validation.expire": 0,
+        "validation.attempts": 0
+      },
+      null,
+      { populate: ["account"] }
+    )
       .then((email: EmailDocument) => {
         resolve(email);
       })
@@ -219,17 +207,14 @@ export class Accounts extends CRUD<AccountDocument> {
   public confirmEmail(email: string, token: string): Promise<EmailDocument> {
     return new Promise<EmailDocument>((resolve, reject) => {
       /* Look for the target email */
-      Emails.shared
-        .fetchByEmail(email)
+      EmailCtrl.fetchByEmail(email)
         .then((email: EmailDocument) => {
           const update: any = { $inc: { "token.attempts": 1 } };
 
-          Emails.shared
-            .update(email._id, null, update, { populate: ["account"] })
+          EmailCtrl.update(email._id, null, update, { populate: ["account"] })
             .then((email: EmailDocument) => {
               /* Check if the user can authenticate using the user policy */
-              AccountAccessPolicy.shared
-                .canSignin(email.account as AccountDocument, email, false)
+              AccessPolicyCtrl.canSignin(email.account as AccountDocument, email, false)
                 .then(() => {
                   /* Check for the current email status */
                   if (email.status === VALIDATION_STATUS.CONFIRMED) {
@@ -293,7 +278,7 @@ export class Accounts extends CRUD<AccountDocument> {
                 id: value.id
               });
 
-              Emails.shared.fetchByEmail(email).then(resolve).catch(reject);
+              EmailCtrl.fetchByEmail(email).then(resolve).catch(reject);
             })
             .catch(reject);
         })
@@ -312,9 +297,9 @@ export class Accounts extends CRUD<AccountDocument> {
    */
   public requestRecover(email: string): Promise<EmailDocument> {
     return new Promise<EmailDocument>((resolve, reject) => {
-      /* Check if the recover is enabled in the target project */
+      /* Check if the recover is enabled */
       const recoverType = Objects.get(
-        this._settings,
+        Settings.shared.value,
         "emailNotifications.token",
         TOKEN_TYPE.DISABLED
       );
@@ -327,31 +312,28 @@ export class Accounts extends CRUD<AccountDocument> {
       }
 
       /* Look for the user by email */
-      Emails.shared
-        .fetchByEmail(email)
+      EmailCtrl.fetchByEmail(email)
         .then((email: EmailDocument) => {
           /* Check if the user has allowed to signin */
-          AccountAccessPolicy.shared
-            .canSignin(email.account as AccountDocument, email, false)
+          AccessPolicyCtrl.canSignin(email.account as AccountDocument, email, false)
             .then(() => {
               /* Prepare the recover token */
               const token = recoverType === TOKEN_TYPE.CODE ? Tokens.short : Tokens.long;
 
               /* Register the reset token */
-              Emails.shared
-                .update(
-                  email._id,
-                  {
-                    "validation.token": token,
-                    "validation.status": TOKEN_STATUS.TO_RECOVER,
-                    "validation.expire": Date.now() + LIFETIME_TYPE.DAY,
-                    "validation.attempts": 1
-                  },
-                  null,
-                  {
-                    populate: ["account"]
-                  }
-                )
+              EmailCtrl.update(
+                email._id,
+                {
+                  "validation.token": token,
+                  "validation.status": TOKEN_STATUS.TO_RECOVER,
+                  "validation.expire": Date.now() + LIFETIME_TYPE.DAY,
+                  "validation.attempts": 1
+                },
+                null,
+                {
+                  populate: ["account"]
+                }
+              )
                 .then(resolve)
                 .catch(reject);
             })
@@ -366,25 +348,23 @@ export class Accounts extends CRUD<AccountDocument> {
    */
   public checkRecover(email: string, token: string): Promise<EmailDocument> {
     return new Promise<EmailDocument>((resolve, reject) => {
-      Emails.shared
-        .fetchByEmail(email)
+      EmailCtrl.fetchByEmail(email)
         .then((email: EmailDocument) => {
           /* Look for the user by email */
-          Emails.shared
-            .update(
-              {
-                _id: email._id,
-                "validation.token": token,
-                "validation.status": TOKEN_STATUS.TO_RECOVER,
-                "validation.expire": { $gt: Date.now() },
-                "validation.attempts": { $lt: MAX_ATTEMPTS }
-              },
-              {
-                "validation.status": TOKEN_STATUS.PARTIAL_CONFIRMED
-              },
-              null,
-              { populate: ["account"] }
-            )
+          EmailCtrl.update(
+            {
+              _id: email._id,
+              "validation.token": token,
+              "validation.status": TOKEN_STATUS.TO_RECOVER,
+              "validation.expire": { $gt: Date.now() },
+              "validation.attempts": { $lt: MAX_ATTEMPTS }
+            },
+            {
+              "validation.status": TOKEN_STATUS.PARTIAL_CONFIRMED
+            },
+            null,
+            { populate: ["account"] }
+          )
             .then(resolve)
             .catch(() => {
               reject({
@@ -402,17 +382,14 @@ export class Accounts extends CRUD<AccountDocument> {
    */
   public doRecover(email: string, token: string, password: string): Promise<EmailDocument> {
     return new Promise<EmailDocument>((resolve, reject) => {
-      Emails.shared
-        .fetchByEmail(email)
+      EmailCtrl.fetchByEmail(email)
         .then((email: EmailDocument) => {
           const update: any = { $inc: { "validation.attempts": 1 } };
           /* Look for the user by email */
-          Emails.shared
-            .update(email._id, null, update, { populate: ["account"] })
+          EmailCtrl.update(email._id, null, update, { populate: ["account"] })
             .then((email: EmailDocument) => {
               /* Check for user account policy */
-              AccountAccessPolicy.shared
-                .canSignin(email.account as AccountDocument, email, false)
+              AccessPolicyCtrl.canSignin(email.account as AccountDocument, email, false)
                 .then(() => {
                   /* Validate max attempts */
                   if (Objects.get(email, "validation.attempts", 1) > MAX_ATTEMPTS) {
@@ -443,20 +420,19 @@ export class Accounts extends CRUD<AccountDocument> {
                   }
 
                   /* Update the recover token */
-                  Emails.shared
-                    .update(
-                      email._id,
-                      {
-                        "validation.token": null,
-                        "validation.status": TOKEN_STATUS.DISABLED,
-                        "validation.expire": 0,
-                        "validation.attempts": 0
-                      },
-                      null,
-                      {
-                        populate: ["account"]
-                      }
-                    )
+                  EmailCtrl.update(
+                    email._id,
+                    {
+                      "validation.token": null,
+                      "validation.status": TOKEN_STATUS.DISABLED,
+                      "validation.expire": 0,
+                      "validation.attempts": 0
+                    },
+                    null,
+                    {
+                      populate: ["account"]
+                    }
+                  )
                     .then((email: EmailDocument) => {
                       /* Update user account password */
                       this.update(
@@ -483,7 +459,7 @@ export class Accounts extends CRUD<AccountDocument> {
    */
   private _doReConfirm(email: EmailDocument, resolve: any, reject: any) {
     const recoverType = Objects.get(
-      this._settings,
+      Settings.shared.value,
       "emailNotifications.token",
       TOKEN_TYPE.DISABLED
     );
@@ -498,8 +474,7 @@ export class Accounts extends CRUD<AccountDocument> {
     };
 
     /* Register the reset token */
-    Emails.shared
-      .update(email._id, update, null, { populate: ["account"] })
+    EmailCtrl.update(email._id, update, null, { populate: ["account"] })
       .then(resolve)
       .catch(reject);
   }
@@ -511,7 +486,7 @@ export class Accounts extends CRUD<AccountDocument> {
     return new Promise<EmailDocument>((resolve, reject) => {
       /* Check if the recover is enabled */
       const recoverType = Objects.get(
-        this._settings,
+        Settings.shared.value,
         "emailNotifications.token",
         TOKEN_TYPE.DISABLED
       );
@@ -524,12 +499,10 @@ export class Accounts extends CRUD<AccountDocument> {
       }
 
       /* Look for the user by email */
-      Emails.shared
-        .fetchByEmail(email)
+      EmailCtrl.fetchByEmail(email)
         .then((email: EmailDocument) => {
           /* Check if the user can authenticate using the user policy */
-          AccountAccessPolicy.shared
-            .canSignin(email.account as AccountDocument, email, false)
+          AccessPolicyCtrl.canSignin(email.account as AccountDocument, email, false)
             .then(() => {
               /* Check for the current email status */
               if (email.status !== VALIDATION_STATUS.NEEDS_CONFIRM_CAN_AUTH) {
@@ -557,3 +530,5 @@ export class Accounts extends CRUD<AccountDocument> {
     });
   }
 }
+
+export const AccountCtrl = Accounts.shared;

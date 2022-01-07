@@ -9,21 +9,23 @@
  */
 import { CRUD, HTTP_STATUS, Objects } from "@ecualead/server";
 import { ExternalAuthDocument, ExternalAuthModel } from "../../models/account/external.auth.model";
-import { ACCOUNT_STATUS, TOKEN_STATUS, VALIDATION_STATUS } from "../../constants/account.enum";
-import { IOauth2Settings } from "../../settings";
-import { EXTERNAL_AUTH_TYPE } from "../../constants/project.enum";
+import {
+  ACCOUNT_STATUS,
+  TOKEN_STATUS,
+  VALIDATION_STATUS,
+  EXTERNAL_AUTH_TYPE
+} from "../../constants/oauth2.enum";
 import { IconCtrl } from "./icon.controller";
-import { Accounts } from "./account.controller";
+import { AccountCtrl } from "./account.controller";
 import { AccountDocument } from "../../models/account/account.model";
 import async from "async";
-import { Emails } from "./email.controller";
+import { EmailCtrl } from "./email.controller";
 import { externalAuthToStr } from "../../utils/external.auth.util";
 import { AUTH_ERRORS } from "@ecualead/auth";
 import { External } from "../oauth2/external.controller";
 
 export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
   private static _instance: ExternalsAuth;
-  private _settings: IOauth2Settings;
 
   /**
    * Private constructor
@@ -33,23 +35,11 @@ export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
   }
 
   /**
-   * Settup the user account controller
-   */
-  public static setup(settings: IOauth2Settings) {
-    if (!ExternalsAuth._instance) {
-      ExternalsAuth._instance = new ExternalsAuth();
-      ExternalsAuth._instance._settings = settings;
-    } else {
-      throw new Error("ExternalsAuth already configured");
-    }
-  }
-
-  /**
    * Get the singleton class instance
    */
   public static get shared(): ExternalsAuth {
     if (!ExternalsAuth._instance) {
-      throw new Error("ExternalsAuth isn't configured");
+      ExternalsAuth._instance = new ExternalsAuth();
     }
     return ExternalsAuth._instance;
   }
@@ -72,8 +62,7 @@ export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
       accountData["color1"] = IconCtrl.getColor(fullname);
 
       /* Register the new user */
-      Accounts.shared
-        .create(accountData)
+      AccountCtrl.create(accountData)
         .then((account: AccountDocument) => {
           this.create({
             account: account._id,
@@ -99,27 +88,23 @@ export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
         emails,
         1,
         (email: any, cb: any) => {
-          Emails.shared
-            .fetchByEmail(email.value)
+          EmailCtrl.fetchByEmail(email.value)
             .then(() => {
               cb();
             })
             .catch((err: any) => {
               /* Email is not registered, so it's linked to the user account */
-              Emails.shared
-                .create({
-                  email: email.value,
-                  validation: {
-                    token: "",
-                    attempts: -1,
-                    status: TOKEN_STATUS.DISABLED,
-                    expire: -1
-                  },
-                  status: email.verified
-                    ? VALIDATION_STATUS.CONFIRMED
-                    : VALIDATION_STATUS.REGISTERED,
-                  account: account
-                })
+              EmailCtrl.create({
+                email: email.value,
+                validation: {
+                  token: "",
+                  attempts: -1,
+                  status: TOKEN_STATUS.DISABLED,
+                  expire: -1
+                },
+                status: email.verified ? VALIDATION_STATUS.CONFIRMED : VALIDATION_STATUS.REGISTERED,
+                account: account
+              })
                 //.catch(reject)
                 .finally(() => {
                   cb();
@@ -135,17 +120,10 @@ export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
 
   /**
    * Find external user account by ID
-   *
-   * @param id
-   * @param type
-   * @param project
-   * @returns
    */
   public fetchById(id: string, type: number): Promise<ExternalAuthDocument> {
     return new Promise<ExternalAuthDocument>((resolve, reject) => {
-      this.fetch({ externalId: id, type: type }, { populate: ["account"] })
-        .then(resolve)
-        .catch(reject);
+      this.fetch({ externalId: id, type: type }, {}, ["account"]).then(resolve).catch(reject);
     });
   }
 
@@ -281,3 +259,5 @@ export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
     });
   }
 }
+
+export const ExternalAuthCtrl = ExternalsAuth.shared;

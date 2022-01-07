@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { Logger } from "@ecualead/server";
-import { EVENT_TYPE } from "../../constants/account.enum";
+import { EVENT_TYPE } from "../../constants/oauth2.enum";
 import { EmailDocument } from "../../models/account/email.model";
 import { PhoneDocument } from "../../models/account/phone.model";
 import { AccountDocument } from "../../models/account/account.model";

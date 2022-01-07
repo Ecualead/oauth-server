@@ -13,7 +13,7 @@ import {
 } from "../../models/oauth2/external.request.model";
 import { EmailDocument } from "../../models/account/email.model";
 import { ExternalAuthDocument } from "../../models/account/external.auth.model";
-import { EXTERNAL_AUTH_TYPE } from "../../constants/project.enum";
+import { EXTERNAL_AUTH_TYPE } from "../../constants/oauth2.enum";
 import { AccountDocument } from "../../models/account/account.model";
 import { IExternalAuth } from "../../settings";
 import { AUTH_ERRORS, OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
@@ -21,8 +21,8 @@ import { Logger, HTTP_STATUS, Objects } from "@ecualead/server";
 import { Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 import passport from "passport";
-import { Emails } from "../account/email.controller";
-import { ExternalsAuth } from "../account/external.auth.controller";
+import { EmailCtrl } from "../account/email.controller";
+import { ExternalAuthCtrl } from "../account/external.auth.controller";
 import { OAuth2ModelCtrl } from "./oauth2.model.controller";
 import { ExternalAuthSchema } from "./schemas/base.controller";
 import { FacebookCtrl } from "./schemas/facebook.controller";
@@ -60,10 +60,10 @@ export class External {
     throw "Invalid external auth schema";
   }
 
-  public doAuthenticate(project: string, request: ExternalRequestDocument, options = {}) {
+  public doAuthenticate(request: ExternalRequestDocument, options = {}) {
     return (req: Request, res: Response, next: NextFunction) => {
       /* Initialize the social network strategy */
-      this._setupSocialStrategy(project, request);
+      this._setupSocialStrategy(request);
 
       /* Authenticate against social network */
       passport.authenticate(request.id, options, (err, user, _info) => {
@@ -127,7 +127,6 @@ export class External {
       /* Prepare user account */
       const account: any = {
         id: user.account.id,
-        project: user.account.project,
         isSocial: true
       };
 
@@ -199,7 +198,7 @@ export class External {
    *
    * @param request External auth request information
    */
-  private _setupSocialStrategy(project: string, request: ExternalRequestDocument) {
+  private _setupSocialStrategy(request: ExternalRequestDocument) {
     /* Handler strategy response function */
     const fnSocialStrategy = (
       req: Request,
@@ -236,15 +235,6 @@ export class External {
   /**
    * Function to handle external account actions after authentication
    * It allows to create, attach or update user account information
-   *
-   * @param authType
-   * @param project
-   * @param referral
-   * @param req
-   * @param accessToken
-   * @param refreshToken
-   * @param profile
-   * @param done
    */
   private _doSocialNetwork(
     authType: EXTERNAL_AUTH_TYPE,
@@ -275,8 +265,7 @@ export class External {
         const authSchema = External.getByType(authType);
 
         /* Look for an user with the same social network id */
-        ExternalsAuth.shared
-          .fetchById(authSchema.id(profile), authType)
+        ExternalAuthCtrl.fetchById(authSchema.id(profile), authType)
           .then((account: ExternalAuthDocument) => {
             /* Check requets user match with found user */
             const tmpUser: AccountDocument = request.account as AccountDocument;
@@ -293,8 +282,14 @@ export class External {
             }
 
             /* User authentication  */
-            ExternalsAuth.shared
-              .updateAccount(authType, account, referral, accessToken, refreshToken, profile)
+            ExternalAuthCtrl.updateAccount(
+              authType,
+              account,
+              referral,
+              accessToken,
+              refreshToken,
+              profile
+            )
               .then((account: ExternalAuthDocument) => {
                 done(null, account);
               })
@@ -303,14 +298,13 @@ export class External {
           .catch((err: any) => {
             /* Check if the user is attaching the social network account to an existent account */
             if (request.account !== null) {
-              return ExternalsAuth.shared
-                .attachAccount(
-                  authType,
-                  request.account as AccountDocument,
-                  accessToken,
-                  refreshToken,
-                  profile
-                )
+              return ExternalAuthCtrl.attachAccount(
+                authType,
+                request.account as AccountDocument,
+                accessToken,
+                refreshToken,
+                profile
+              )
                 .then((account: ExternalAuthDocument) => {
                   done(null, account);
                 })
@@ -319,17 +313,15 @@ export class External {
 
             /* Check if the user account can be attached by email address */
             if (profile.emails && profile.emails.length > 0) {
-              return Emails.shared
-                .fetchByEmail(Objects.get(profile, "emails.0.value"))
+              return EmailCtrl.fetchByEmail(Objects.get(profile, "emails.0.value"))
                 .then((email: EmailDocument) => {
-                  ExternalsAuth.shared
-                    .attachAccount(
-                      authType,
-                      email.account as AccountDocument,
-                      accessToken,
-                      refreshToken,
-                      profile
-                    )
+                  ExternalAuthCtrl.attachAccount(
+                    authType,
+                    email.account as AccountDocument,
+                    accessToken,
+                    refreshToken,
+                    profile
+                  )
                     .then((account: ExternalAuthDocument) => {
                       done(null, account);
                     })
@@ -337,8 +329,13 @@ export class External {
                 })
                 .catch(() => {
                   /* Register new social account */
-                  ExternalsAuth.shared
-                    .createAccount(authType, referral, accessToken, refreshToken, profile)
+                  ExternalAuthCtrl.createAccount(
+                    authType,
+                    referral,
+                    accessToken,
+                    refreshToken,
+                    profile
+                  )
                     .then((account: ExternalAuthDocument) => {
                       done(null, account);
                     })
@@ -347,8 +344,7 @@ export class External {
             }
 
             /* Register new social account */
-            ExternalsAuth.shared
-              .createAccount(authType, referral, accessToken, refreshToken, profile)
+            ExternalAuthCtrl.createAccount(authType, referral, accessToken, refreshToken, profile)
               .then((account: ExternalAuthDocument) => {
                 done(null, account);
               })
