@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "declaration": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "removeComments": true,
@@ -9,22 +10,20 @@
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "outDir": "./dist",
+    "sourceMap": true,
+    "outDir": "./lib",
     "baseUrl": ".",
     "lib": [
       "ES2018",
       "DOM"
     ],
-    "paths": {
-      "@/*": [
-        "src/*",
-      ]
-    }
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.d.ts"
   ],
   "exclude": [
+    "src/scripts",
     "node_modules",
     "**/*.spec.ts"
   ]
