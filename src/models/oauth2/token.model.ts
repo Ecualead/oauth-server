@@ -118,6 +118,11 @@ export class Token extends BaseModel {
       createdAt: this.createdAt
     };
 
+    /* Set the user name in the user information */
+    if (this.user) {
+      token["user"]["username"] = this.username;
+    }
+
     token.scope = fillTokenTypeScope(token, token.scope);
     return token;
   }

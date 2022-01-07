@@ -7,12 +7,13 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { APPLICATION_TYPE } from "../../constants/application.enum";
-import { BaseModel, Objects } from "@ecualead/server";
-import { getModelForClass, prop, pre, DocumentType, index } from "@typegoose/typegoose";
+import { APPLICATION_TYPE } from "../../constants/oauth2.enum";
+import { BaseModel } from "@ecualead/server";
+import { getModelForClass, prop, DocumentType, index } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { LIFETIME_TYPE } from "../../constants/project.enum";
+import { LIFETIME_TYPE } from "../../constants/oauth2.enum";
 import { Client } from "oauth2-server";
+import { Settings } from "../../controllers/settings.controller";
 
 @index({ type: 1 })
 @index({ canonical: 1 }, { unique: true })
@@ -55,7 +56,6 @@ export class Application extends BaseModel {
           transform: (_doc: any, ret: any) => {
             return {
               id: ret.id,
-              project: ret.project,
               name: ret.name,
               description: ret.description,
               type: ret.type,
@@ -81,13 +81,10 @@ export class Application extends BaseModel {
       grants: this.grants,
       accessTokenLifetime:
         this.type === APPLICATION_TYPE.SERVICE || this.type === APPLICATION_TYPE.MODULE
-          ? -1
-          : Objects.get(this, "project.settings.tokenLifetime.accessToken", LIFETIME_TYPE.MONTH),
-      refreshTokenLifetime: Objects.get(
-        this,
-        "project.settings.tokenLifetime.refreshToken",
-        LIFETIME_TYPE.YEAR
-      ),
+          ? LIFETIME_TYPE.INFINITE
+          : Settings.shared.value?.tokenPolicy?.accessTokenTtl || LIFETIME_TYPE.MONTH,
+      refreshTokenLifetime:
+        Settings.shared.value?.tokenPolicy?.refreshTokenTtl || LIFETIME_TYPE.YEAR,
       scope: this.scope
     };
     return client;

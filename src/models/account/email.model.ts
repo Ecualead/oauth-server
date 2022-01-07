@@ -10,7 +10,7 @@
 import { BaseModel } from "@ecualead/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { VALIDATION_STATUS } from "../../constants/account.enum";
+import { VALIDATION_STATUS } from "../../constants/oauth2.enum";
 import { Account } from "./account.model";
 import { ValidationToken } from "./validation.token.model";
 

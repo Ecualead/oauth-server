@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { prop, index } from "@typegoose/typegoose";
-import { TOKEN_STATUS } from "../../constants/account.enum";
+import { TOKEN_STATUS } from "../../constants/oauth2.enum";
 
 @index({ token: 1 })
 @index({ status: 1 })

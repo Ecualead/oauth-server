@@ -57,8 +57,7 @@ export class AccountReferral {
     next();
   });
 })
-@index({ code: 1 })
-@index({ project: 1, code: 1 }, { unique: true })
+@index({ type: 1 })
 export class Account extends BaseModel {
   @prop()
   name?: string;
