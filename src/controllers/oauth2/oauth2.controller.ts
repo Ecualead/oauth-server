@@ -84,6 +84,7 @@ class OAuth2 {
 
           res.locals["token"] = token;
           res.locals["jwt"] = JWTCtrl.decode(token.accessToken);
+          (req as any).user = res.locals["jwt"];
           next();
         })
         .catch(next);
