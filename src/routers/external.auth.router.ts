@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { EXTERNAL_AUTH_TYPE } from "../constants/oauth2.enum";
+import { EXTERNAL_AUTH_TYPE } from "@ecualead/auth";
 import { AccessPolicyCtrl } from "../controllers/application/access.policy.controller";
 import { ExternalCtrl } from "../controllers/oauth2/external.controller";
 import { OAuth2Ctrl } from "../controllers/oauth2/oauth2.controller";

@@ -9,19 +9,19 @@
  */
 import { CRUD, HTTP_STATUS, Objects } from "@ecualead/server";
 import { ExternalAuthDocument, ExternalAuthModel } from "../../models/account/external.auth.model";
-import {
-  ACCOUNT_STATUS,
-  TOKEN_STATUS,
-  VALIDATION_STATUS,
-  EXTERNAL_AUTH_TYPE
-} from "../../constants/oauth2.enum";
+import { VALIDATION_STATUS } from "../../constants/oauth2.enum";
 import { IconCtrl } from "./icon.controller";
 import { AccountCtrl } from "./account.controller";
 import { AccountDocument } from "../../models/account/account.model";
 import async from "async";
 import { EmailCtrl } from "./email.controller";
 import { externalAuthToStr } from "../../utils/external.auth.util";
-import { AUTH_ERRORS } from "@ecualead/auth";
+import {
+  ACCOUNT_STATUS,
+  AUTH_ERRORS,
+  EXTERNAL_AUTH_TYPE,
+  VALIDATION_TOKEN_STATUS
+} from "@ecualead/auth";
 import { External } from "../oauth2/external.controller";
 
 export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
@@ -99,7 +99,7 @@ export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
                 validation: {
                   token: "",
                   attempts: -1,
-                  status: TOKEN_STATUS.DISABLED,
+                  status: VALIDATION_TOKEN_STATUS.DISABLED,
                   expire: -1
                 },
                 status: email.verified ? VALIDATION_STATUS.CONFIRMED : VALIDATION_STATUS.REGISTERED,

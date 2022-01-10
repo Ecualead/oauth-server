@@ -7,20 +7,18 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ecualead/auth";
+import {
+  ACCOUNT_STATUS,
+  AUTH_ERRORS,
+  EMAIL_TOKEN_TYPE,
+  LIFETIME_TYPE,
+  VALIDATION_TOKEN_STATUS
+} from "@ecualead/auth";
 import { Objects, Tokens, Arrays, HTTP_STATUS, CRUD } from "@ecualead/server";
 import { AccessPolicyCtrl } from "./access.policy.controller";
 import { IconCtrl } from "./icon.controller";
 import { ReferralCodeCtrl } from "./referral.code.controller";
-import {
-  EMAIL_CONFIRMATION,
-  TOKEN_TYPE,
-  LIFETIME_TYPE,
-  ACCOUNT_STATUS,
-  TOKEN_STATUS,
-  SCOPE_PREVENT,
-  VALIDATION_STATUS
-} from "../../constants/oauth2.enum";
+import { EMAIL_CONFIRMATION, SCOPE_PREVENT, VALIDATION_STATUS } from "../../constants/oauth2.enum";
 import { AccountDocument, AccountModel } from "../../models/account/account.model";
 import { EmailCtrl } from "./email.controller";
 import { EmailDocument } from "../../models/account/email.model";
@@ -188,7 +186,7 @@ export class Accounts extends CRUD<AccountDocument> {
       {
         status: VALIDATION_STATUS.CONFIRMED,
         "validation.token": null,
-        "validation.status": TOKEN_STATUS.DISABLED,
+        "validation.status": VALIDATION_TOKEN_STATUS.DISABLED,
         "validation.expire": 0,
         "validation.attempts": 0
       },
@@ -301,9 +299,9 @@ export class Accounts extends CRUD<AccountDocument> {
       const recoverType = Objects.get(
         Settings.shared.value,
         "emailNotifications.token",
-        TOKEN_TYPE.DISABLED
+        EMAIL_TOKEN_TYPE.DISABLED
       );
-      if (recoverType === TOKEN_TYPE.DISABLED) {
+      if (recoverType === EMAIL_TOKEN_TYPE.DISABLED) {
         reject({
           boError: AUTH_ERRORS.RECOVER_NOT_ALLOWED,
           boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN
@@ -318,14 +316,14 @@ export class Accounts extends CRUD<AccountDocument> {
           AccessPolicyCtrl.canSignin(email.account as AccountDocument, email, false)
             .then(() => {
               /* Prepare the recover token */
-              const token = recoverType === TOKEN_TYPE.CODE ? Tokens.short : Tokens.long;
+              const token = recoverType === EMAIL_TOKEN_TYPE.CODE ? Tokens.short : Tokens.long;
 
               /* Register the reset token */
               EmailCtrl.update(
                 email._id,
                 {
                   "validation.token": token,
-                  "validation.status": TOKEN_STATUS.TO_RECOVER,
+                  "validation.status": VALIDATION_TOKEN_STATUS.TO_RECOVER,
                   "validation.expire": Date.now() + LIFETIME_TYPE.DAY,
                   "validation.attempts": 1
                 },
@@ -355,12 +353,12 @@ export class Accounts extends CRUD<AccountDocument> {
             {
               _id: email._id,
               "validation.token": token,
-              "validation.status": TOKEN_STATUS.TO_RECOVER,
+              "validation.status": VALIDATION_TOKEN_STATUS.TO_RECOVER,
               "validation.expire": { $gt: Date.now() },
               "validation.attempts": { $lt: MAX_ATTEMPTS }
             },
             {
-              "validation.status": TOKEN_STATUS.PARTIAL_CONFIRMED
+              "validation.status": VALIDATION_TOKEN_STATUS.PARTIAL_CONFIRMED
             },
             null,
             { populate: ["account"] }
@@ -411,7 +409,8 @@ export class Accounts extends CRUD<AccountDocument> {
                   /* Validate the confirm token */
                   if (
                     Objects.get(email, "validation.token", null) !== token ||
-                    Objects.get(email, "validation.status", -1) !== TOKEN_STATUS.PARTIAL_CONFIRMED
+                    Objects.get(email, "validation.status", -1) !==
+                      VALIDATION_TOKEN_STATUS.PARTIAL_CONFIRMED
                   ) {
                     return reject({
                       boStatus: HTTP_STATUS.HTTP_4XX_FORBIDDEN,
@@ -424,7 +423,7 @@ export class Accounts extends CRUD<AccountDocument> {
                     email._id,
                     {
                       "validation.token": null,
-                      "validation.status": TOKEN_STATUS.DISABLED,
+                      "validation.status": VALIDATION_TOKEN_STATUS.DISABLED,
                       "validation.expire": 0,
                       "validation.attempts": 0
                     },
@@ -461,14 +460,14 @@ export class Accounts extends CRUD<AccountDocument> {
     const recoverType = Objects.get(
       Settings.shared.value,
       "emailNotifications.token",
-      TOKEN_TYPE.DISABLED
+      EMAIL_TOKEN_TYPE.DISABLED
     );
 
     /* Prepare the account reconfirm token token */
-    const token = recoverType === TOKEN_TYPE.CODE ? Tokens.short : Tokens.long;
+    const token = recoverType === EMAIL_TOKEN_TYPE.CODE ? Tokens.short : Tokens.long;
     const update: any = {
       "validation.token": token,
-      "validation.status": TOKEN_STATUS.TO_CONFIRM,
+      "validation.status": VALIDATION_TOKEN_STATUS.TO_CONFIRM,
       "validation.expire": Date.now() + LIFETIME_TYPE.DAY,
       "validation.attempts": 1
     };
@@ -488,9 +487,9 @@ export class Accounts extends CRUD<AccountDocument> {
       const recoverType = Objects.get(
         Settings.shared.value,
         "emailNotifications.token",
-        TOKEN_TYPE.DISABLED
+        EMAIL_TOKEN_TYPE.DISABLED
       );
-      if (recoverType === TOKEN_TYPE.DISABLED) {
+      if (recoverType === EMAIL_TOKEN_TYPE.DISABLED) {
         reject({
           boError: AUTH_ERRORS.RECOVER_NOT_ALLOWED,
           boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE

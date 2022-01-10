@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { prop, index } from "@typegoose/typegoose";
-import { TOKEN_STATUS } from "../../constants/oauth2.enum";
+import { VALIDATION_TOKEN_STATUS } from "@ecualead/auth";
 
 @index({ token: 1 })
 @index({ status: 1 })
@@ -20,7 +20,7 @@ export class ValidationToken {
   @prop({ required: true, default: 0 })
   attempts?: number;
 
-  @prop({ required: true, default: TOKEN_STATUS.DISABLED })
+  @prop({ required: true, default: VALIDATION_TOKEN_STATUS.DISABLED })
   status?: number;
 
   @prop({ required: true, default: 0 })

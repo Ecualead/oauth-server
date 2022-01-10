@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS, OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
+import { AUTH_ERRORS, LIFETIME_TYPE, OAUTH2_TOKEN_TYPE, IUserData, JWTCtrl } from "@ecualead/auth";
 import { Logger, Arrays, HTTP_STATUS, Tokens, Objects } from "@ecualead/server";
 import {
   AuthorizationCode,
@@ -29,9 +29,8 @@ import { ApplicationCtrl } from "../application/application.controller";
 import { ApplicationDocument } from "../../models/application/application.model";
 import { CodeDocument, CodeModel } from "../../models/oauth2/code.model";
 import { TokenModel, TokenDocument } from "../../models/oauth2/token.model";
-import { LIFETIME_TYPE, SCOPE_PREVENT, APPLICATION_TYPE } from "../../constants/oauth2.enum";
+import { SCOPE_PREVENT, APPLICATION_TYPE } from "../../constants/oauth2.enum";
 import { EmailDocument } from "../../models/account/email.model";
-import { IUserData, JWTCtrl } from "../jwt.controller";
 import { Settings } from "../settings.controller";
 
 function prepareScope(scope?: string | string[]): string[] {
@@ -239,7 +238,8 @@ class OAuth2Model
       /* Generate access token */
       const tokenInfo: IUserData = {
         uid: user.id,
-        app: application.id
+        app: application.id,
+        ut: OAUTH2_TOKEN_TYPE.APPLICATION
       };
 
       /* Get access token TTL */
@@ -259,6 +259,7 @@ class OAuth2Model
         tokenInfo["lname2"] = user.lastname2;
         tokenInfo["type"] = user.type;
         tokenInfo["email"] = user["username"];
+        tokenInfo["ut"] = OAUTH2_TOKEN_TYPE.USER;
 
         /* TODO XXX FIX SOCIAL ACCOUNT */
         return EmailCtrl.fetchByEmail(user["username"])
@@ -601,25 +602,25 @@ class OAuth2Model
           })
           .catch(reject);
       }
-      
+
       /* Handle refresh token */
-        token = token as RefreshToken;
-        this._logger.debug(`Revoking refresh token ${token.refreshToken}`);
-        TokenModel.findOneAndUpdate(
-          {
-            refreshToken: token.refreshToken,
-            application: token.client.id,
-            user: token.user.id
-          },
-          {
-            refreshToken: null,
-            refreshTokenExpiresAt: null
-          }
-        )
-          .then((token: TokenDocument) => {
-            resolve(token !== null);
-          })
-          .catch(reject);
+      token = token as RefreshToken;
+      this._logger.debug(`Revoking refresh token ${token.refreshToken}`);
+      TokenModel.findOneAndUpdate(
+        {
+          refreshToken: token.refreshToken,
+          application: token.client.id,
+          user: token.user.id
+        },
+        {
+          refreshToken: null,
+          refreshTokenExpiresAt: null
+        }
+      )
+        .then((token: TokenDocument) => {
+          resolve(token !== null);
+        })
+        .catch(reject);
     });
   }
 

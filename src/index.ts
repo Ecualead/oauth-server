@@ -10,17 +10,12 @@
 
 /* Export constants */
 export {
-  ACCOUNT_STATUS,
-  TOKEN_STATUS,
   EVENT_TYPE,
   VALIDATION_STATUS,
   SCOPE_PREVENT,
   APPLICATION_TYPE,
   NOTIFICATION_TYPE,
-  LIFETIME_TYPE,
-  EMAIL_CONFIRMATION,
-  TOKEN_TYPE,
-  EXTERNAL_AUTH_TYPE
+  EMAIL_CONFIRMATION
 } from "./constants/oauth2.enum";
 
 /* Export controllers */
@@ -46,7 +41,6 @@ export { TwitterCtrl } from "./controllers/oauth2/schemas/twitter.controller";
 export { External, ExternalCtrl } from "./controllers/oauth2/external.controller";
 export { OAuth2Ctrl } from "./controllers/oauth2/oauth2.controller";
 export { OAuth2ModelCtrl } from "./controllers/oauth2/oauth2.model.controller";
-export { JWT, JWTCtrl } from "./controllers/jwt.controller";
 export { Settings } from "./controllers/settings.controller";
 
 /* Export module setings */
@@ -57,7 +51,8 @@ export {
   IExternalAuth,
   IPasswordPolicy,
   ISignKeys,
-  ITokenPolicy
+  ITokenPolicy,
+  IRouterHooks
 } from "./settings";
 
 /* Export data models */
@@ -89,11 +84,8 @@ export {
 } from "./models/oauth2/external.request.model";
 export { Token, TokenDocument, TokenModel } from "./models/oauth2/token.model";
 
-/* Export middlewares */
-export { middleware as FormUrlEncoded } from "./middlewares/from.urlencoded";
-
 /* Export routers */
-export * as OAuthRoutes from "./routers";
+export { OAuth2Router } from "./routers";
 
 /* Export utils */
 export { externalAuthToInt, externalAuthToStr } from "./utils/external.auth.util";

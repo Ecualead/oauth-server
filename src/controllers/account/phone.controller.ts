@@ -7,11 +7,11 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ecualead/auth";
+import { AUTH_ERRORS, VALIDATION_TOKEN_STATUS } from "@ecualead/auth";
 import { CRUD, HTTP_STATUS } from "@ecualead/server";
 import { PhoneDocument, PhoneModel } from "../../models/account/phone.model";
 import { Request, Response, NextFunction } from "express";
-import { TOKEN_STATUS, VALIDATION_STATUS } from "../../constants/oauth2.enum";
+import { VALIDATION_STATUS } from "../../constants/oauth2.enum";
 
 export class Phones extends CRUD<PhoneDocument> {
   private static _instance: Phones;
@@ -79,7 +79,7 @@ export class Phones extends CRUD<PhoneDocument> {
         validation: {
           token: null,
           attempts: 0,
-          status: TOKEN_STATUS.DISABLED,
+          status: VALIDATION_TOKEN_STATUS.DISABLED,
           expire: 0
         },
         status: VALIDATION_STATUS.REGISTERED,

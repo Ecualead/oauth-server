@@ -7,12 +7,11 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ecualead/auth";
+import { ACCOUNT_STATUS, AUTH_ERRORS } from "@ecualead/auth";
 import { Objects, HTTP_STATUS } from "@ecualead/server";
-import { ACCOUNT_STATUS, VALIDATION_STATUS, EMAIL_CONFIRMATION } from "../../constants/oauth2.enum";
+import { VALIDATION_STATUS, EMAIL_CONFIRMATION } from "../../constants/oauth2.enum";
 import { AccountDocument } from "../../models/account/account.model";
 import { EmailDocument } from "../../models/account/email.model";
-import { IOauth2Settings } from "../../settings";
 import { Settings } from "../settings.controller";
 
 export class AccessPolicy {

@@ -7,16 +7,16 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ecualead/auth";
+import {
+  AUTH_ERRORS,
+  EMAIL_TOKEN_TYPE,
+  LIFETIME_TYPE,
+  VALIDATION_TOKEN_STATUS
+} from "@ecualead/auth";
 import { Tokens, CRUD, HTTP_STATUS } from "@ecualead/server";
 import { EmailDocument, EmailModel } from "../../models/account/email.model";
 import { Request, Response, NextFunction } from "express";
-import {
-  TOKEN_STATUS,
-  VALIDATION_STATUS,
-  LIFETIME_TYPE,
-  TOKEN_TYPE
-} from "../../constants/oauth2.enum";
+import { VALIDATION_STATUS } from "../../constants/oauth2.enum";
 import { Settings } from "../settings.controller";
 
 export class Emails extends CRUD<EmailDocument> {
@@ -87,14 +87,14 @@ export class Emails extends CRUD<EmailDocument> {
       const validationToken: any = {
         token: null,
         attempts: 0,
-        status: TOKEN_STATUS.DISABLED,
+        status: VALIDATION_TOKEN_STATUS.DISABLED,
         expire: 0
       };
 
-      if (tokenType !== TOKEN_TYPE.DISABLED) {
-        validationToken.token = tokenType !== TOKEN_TYPE.LINK ? Tokens.short : Tokens.long;
+      if (tokenType !== EMAIL_TOKEN_TYPE.DISABLED) {
+        validationToken.token = tokenType !== EMAIL_TOKEN_TYPE.LINK ? Tokens.short : Tokens.long;
         validationToken.attempts = 0;
-        validationToken.status = TOKEN_STATUS.TO_CONFIRM;
+        validationToken.status = VALIDATION_TOKEN_STATUS.TO_CONFIRM;
         validationToken.expire = Date.now() + LIFETIME_TYPE.DAY;
       }
 

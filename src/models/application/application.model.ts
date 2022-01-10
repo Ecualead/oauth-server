@@ -11,7 +11,7 @@ import { APPLICATION_TYPE } from "../../constants/oauth2.enum";
 import { BaseModel } from "@ecualead/server";
 import { getModelForClass, prop, DocumentType, index } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { LIFETIME_TYPE } from "../../constants/oauth2.enum";
+import { LIFETIME_TYPE } from "@ecualead/auth";
 import { Client } from "oauth2-server";
 import { Settings } from "../../controllers/settings.controller";
 

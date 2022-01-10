@@ -8,7 +8,7 @@
  * permission of the author.
  */
 
-import { EXTERNAL_AUTH_TYPE } from "../constants/oauth2.enum";
+import { EXTERNAL_AUTH_TYPE } from "@ecualead/auth";
 
 export function externalAuthToInt(auth: string): EXTERNAL_AUTH_TYPE {
   auth = auth.toLowerCase();

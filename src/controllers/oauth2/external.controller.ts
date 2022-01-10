@@ -13,10 +13,9 @@ import {
 } from "../../models/oauth2/external.request.model";
 import { EmailDocument } from "../../models/account/email.model";
 import { ExternalAuthDocument } from "../../models/account/external.auth.model";
-import { EXTERNAL_AUTH_TYPE } from "../../constants/oauth2.enum";
 import { AccountDocument } from "../../models/account/account.model";
 import { IExternalAuth } from "../../settings";
-import { AUTH_ERRORS, OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
+import { AUTH_ERRORS, EXTERNAL_AUTH_TYPE, OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
 import { Logger, HTTP_STATUS, Objects } from "@ecualead/server";
 import { Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";

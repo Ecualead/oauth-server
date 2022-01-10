@@ -10,14 +10,13 @@
 import { ClusterServer, Logger } from "@ecualead/server";
 import AsyncLock from "async-lock";
 /* Base components routes */
-import OAuth2Router from "../routers";
+import { OAuth2Router } from "../routers";
 import { ReferralCodeCtrl } from "../controllers/account/referral.code.controller";
-import { AuthenticationCtrl } from "@ecualead/auth";
-import { MailCtrl } from "@ikoabo/mailer";
+import { AuthenticationCtrl, JWTCtrl, EMAIL_TOKEN_TYPE } from "@ecualead/auth";
+import { MailCtrl } from "@ecualead/msg";
 import { IOauth2Settings } from "../settings";
-import { EMAIL_CONFIRMATION, TOKEN_TYPE } from "../constants/oauth2.enum";
+import { EMAIL_CONFIRMATION } from "../constants/oauth2.enum";
 import { Settings } from "../controllers/settings.controller";
-import { JWTCtrl } from "../controllers/jwt.controller";
 
 /* Initialize cluster server */
 const clusterServer = ClusterServer.setup({ running: requestCredentials }, { worker: runWorker });
@@ -51,7 +50,7 @@ const baseSettings: IOauth2Settings = {
     loginEvent: true,
     chPwdEvent: true,
     recoverEvent: true,
-    token: TOKEN_TYPE.LINK
+    token: EMAIL_TOKEN_TYPE.LINK
   },
   externalAuth: [],
   signKeys: {
@@ -72,12 +71,7 @@ function requestCredentials(): Promise<void> {
     /* Load the JWT sign keys */
     JWTCtrl.loadKeys();
 
-    AuthenticationCtrl.setup(
-      process.env.AUTH_SERVER,
-      process.env.AUTH_PROJECT,
-      process.env.AUTH_AUDIENCE,
-      process.env.AUTH_KEY
-    );
+    AuthenticationCtrl.setup(process.env.AUTH_SERVER);
     AuthenticationCtrl.authService(process.env.AUTH_ID, process.env.AUTH_SECRET)
       .catch((err: any) => {
         logger.error("Invalid authentication configuration", err);
@@ -99,22 +93,20 @@ function runWorker(worker: any): Promise<void> {
     worker.on("message", (msg: any) => {
       switch (msg.action) {
         case "get/code":
-          lock.acquire(
-            "request-code",
-            (done) => {
+          lock
+            .acquire("request-code", (done) => {
               /* Generate the new vCode */
               ReferralCodeCtrl.code
                 .then((value: string) => {
                   done(null, value);
                 })
                 .catch(done);
-            },
-            (err, value: string) => {
+            })
+            .catch((err) => {
               /* Send response to slave service */
-              worker.send({ action: "get/code", err: err, code: value });
+              worker.send({ action: "get/code", err: err, code: null });
               resolve();
-            }
-          );
+            });
           break;
       }
     });

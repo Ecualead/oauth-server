@@ -11,7 +11,7 @@ import { BaseModel } from "@ecualead/server";
 import { prop, index, Ref, getModelForClass, DocumentType, Severity } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { Account } from "./account.model";
-import { EXTERNAL_AUTH_TYPE } from "../../constants/oauth2.enum";
+import { EXTERNAL_AUTH_TYPE } from "@ecualead/auth";
 
 @index({ account: 1 })
 @index({ type: 1 })

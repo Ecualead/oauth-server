@@ -7,9 +7,9 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { JWTCtrl } from "../controllers/jwt.controller";
+import { JWTCtrl, EMAIL_TOKEN_TYPE } from "@ecualead/auth";
 import { Settings } from "../controllers/settings.controller";
-import { EMAIL_CONFIRMATION, TOKEN_TYPE } from "../constants/oauth2.enum";
+import { EMAIL_CONFIRMATION } from "../constants/oauth2.enum";
 import { IOauth2Settings } from "../settings";
 
 const baseSettings: IOauth2Settings = {
@@ -38,7 +38,7 @@ const baseSettings: IOauth2Settings = {
     loginEvent: true,
     chPwdEvent: true,
     recoverEvent: true,
-    token: TOKEN_TYPE.LINK
+    token: EMAIL_TOKEN_TYPE.LINK
   },
   externalAuth: [],
   signKeys: {

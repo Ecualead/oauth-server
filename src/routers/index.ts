@@ -18,4 +18,4 @@ registerAccount(router, "");
 registerOAuth2(router, "");
 registerExternalAuth(router, "/external");
 
-export default router;
+export const OAuth2Router = router;

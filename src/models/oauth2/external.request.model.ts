@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { EXTERNAL_AUTH_TYPE } from "../../constants/oauth2.enum";
+import { EXTERNAL_AUTH_TYPE } from "@ecualead/auth";
 import { BaseModel } from "@ecualead/server";
 import { prop, Ref, index, getModelForClass, DocumentType } from "@typegoose/typegoose";
 import mongoose from "mongoose";
