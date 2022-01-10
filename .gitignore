@@ -4,6 +4,7 @@
 .nyc_output
 codes
 build
+lib
 dist
 node_modules
 coverage
