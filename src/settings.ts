@@ -7,7 +7,9 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { EMAIL_CONFIRMATION, EXTERNAL_AUTH_TYPE, TOKEN_TYPE } from "./constants/oauth2.enum";
+import { EMAIL_CONFIRMATION } from "./constants/oauth2.enum";
+import { EXTERNAL_AUTH_TYPE, EMAIL_TOKEN_TYPE } from "@ecualead/auth";
+import {Request, Response, NextFunction} from "express";
 
 export interface IExternalAuth {
   name: string;
@@ -51,7 +53,14 @@ export interface IEmailNotifications {
   loginEvent?: boolean;
   chPwdEvent?: boolean;
   recoverEvent?: boolean;
-  token: TOKEN_TYPE;
+  token: EMAIL_TOKEN_TYPE;
+}
+
+export interface IRouterHooks{
+  postRegister?: (req: Request, res: Response, next: NextFunction) => void;
+  postConfirm?: (req: Request, res: Response, next: NextFunction) => void;
+  postToken?: (req: Request, res: Response, next: NextFunction) => void;
+  postProfile?: (req: Request, res: Response, next: NextFunction) => void;
 }
 
 export interface IOauth2Settings {
@@ -66,4 +75,5 @@ export interface IOauth2Settings {
 
   externalAuth?: IExternalAuth[];
   signKeys: ISignKeys;
+  routerHooks: IRouterHooks;
 }

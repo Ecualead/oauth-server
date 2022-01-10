@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { ResponseHandler, Objects } from "@ecualead/server";
+import { ResponseHandler, Objects, FormURLEncoded } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import {
   AuthorizationCode,
@@ -18,8 +18,8 @@ import {
 import { OAuth2Ctrl } from "../controllers/oauth2/oauth2.controller";
 import { AccessPolicyCtrl } from "../controllers/application/access.policy.controller";
 import { OAuth2ModelCtrl } from "../controllers/oauth2/oauth2.model.controller";
-import { JWTCtrl } from "../controllers/jwt.controller";
-import { middleware as FormUrlEncoded } from "../middlewares/from.urlencoded";
+import { Settings } from "../controllers/settings.controller";
+import { JWTCtrl } from "@ecualead/auth";
 
 export function register(router: Router, prefix: string) {
   const options = {
@@ -62,7 +62,7 @@ export function register(router: Router, prefix: string) {
 
   router.post(
     `${prefix}/token`,
-    FormUrlEncoded,
+    FormURLEncoded,
     (req: Request, res: Response, next: NextFunction) => {
       const request = new ORequest(req);
       const response = new OResponse(res);
@@ -92,6 +92,14 @@ export function register(router: Router, prefix: string) {
             .catch(next);
         })
         .catch(next);
+    },
+    (req: Request, res: Response, next: NextFunction) => {
+      /* Check for router hook */
+      if (Settings.shared.value?.routerHooks?.postToken) {
+        return Settings.shared.value.routerHooks.postToken(req, res, next);
+      }
+
+      next();
     },
     OAuth2Ctrl.handleError,
     ResponseHandler.success,

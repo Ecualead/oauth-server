@@ -13,7 +13,8 @@ import {
   ResponseHandler,
   ValidateObjectId,
   Objects,
-  HTTP_STATUS
+  HTTP_STATUS,
+  FormURLEncoded
 } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Request as ORequest, Response as OResponse, Token } from "oauth2-server";
@@ -35,7 +36,7 @@ import { NotificationCtrl } from "../controllers/notification/notification.contr
 import { IconCtrl } from "../controllers/account/icon.controller";
 import { EmailCtrl } from "../controllers/account/email.controller";
 import { PhoneCtrl } from "../controllers/account/phone.controller";
-import { middleware as FormUrlEncoded } from "../middlewares/from.urlencoded";
+import { Settings } from "../controllers/settings.controller";
 
 export function register(router: Router, prefix: string) {
   /**
@@ -46,7 +47,7 @@ export function register(router: Router, prefix: string) {
    */
   router.post(
     `${prefix}/register`,
-    FormUrlEncoded,
+    FormURLEncoded,
     Validator.joi(RegisterValidation),
     OAuth2Ctrl.authenticate(["application", "register"]),
     (req: Request, res: Response, next: NextFunction) => {
@@ -118,6 +119,14 @@ export function register(router: Router, prefix: string) {
         })
         .catch(next);
     },
+    (req: Request, res: Response, next: NextFunction) => {
+      /* Check for router hook */
+      if (Settings.shared.value?.routerHooks?.postRegister) {
+        return Settings.shared.value.routerHooks.postRegister(req, res, next);
+      }
+
+      next();
+    },
     OAuth2Ctrl.handleError,
     ResponseHandler.success,
     ResponseHandler.error
@@ -131,7 +140,7 @@ export function register(router: Router, prefix: string) {
    */
   router.post(
     `${prefix}/confirm`,
-    FormUrlEncoded,
+    FormURLEncoded,
     Validator.joi(AccountValidation),
     OAuth2Ctrl.authenticate(["application", "confirm"]),
     (req: Request, res: Response, next: NextFunction) => {
@@ -153,6 +162,14 @@ export function register(router: Router, prefix: string) {
         })
         .catch(next);
     },
+    (req: Request, res: Response, next: NextFunction) => {
+      /* Check for router hook */
+      if (Settings.shared.value?.routerHooks?.postConfirm) {
+        return Settings.shared.value.routerHooks.postConfirm(req, res, next);
+      }
+
+      next();
+    },
     OAuth2Ctrl.handleError,
     ResponseHandler.success,
     ResponseHandler.error
@@ -166,7 +183,7 @@ export function register(router: Router, prefix: string) {
    */
   router.post(
     `${prefix}/resend`,
-    FormUrlEncoded,
+    FormURLEncoded,
     (req: Request, res: Response, next: NextFunction) => {
       const request = new ORequest(req);
       const response = new OResponse(res);
@@ -242,7 +259,7 @@ export function register(router: Router, prefix: string) {
    */
   router.post(
     `${prefix}/recover/request`,
-    FormUrlEncoded,
+    FormURLEncoded,
     Validator.joi(EmailValidation),
     OAuth2Ctrl.authenticate(["application", "recover"]),
     (req: Request, res: Response, next: NextFunction) => {
@@ -278,7 +295,7 @@ export function register(router: Router, prefix: string) {
    */
   router.post(
     `${prefix}/recover/validate`,
-    FormUrlEncoded,
+    FormURLEncoded,
     Validator.joi(AccountValidation),
     OAuth2Ctrl.authenticate(["application", "recover"]),
     (req: Request, res: Response, next: NextFunction) => {
@@ -303,7 +320,7 @@ export function register(router: Router, prefix: string) {
    */
   router.post(
     `${prefix}/recover/store`,
-    FormUrlEncoded,
+    FormURLEncoded,
     Validator.joi(RecoverValidation),
     OAuth2Ctrl.authenticate(["application", "recover"]),
     (req: Request, res: Response, next: NextFunction) => {
@@ -358,6 +375,14 @@ export function register(router: Router, prefix: string) {
           next();
         })
         .catch(next);
+    },
+    (req: Request, res: Response, next: NextFunction) => {
+      /* Check for router hook */
+      if (Settings.shared.value?.routerHooks?.postProfile) {
+        return Settings.shared.value.routerHooks.postProfile(req, res, next);
+      }
+
+      next();
     },
     OAuth2Ctrl.handleError,
     ResponseHandler.success,
@@ -423,7 +448,7 @@ export function register(router: Router, prefix: string) {
    */
   router.put(
     `${prefix}/password`,
-    FormUrlEncoded,
+    FormURLEncoded,
     Validator.joi(PassowrdChangeValidation),
     OAuth2Ctrl.authenticate(["user"]),
     (req: Request, res: Response, next: NextFunction) => {
