@@ -52,9 +52,8 @@ class MailNotification extends BaseNotification {
   private _getToken(credential: EmailDocument, payload?: any): string {
     /* Fetch the user account token to be sent */
     let token: string = Objects.get(payload, "token");
-    const email: string = Objects.get(payload, "email");
     if (!token) {
-      token = Objects.get(credential, "token.token");
+      token = Objects.get(credential, "validation.token");
     }
     return token;
   }
