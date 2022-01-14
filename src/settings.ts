@@ -61,6 +61,7 @@ export interface IRouterHooks{
   postConfirm?: (req: Request, res: Response, next: NextFunction) => void;
   postToken?: (req: Request, res: Response, next: NextFunction) => void;
   postProfile?: (req: Request, res: Response, next: NextFunction) => void;
+  postProfileUpdate?: (req: Request, res: Response, next: NextFunction) => void;
 }
 
 export interface IOauth2Settings {

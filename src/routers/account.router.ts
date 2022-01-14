@@ -435,6 +435,14 @@ export function register(router: Router, prefix: string) {
         })
         .catch(next);
     },
+    (req: Request, res: Response, next: NextFunction) => {
+      /* Check for router hook */
+      if (Settings.shared.value?.routerHooks?.postProfileUpdate) {
+        return Settings.shared.value.routerHooks.postProfileUpdate(req, res, next);
+      }
+
+      next();
+    },
     OAuth2Ctrl.handleError,
     ResponseHandler.success,
     ResponseHandler.error
