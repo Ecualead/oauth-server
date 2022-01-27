@@ -88,6 +88,7 @@ export class External {
 
   public doAuthenticate(reqId: string, settings: IExternalAuth, options: any = {}) {
     return (req: Request, res: Response, next: NextFunction) => {
+      this._logger.debug("External autentication", { request: reqId, external: settings.name });
       /* Initialize the social network strategy */
       this._setupSocialStrategy(reqId, settings);
 
@@ -98,6 +99,8 @@ export class External {
         /* Check if there were some errors */
         if (err) {
           this._logger.error("Error authenticating social network", {
+            external: settings.name,
+            request: reqId,
             error: err
           });
 
@@ -120,6 +123,11 @@ export class External {
 
         /* When no user is given there is an unknown error */
         if (!user) {
+          this._logger.error("No user given error", {
+            external: settings.name,
+            request: reqId
+          });
+
           /* Remove the passport strategy */
           this._clearStrategy(reqId);
 
@@ -130,6 +138,11 @@ export class External {
         }
 
         /* Store user information and call next middleware */
+        this._logger.debug("User authenticated", {
+          external: settings.name,
+          request: reqId,
+          user: user
+        });
         req["user"] = user;
         next();
       })(req, res, next);
@@ -146,14 +159,14 @@ export class External {
   public authenticateSocialAccount(request: ExternalRequestDocument, user: any): Promise<Token> {
     return new Promise<Token>((resolve, reject) => {
       this._logger.debug("Authenticating user account", {
-        account: Objects.get(request, "account.id")
+        account: user.account
       });
 
       /* Look for the user account profile */
       const client: any = Objects.get(request, "application");
 
       /* Prepare user account */
-      const account: any = user.account.id;
+      const account: any = user.account;
       account["isSocial"] = true;
 
       /* Generate the access token */
@@ -174,7 +187,7 @@ export class External {
               ),
               scope: [],
               client: client,
-              user: user,
+              user: account,
               type: OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH
             };
             /* Save the generated token */
@@ -265,12 +278,22 @@ export class External {
     profile: any,
     done: (error: any, user?: any) => void
   ) {
+    this._logger.debug("External user authentication", {
+      external: External.toStr(authType),
+      profile: profile
+    });
+    
     /* Find the request state */
     const state = Objects.get(req, "query.state", "").toString();
     ExternalRequestModel.findById(state)
       .populate("account")
       .then((request: ExternalRequestDocument) => {
         if (!request || External.toType(request.external) !== authType) {
+          this._logger.error("External request mismatch", {
+            request: state,
+            expected: authType,
+            received: External.toType(request.external)
+          });
           return done({
             boError: AUTH_ERRORS.INVALID_SOCIAL_REQUEST,
             boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED

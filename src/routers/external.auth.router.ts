@@ -30,6 +30,25 @@ import { Settings } from "../controllers/settings.controller";
 import { IExternalAuth } from "../settings";
 import mongoose from "mongoose";
 
+function externaAuthError(err: any, _req: Request, res: Response, next: NextFunction) {
+  /* Get the social network request */
+  const request: ExternalRequestDocument = Objects.get(res, "locals.request");
+  if (!request) {
+    return next({
+      boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+      boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
+    });
+  }
+
+  const error = Objects.get(err, "boError.value", AUTH_ERRORS.UNKNOWN_AUTH_SERVER_ERROR.value);
+  const status = Objects.get(
+    err,
+    "boError.status",
+    Objects.get(err, "boStatus", HTTP_STATUS.HTTP_4XX_BAD_REQUEST)
+  );
+  res.redirect(`${request.redirect}?status=${status}&error=${error}`);
+}
+
 export function register(router: Router, prefix: string) {
   router.get(
     `${prefix}/:external`,
@@ -97,22 +116,8 @@ export function register(router: Router, prefix: string) {
       );
     },
     ResponseHandler.errorParse,
-    (err: any, _req: Request, res: Response, next: NextFunction) => {
-      /* Get the social network request */
-      const request: ExternalRequestDocument = Objects.get(res, "locals.request");
-      if (!request) {
-        return next({
-          boError: AUTH_ERRORS.INVALID_CREDENTIALS,
-          boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
-        });
-      }
-
-      res.redirect(
-        `${request.redirect}?status=${err.boStatus || HTTP_STATUS.HTTP_4XX_BAD_REQUEST}&error=${
-          err.boError
-        }`
-      );
-    }
+    externaAuthError,
+    ResponseHandler.error
   );
 
   router.get(
@@ -185,29 +190,15 @@ export function register(router: Router, prefix: string) {
             .then(() => {
               /* Return the access token */
               return res.redirect(
-                `${request.redirect}?status=${HTTP_STATUS.HTTP_2XX_CREATED}&at=${token.accessToken}&rt=${token.refreshToken}`
+                `${request.redirect}?status=${HTTP_STATUS.HTTP_2XX_OK}&at=${token.accessToken}&rt=${token.refreshToken}`
               );
             })
             .catch(next);
         })
         .catch(next);
     },
-    (err: any, _req: Request, res: Response, next: NextFunction) => {
-      /* Get the social network request */
-      const request: ExternalRequestDocument = Objects.get(res, "locals.request");
-      if (!request) {
-        return next({
-          boError: AUTH_ERRORS.INVALID_CREDENTIALS,
-          boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
-        });
-      }
-
-      res.redirect(
-        `${request.redirect}?status=${err.boStatus || HTTP_STATUS.HTTP_4XX_BAD_REQUEST}&error=${
-          err.boError
-        }`
-      );
-    },
+    ResponseHandler.errorParse,
+    externaAuthError,
     ResponseHandler.error
   );
 
@@ -253,9 +244,8 @@ export function register(router: Router, prefix: string) {
         })
         .catch(next);
     },
-    (err: any, req: Request, res: Response, next: NextFunction) => {
-      next(err);
-    },
+    ResponseHandler.errorParse,
+    externaAuthError,
     ResponseHandler.error,
     ResponseHandler.success
   );

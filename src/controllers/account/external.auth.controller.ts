@@ -234,7 +234,7 @@ export class ExternalsAuth extends CRUD<ExternalAuthDocument> {
     profile: any
   ): Promise<ExternalAuthDocument> {
     return new Promise<ExternalAuthDocument>((resolve, reject) => {
-      this._logger.debug("Store external auth credentials", {
+      this._logger.debug("Update external account auth credentials", {
         account: account.id,
         type: externalAuthToStr(authType),
         referral: referral
