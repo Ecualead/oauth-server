@@ -11,11 +11,15 @@ import passport from "passport";
 import { Strategy as FacebookStrategy } from "passport-facebook";
 import { ExternalAuthSchema } from "./base.controller";
 import { IExternalAuth } from "../../../settings";
+import { createHmac } from "crypto";
+import { Logger } from "@ecualead/server";
+
+const logger = new Logger("FacebookOAuth2");
 
 /**
  * Facebook social network startegy handler
  */
-class ExternalAuthFacebook extends ExternalAuthSchema {
+export class ExternalAuthFacebook extends ExternalAuthSchema {
   private static _instance: ExternalAuthFacebook;
 
   /**
@@ -58,14 +62,17 @@ class ExternalAuthFacebook extends ExternalAuthSchema {
    * Get social profile id
    */
   public id(profile: any): string {
-    /* TODO XXX Handle External auth ID */
-    return "HandleID";
+    return profile["id"];
   }
 
   /**
    * Get social profile first name
    */
   public name(profile: any): string {
+    if (profile["first_name"]) {
+      return profile["first_name"];
+    }
+
     const names: string[] = profile.displayName ? profile.displayName.split(" ") : [];
     return names.length > 0 ? names[0] : "Unknown";
   }
@@ -74,6 +81,10 @@ class ExternalAuthFacebook extends ExternalAuthSchema {
    * Get social profile last name
    */
   public lastname(profile: any): string {
+    if (profile["last_name"]) {
+      return profile["last_name"];
+    }
+
     const names: string[] = profile.displayName ? profile.displayName.split(" ") : [];
     let response = "Unknown";
     if (names.length > 1) {
@@ -86,15 +97,44 @@ class ExternalAuthFacebook extends ExternalAuthSchema {
   /**
    * Get social profile email
    */
-  public email(_profile: any): string {
-    return null;
+  public email(profile: any): string {
+    return profile["email"];
   }
 
   /**
    * Get social profile phone
    */
-  public phone(_profile: any): string {
-    return null;
+  public phone(profile: any): string {
+    return profile["phone"];
+  }
+
+  private static base64Decode(str: string): string {
+    const tmp = str.replace(/-/g, "+").replace(/_/g, "/");
+    return Buffer.from(tmp, "base64").toString("utf8");
+  }
+
+  public static decodeSignedRequest(signedRequest: string, secret: string): any {
+    const request = signedRequest.split(".", 2);
+    if (request.length !== 2) {
+      logger.error("Invalid signed request", signedRequest);
+      return null;
+    }
+
+    const sig = ExternalAuthFacebook.base64Decode(request[0]);
+    const data = JSON.parse(ExternalAuthFacebook.base64Decode(request[1]));
+
+    const expectedSig = createHmac("sha256", secret).update(request[1]).digest("base64");
+    if (sig !== expectedSig) {
+      logger.error("Signature mismatch", {
+        request: signedRequest,
+        sig: sig,
+        data: data,
+        expectedSig: expectedSig
+      });
+      return null;
+    }
+
+    return data;
   }
 }
 
