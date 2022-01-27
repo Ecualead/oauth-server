@@ -37,7 +37,7 @@ export class AccessPolicy {
    */
   public canSignin(
     user: AccountDocument,
-    email: EmailDocument,
+    email?: EmailDocument,
     social?: boolean
   ): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {

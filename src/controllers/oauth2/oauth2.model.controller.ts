@@ -522,18 +522,28 @@ class OAuth2Model
 
               /* Check if the user is registered into the application */
               if (token.user) {
-                return EmailCtrl.fetchByEmail(token.username)
-                  .then((userEmail: EmailDocument) => {
-                    /* Check user signin policy */
-                    AccessPolicyCtrl.canSignin(
-                      userEmail.account as AccountDocument,
-                      userEmail,
-                      token.type === OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH
-                    )
-                      .then(() => {
-                        resolve(token.toToken());
-                      })
-                      .catch(reject);
+                /* Validate non social accounts */
+                if (token.type !== OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH) {
+                  return EmailCtrl.fetchByEmail(token.username)
+                    .then((userEmail: EmailDocument) => {
+                      /* Check user signin policy */
+                      AccessPolicyCtrl.canSignin(
+                        userEmail.account as AccountDocument,
+                        userEmail,
+                        false
+                      )
+                        .then(() => {
+                          resolve(token.toToken());
+                        })
+                        .catch(reject);
+                    })
+                    .catch(reject);
+                }
+
+                /* Validate social account */
+                return AccessPolicyCtrl.canSignin(token.user as AccountDocument, null, true)
+                  .then(() => {
+                    resolve(token.toToken());
                   })
                   .catch(reject);
               }
