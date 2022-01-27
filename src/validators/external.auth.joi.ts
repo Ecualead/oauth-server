@@ -10,7 +10,7 @@
 import { Joi } from "@ecualead/server";
 
 export const ExternalAuthValidation = Joi.object().keys({
-  external: Joi.objectId().required()
+  external: Joi.string().valid("facebook", "google").required()
 });
 
 export const ExternalAuthStateValidation = Joi.object().keys({
@@ -18,11 +18,13 @@ export const ExternalAuthStateValidation = Joi.object().keys({
   code: Joi.string().allow("").optional(),
   scope: Joi.string().allow("").optional(),
   authuser: Joi.string().allow("").optional(),
+  hd: Joi.string().allow("").optional(),
   prompt: Joi.string().allow("").optional()
 });
 
 export const ExternalAuthParamsValidation = Joi.object().keys({
   token: Joi.string().required(),
   redirect: Joi.string().required(),
-  type: Joi.number().integer().optional()
+  type: Joi.number().integer().optional(),
+  parent: Joi.string().allow(null).optional()
 });
