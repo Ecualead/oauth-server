@@ -27,6 +27,7 @@ import { ExternalAuthSchema } from "./schemas/base.controller";
 import { FacebookCtrl } from "./schemas/facebook.controller";
 import { GoogleCtrl } from "./schemas/google.controller";
 import { TwitterCtrl } from "./schemas/twitter.controller";
+import { Settings } from "../settings.controller";
 
 export class External {
   private static _instance: External;
@@ -59,13 +60,41 @@ export class External {
     throw "Invalid external auth schema";
   }
 
-  public doAuthenticate(request: ExternalRequestDocument, options = {}) {
+  public static toStr(type: EXTERNAL_AUTH_TYPE): string {
+    switch (type) {
+      case EXTERNAL_AUTH_TYPE.FACEBOOK:
+        return "facebook";
+      case EXTERNAL_AUTH_TYPE.GOOGLE:
+        return "google";
+      case EXTERNAL_AUTH_TYPE.TWITTER:
+        return "twitter";
+    }
+
+    throw "Invalid external auth schema";
+  }
+
+  public static toType(name: string): EXTERNAL_AUTH_TYPE {
+    switch (name) {
+      case "facebook":
+        return EXTERNAL_AUTH_TYPE.FACEBOOK;
+      case "google":
+        return EXTERNAL_AUTH_TYPE.GOOGLE;
+      case "twitter":
+        return EXTERNAL_AUTH_TYPE.TWITTER;
+    }
+
+    throw "Invalid external auth schema";
+  }
+
+  public doAuthenticate(reqId: string, settings: IExternalAuth, options: any = {}) {
     return (req: Request, res: Response, next: NextFunction) => {
       /* Initialize the social network strategy */
-      this._setupSocialStrategy(request);
+      this._setupSocialStrategy(reqId, settings);
+
+      options["state"] = reqId;
 
       /* Authenticate against social network */
-      passport.authenticate(request.id, options, (err, user, _info) => {
+      passport.authenticate(reqId, options, (err, user, _info) => {
         /* Check if there were some errors */
         if (err) {
           this._logger.error("Error authenticating social network", {
@@ -73,7 +102,7 @@ export class External {
           });
 
           /* Remove the passport strategy */
-          this._clearStrategy(request.id);
+          this._clearStrategy(reqId);
 
           /* Check for oauth errors */
           if (err["oauthError"] || !err.code || !Number.isInteger(err.code)) {
@@ -92,7 +121,7 @@ export class External {
         /* When no user is given there is an unknown error */
         if (!user) {
           /* Remove the passport strategy */
-          this._clearStrategy(request.id);
+          this._clearStrategy(reqId);
 
           return next({
             boError: AUTH_ERRORS.ACCOUNT_NOT_REGISTERED,
@@ -124,10 +153,8 @@ export class External {
       const client: any = Objects.get(request, "application");
 
       /* Prepare user account */
-      const account: any = {
-        id: user.account.id,
-        isSocial: true
-      };
+      const account: any = user.account.id;
+      account["isSocial"] = true;
 
       /* Generate the access token */
       OAuth2ModelCtrl.generateAccessToken(client, account, []).then((accessToken: string) => {
@@ -176,20 +203,23 @@ export class External {
     });
 
     /* Remove the social network request */
-    ExternalRequestModel.findOneAndRemove({ _id: request }).then(
-      (value: ExternalRequestDocument) => {
-        if (value) {
-          try {
-            passport.unuse(request);
-          } catch (err) {
-            this._logger.error("Unknown error removing startegy", {
-              request: value,
-              error: err
-            });
-          }
+    ExternalRequestModel.findOneAndRemove({ _id: request })
+      .catch((err) => {
+        this._logger.error("Error removing the external request", {
+          request: request,
+          error: err
+        });
+      })
+      .finally(() => {
+        try {
+          passport.unuse(request);
+        } catch (err) {
+          this._logger.error("Error removing passport strategy", {
+            request: request,
+            error: err
+          });
         }
-      }
-    );
+      });
   }
 
   /**
@@ -197,7 +227,7 @@ export class External {
    *
    * @param request External auth request information
    */
-  private _setupSocialStrategy(request: ExternalRequestDocument) {
+  private _setupSocialStrategy(reqId: string, settings: IExternalAuth) {
     /* Handler strategy response function */
     const fnSocialStrategy = (
       req: Request,
@@ -206,29 +236,21 @@ export class External {
       profile: any,
       done: (error: any, user?: any) => void
     ) => {
-      this._doSocialNetwork(
-        (request.settings as IExternalAuth).type,
-        request.referral,
-        req,
-        token,
-        refreshToken,
-        profile,
-        done
-      );
+      this._doSocialNetwork(settings.type, req, token, refreshToken, profile, done);
     };
 
     /* Prepare the callback URI */
-    const callbackURI = `${process.env.AUTH_SERVER}/v1/oauth/external/${
-      (request.settings as IExternalAuth).type
-    }/success`;
+    const callbackURI = `${Settings.shared.value.oauth2BaseUrl}/external/${settings.name}/done`;
 
     /* Initialize the passport strategy for the given network type */
-    const strategy: passport.Strategy = External.getByType(
-      (request.settings as IExternalAuth).type
-    ).setup(request.settings as IExternalAuth, callbackURI, fnSocialStrategy);
+    const strategy: passport.Strategy = External.getByType(settings.type).setup(
+      settings,
+      callbackURI,
+      fnSocialStrategy
+    );
 
     /* Register the passport strategy */
-    passport.use(request.id, strategy);
+    passport.use(reqId, strategy);
   }
 
   /**
@@ -237,7 +259,6 @@ export class External {
    */
   private _doSocialNetwork(
     authType: EXTERNAL_AUTH_TYPE,
-    referral: string,
     req: Request,
     accessToken: string,
     refreshToken: string,
@@ -248,12 +269,8 @@ export class External {
     const state = Objects.get(req, "query.state", "").toString();
     ExternalRequestModel.findById(state)
       .populate("account")
-      .populate("externalAuth")
       .then((request: ExternalRequestDocument) => {
-        if (
-          !request ||
-          Objects.get(request, "externalAuth.type", EXTERNAL_AUTH_TYPE.UNKNOWN) !== authType
-        ) {
+        if (!request || External.toType(request.external) !== authType) {
           return done({
             boError: AUTH_ERRORS.INVALID_SOCIAL_REQUEST,
             boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
@@ -284,7 +301,7 @@ export class External {
             ExternalAuthCtrl.updateAccount(
               authType,
               account,
-              referral,
+              request.referral,
               accessToken,
               refreshToken,
               profile
@@ -330,7 +347,7 @@ export class External {
                   /* Register new social account */
                   ExternalAuthCtrl.createAccount(
                     authType,
-                    referral,
+                    request.referral,
                     accessToken,
                     refreshToken,
                     profile
@@ -343,7 +360,13 @@ export class External {
             }
 
             /* Register new social account */
-            ExternalAuthCtrl.createAccount(authType, referral, accessToken, refreshToken, profile)
+            ExternalAuthCtrl.createAccount(
+              authType,
+              request.referral,
+              accessToken,
+              refreshToken,
+              profile
+            )
               .then((account: ExternalAuthDocument) => {
                 done(null, account);
               })

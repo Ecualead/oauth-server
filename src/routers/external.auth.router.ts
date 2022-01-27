@@ -24,15 +24,13 @@ import { AUTH_ERRORS } from "@ecualead/auth";
 import { Validator, ResponseHandler, HTTP_STATUS, Objects } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
+import { ExternalAuthFacebook } from "../controllers/oauth2/schemas/facebook.controller";
+import { ExternalAuthCtrl } from "../controllers/account/external.auth.controller";
+import { Settings } from "../controllers/settings.controller";
+import { IExternalAuth } from "../settings";
+import mongoose from "mongoose";
 
 export function register(router: Router, prefix: string) {
-  /**
-   * @api {get} /v1/oauth/external/:external Request external authentication
-   * @apiVersion 2.0.0
-   * @apiName ExternalAuthRequest
-   * @apiGroup External Authentication
-   *
-   */
   router.get(
     `${prefix}/:external`,
     Validator.joi(ExternalAuthValidation, "params"),
@@ -44,14 +42,11 @@ export function register(router: Router, prefix: string) {
       OAuth2Ctrl.authenticate()(req, res, next);
     },
     (req: Request, res: Response, next: NextFunction) => {
-      const authType: EXTERNAL_AUTH_TYPE = Objects.get(
-        res,
-        "locals.external.type",
-        EXTERNAL_AUTH_TYPE.UNKNOWN
-      );
+      const external = req.params["external"];
       const token: string = Objects.get(req, "query.token", "").toString();
       const redirect: string = Objects.get(req, "query.redirect", "").toString();
       const type: number = parseInt(Objects.get(req, "query.type", "0"));
+      const parent: string = Objects.get(req, "query.parent");
 
       /* Check if user id is valid user account */
       const appId = Objects.get(res, "locals.token.client.id").toString();
@@ -60,19 +55,28 @@ export function register(router: Router, prefix: string) {
         userId = null;
       }
 
+      /* Look for the external settigns */
+      const settings: IExternalAuth[] = Settings.shared.value.externalAuth?.filter(
+        (item: IExternalAuth) => item.name === external
+      );
+      if (settings?.length !== 1) {
+        return next(AUTH_ERRORS.INVALID_SOCIAL_REQUEST);
+      }
+      res.locals["settings"] = settings[0];
+
       /* Temporally store request data to allow callback */
       ExternalRequestModel.create({
         token: token,
         type: type,
+        parent: parent,
         application: appId,
         account: userId,
         redirect: redirect,
-        externalAuth: Objects.get(res, "locals.external._id")
+        external: external
       })
         .then((request: ExternalRequestDocument) => {
           request.application = Objects.get(res, "locals.token.client");
           request.account = Objects.get(res, "locals.token.user");
-          request.settings = Objects.get(res, "locals.external");
 
           /* Pass the object to the next middleware */
           res.locals["request"] = request;
@@ -82,10 +86,15 @@ export function register(router: Router, prefix: string) {
     },
     (req: Request, res: Response, next: NextFunction) => {
       /* Calling social network authentication with callback reference */
-      ExternalCtrl.doAuthenticate(Objects.get(res, "locals.request"), {
-        state: Objects.get(res, "locals.request.id"),
-        scope: Objects.get(res, "locals.request.externalAuth.scope")
-      })(req, res, next);
+      const options: any = {};
+      if (res.locals["settings"].scope) {
+        options["scope"] = res.locals["settings"].scope;
+      }
+      ExternalCtrl.doAuthenticate(res.locals["request"].id, res.locals["settings"], options)(
+        req,
+        res,
+        next
+      );
     },
     ResponseHandler.errorParse,
     (err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -106,29 +115,25 @@ export function register(router: Router, prefix: string) {
     }
   );
 
-  /**
-   * @api {get} /v1/oauth/external/:external/callback External authentication success callback
-   * @apiVersion 2.0.0
-   * @apiName ExternalAuthSuccessCallbackState
-   * @apiGroup External Authentication
-   *
-   */
   router.get(
-    `${prefix}/:external/success`,
+    `${prefix}/:external/done`,
     Validator.joi(ExternalAuthValidation, "params"),
     Validator.joi(ExternalAuthStateValidation, "query"),
     (req: Request, res: Response, next: NextFunction) => {
-      const authType: EXTERNAL_AUTH_TYPE = Objects.get(
-        res,
-        "locals.external.type",
-        EXTERNAL_AUTH_TYPE.UNKNOWN
-      );
+      const external = req.params["external"];
       const state: string = Objects.get(req, "query.state", "").toString();
-      const external: string = Objects.get(req, "params.external", "").toString();
+
+      /* Look for the external settigns */
+      const settings: IExternalAuth[] = Settings.shared.value.externalAuth?.filter(
+        (item: IExternalAuth) => item.name === external
+      );
+      if (settings?.length !== 1) {
+        return next(AUTH_ERRORS.INVALID_SOCIAL_REQUEST);
+      }
+      res.locals["settings"] = settings[0];
 
       /* Find the authentication state */
-      ExternalRequestModel.findById(state)
-        .populate("externalAuth")
+      ExternalRequestModel.findById(new mongoose.Types.ObjectId(state))
         .populate({ path: "application" })
         .then((authRequest: ExternalRequestDocument) => {
           if (!authRequest) {
@@ -139,7 +144,7 @@ export function register(router: Router, prefix: string) {
           }
 
           /* Check external auth type match */
-          if (Objects.get(authRequest, "externalAuth.type") !== authType) {
+          if (authRequest.external !== external) {
             return next({
               boError: AUTH_ERRORS.INVALID_APPLICATION,
               boStatus: HTTP_STATUS.HTTP_4XX_NOT_ACCEPTABLE
@@ -150,9 +155,8 @@ export function register(router: Router, prefix: string) {
           res.locals["request"] = authRequest;
 
           /* Calling social network authentication with callback reference */
-          const cbFailure = `${process.env.AUTH_SERVER}/v1/oauth/external/${external}/fail`;
-          ExternalCtrl.doAuthenticate(authRequest, {
-            state: authRequest.id,
+          const cbFailure = `${Settings.shared.value.oauth2BaseUrl}/external/${external}/fail`;
+          ExternalCtrl.doAuthenticate(authRequest.id, res.locals["settings"], {
             failureRedirect: cbFailure
           })(req, res, next);
         })
@@ -207,13 +211,6 @@ export function register(router: Router, prefix: string) {
     ResponseHandler.error
   );
 
-  /**
-   * @api {get} /v1/oauth/external/:external/callback/failure External authentication failure callback
-   * @apiVersion 2.0.0
-   * @apiName ExternalAuthFailureCallbackState
-   * @apiGroup External Authentication
-   *
-   */
   router.get(
     `${prefix}/:external/fail`,
     Validator.joi(ExternalAuthValidation, "params"),
@@ -258,6 +255,28 @@ export function register(router: Router, prefix: string) {
     },
     (err: any, req: Request, res: Response, next: NextFunction) => {
       next(err);
+    },
+    ResponseHandler.error,
+    ResponseHandler.success
+  );
+
+  router.post(
+    `${prefix}/facebook/remove`,
+    (req: Request, res: Response, next: NextFunction) => {
+      const decoded = ExternalAuthFacebook.decodeSignedRequest(req.body["signed_request"], "asda");
+
+      /* If the decoded signed request is invalid */
+      if (!decoded) {
+        return next(AUTH_ERRORS.INVALID_AUTHORIZATION_CODE);
+      }
+
+      /* Remove user credentials from account */
+      ExternalAuthCtrl.delete({ externalId: decoded["user_id"] })
+        .then(() => {
+          res.locals["response"] = { url: "<url>", confirmation_code: "<code>" };
+          next();
+        })
+        .catch(next);
     },
     ResponseHandler.error,
     ResponseHandler.success
