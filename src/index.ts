@@ -35,7 +35,10 @@ export { MailNotificationCtrl } from "./controllers/notification/transport/mail.
 export { BaseNotification } from "./controllers/notification/base.controller";
 export { Notification, NotificationCtrl } from "./controllers/notification/notification.controller";
 export { ExternalAuthSchema } from "./controllers/oauth2/schemas/base.controller";
-export { FacebookCtrl } from "./controllers/oauth2/schemas/facebook.controller";
+export {
+  FacebookCtrl,
+  ExternalAuthFacebook
+} from "./controllers/oauth2/schemas/facebook.controller";
 export { GoogleCtrl } from "./controllers/oauth2/schemas/google.controller";
 export { TwitterCtrl } from "./controllers/oauth2/schemas/twitter.controller";
 export { External, ExternalCtrl } from "./controllers/oauth2/external.controller";
@@ -79,8 +82,7 @@ export { Code, CodeDocument, CodeModel } from "./models/oauth2/code.model";
 export {
   ExternalRequest,
   ExternalRequestDocument,
-  ExternalRequestModel,
-  ExternalAuthSettings
+  ExternalRequestModel
 } from "./models/oauth2/external.request.model";
 export { Token, TokenDocument, TokenModel } from "./models/oauth2/token.model";
 
