@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { AUTH_ERRORS } from "@ecualead/auth";
+import { AUTH_ERRORS, OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
 import {
   Validator,
   ResponseHandler,
@@ -19,7 +19,7 @@ import {
 import { Router, Request, Response, NextFunction } from "express";
 import { Request as ORequest, Response as OResponse, Token } from "oauth2-server";
 import { AccountCtrl } from "../controllers/account/account.controller";
-import { EVENT_TYPE } from "../constants/oauth2.enum";
+import { EMAIL_CONFIRMATION, EVENT_TYPE } from "../constants/oauth2.enum";
 import {
   RegisterValidation,
   AccountValidation,
@@ -37,6 +37,7 @@ import { IconCtrl } from "../controllers/account/icon.controller";
 import { EmailCtrl } from "../controllers/account/email.controller";
 import { PhoneCtrl } from "../controllers/account/phone.controller";
 import { Settings } from "../controllers/settings.controller";
+import { OAuth2ModelCtrl } from "../controllers/oauth2/oauth2.model.controller";
 
 export function register(router: Router, prefix: string) {
   /**
@@ -118,6 +119,77 @@ export function register(router: Router, prefix: string) {
           next();
         })
         .catch(next);
+    },
+    (req: Request, res: Response, next: NextFunction) => {
+      /* Continue is confirmation is required */
+      if (Settings.shared.value.emailPolicy.type === EMAIL_CONFIRMATION.REQUIRED) {
+        return next();
+      }
+
+      /* Look for the application client */
+      const client: any = res.locals["token"].client;
+      
+      /* Prepare user account */
+      const account: any = res.locals["account"]
+      account["username"] = Objects.get(req, "body.email");
+
+      /* Generate the access token */
+      OAuth2ModelCtrl.generateAccessToken(client, account, [])
+        .then((accessToken: string) => {
+          /* Generate the refresh token */
+          OAuth2ModelCtrl.generateRefreshToken(client, account, [])
+            .then((refreshToken: string) => {
+              /* Prepare the authentication token */
+              const token: Token = {
+                accessToken: accessToken,
+                accessTokenExpiresAt: new Date(
+                  Date.now() +
+                    (client.accessTokenLifetime ? client.accessTokenLifetime : 3600) * 1000
+                ),
+                refreshToken: refreshToken,
+                refreshTokenExpiresAt: new Date(
+                  Date.now() +
+                    (client.accessTokenLifetime ? client.refreshTokenLifetime : 604800) * 1000
+                ),
+                scope: [],
+                client: client,
+                user: account,
+                type: OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH
+              };
+              /* Save the generated token */
+              OAuth2ModelCtrl.saveToken(token, client, account)
+                .then((token: Token) => {
+                  res.locals["token"] = token;
+                  res.locals["response"] = {
+                    id: account.id,
+                    tokenType: "Bearer",
+                    accessToken: token.accessToken,
+                    refreshToken: token.refreshToken,
+                    accessTokenExpiresAt: token.accessTokenExpiresAt
+                      ? token.accessTokenExpiresAt.getTime()
+                      : null,
+                    refreshTokenExpiresAt: token.refreshTokenExpiresAt
+                      ? token.refreshTokenExpiresAt.getTime()
+                      : null,
+                    createdAt: token.createdAt.getTime(),
+                    scope: token.scope
+                  };
+                  next();
+                })
+                .catch(() => {
+                  /* On error proceed without authentication */
+                  next();
+                });
+            })
+            .catch(() => {
+              /* On error proceed without authentication */
+              next();
+            });
+        })
+        .catch(() => {
+          /* On error proceed without authentication */
+          next();
+        });
     },
     (req: Request, res: Response, next: NextFunction) => {
       /* Check for router hook */

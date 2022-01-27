@@ -108,7 +108,7 @@ export class Account extends BaseModel {
           versionKey: false,
           transform: (_doc: any, ret: any) => {
             return {
-              user: ret.id,
+              uid: ret.id,
               name: ret.name,
               lastname1: ret.lastname1,
               lastname2: ret.lastname2,
