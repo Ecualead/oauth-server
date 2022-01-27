@@ -9,14 +9,14 @@
  */
 import { EMAIL_CONFIRMATION } from "./constants/oauth2.enum";
 import { EXTERNAL_AUTH_TYPE, EMAIL_TOKEN_TYPE } from "@ecualead/auth";
-import {Request, Response, NextFunction} from "express";
+import { Request, Response, NextFunction } from "express";
 
 export interface IExternalAuth {
   name: string;
   type: EXTERNAL_AUTH_TYPE;
   clientId: string;
   clientSecret: string;
-  scope?: string;
+  scope?: string[] | string;
   profile?: string[];
   redirect?: string[];
 }
@@ -56,7 +56,7 @@ export interface IEmailNotifications {
   token: EMAIL_TOKEN_TYPE;
 }
 
-export interface IRouterHooks{
+export interface IRouterHooks {
   postRegister?: (req: Request, res: Response, next: NextFunction) => void;
   postConfirm?: (req: Request, res: Response, next: NextFunction) => void;
   postToken?: (req: Request, res: Response, next: NextFunction) => void;
@@ -74,6 +74,7 @@ export interface IOauth2Settings {
   handleReferral?: boolean;
   emailNotifications: IEmailNotifications;
 
+  oauth2BaseUrl: string;
   externalAuth?: IExternalAuth[];
   signKeys: ISignKeys;
   routerHooks: IRouterHooks;
