@@ -26,7 +26,6 @@ import { OAuth2ModelCtrl } from "./oauth2.model.controller";
 import { ExternalAuthSchema } from "./schemas/base.controller";
 import { FacebookCtrl } from "./schemas/facebook.controller";
 import { GoogleCtrl } from "./schemas/google.controller";
-import { TwitterCtrl } from "./schemas/twitter.controller";
 import { Settings } from "../settings.controller";
 
 export class External {
@@ -53,8 +52,6 @@ export class External {
         return FacebookCtrl;
       case EXTERNAL_AUTH_TYPE.GOOGLE:
         return GoogleCtrl;
-      case EXTERNAL_AUTH_TYPE.TWITTER:
-        return TwitterCtrl;
     }
 
     throw "Invalid external auth schema";
@@ -66,8 +63,6 @@ export class External {
         return "facebook";
       case EXTERNAL_AUTH_TYPE.GOOGLE:
         return "google";
-      case EXTERNAL_AUTH_TYPE.TWITTER:
-        return "twitter";
     }
 
     throw "Invalid external auth schema";
@@ -79,8 +74,6 @@ export class External {
         return EXTERNAL_AUTH_TYPE.FACEBOOK;
       case "google":
         return EXTERNAL_AUTH_TYPE.GOOGLE;
-      case "twitter":
-        return EXTERNAL_AUTH_TYPE.TWITTER;
     }
 
     throw "Invalid external auth schema";
