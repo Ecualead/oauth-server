@@ -9,7 +9,7 @@
  */
 import { AUTH_ERRORS } from "@ecualead/auth";
 import { BaseModel, HTTP_STATUS } from "@ecualead/server";
-import { prop, pre, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
+import { prop, pre, index, getModelForClass, DocumentType } from "@typegoose/typegoose";
 import { hash, compare } from "bcrypt";
 import mongoose from "mongoose";
 
@@ -33,7 +33,7 @@ export class AccountReferral {
   }
 
   /* Update the user crypt password */
-  hash(this.password, 10, (err: mongoose.Error, hash) => {
+  hash(this.password, 10, (err: any, hash) => {
     if (err) {
       return next(err);
     }
@@ -48,7 +48,7 @@ export class AccountReferral {
   }
 
   /* Update the user crypt password */
-  hash((this.getUpdate() as any)["$set"]["password"], 10, (err: mongoose.Error, hash) => {
+  hash((this.getUpdate() as any)["$set"]["password"], 10, (err: any, hash) => {
     if (err) {
       return next(err);
     }
@@ -129,7 +129,7 @@ export class Account extends BaseModel {
       if (!password || !("password" in this)) {
         reject({ boError: AUTH_ERRORS.INVALID_CREDENTIALS });
       }
-      compare(password, this.password, (err: mongoose.Error, isMatch: boolean) => {
+      compare(password, this.password, (err: any, isMatch: boolean) => {
         if (isMatch) {
           return resolve();
         }
