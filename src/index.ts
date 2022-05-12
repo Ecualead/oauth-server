@@ -40,7 +40,6 @@ export {
   ExternalAuthFacebook
 } from "./controllers/oauth2/schemas/facebook.controller";
 export { GoogleCtrl } from "./controllers/oauth2/schemas/google.controller";
-export { TwitterCtrl } from "./controllers/oauth2/schemas/twitter.controller";
 export { External, ExternalCtrl } from "./controllers/oauth2/external.controller";
 export { OAuth2Ctrl } from "./controllers/oauth2/oauth2.controller";
 export { OAuth2ModelCtrl } from "./controllers/oauth2/oauth2.model.controller";

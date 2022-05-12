@@ -21,8 +21,6 @@ export function externalAuthToInt(auth: string): EXTERNAL_AUTH_TYPE {
       return EXTERNAL_AUTH_TYPE.INSTAGRAM;
     case "linkedin":
       return EXTERNAL_AUTH_TYPE.LINKEDIN;
-    case "twitter":
-      return EXTERNAL_AUTH_TYPE.TWITTER;
     case "yahoo":
       return EXTERNAL_AUTH_TYPE.YAHOO;
     case "telegram":
@@ -41,10 +39,6 @@ export function externalAuthToStr(auth: EXTERNAL_AUTH_TYPE): string {
       return "google";
     case EXTERNAL_AUTH_TYPE.INSTAGRAM:
       return "instagram";
-    case EXTERNAL_AUTH_TYPE.LINKEDIN:
-      return "linkedin";
-    case EXTERNAL_AUTH_TYPE.TWITTER:
-      return "twitter";
     case EXTERNAL_AUTH_TYPE.YAHOO:
       return "yahoo";
     case EXTERNAL_AUTH_TYPE.TELEGRAM:
