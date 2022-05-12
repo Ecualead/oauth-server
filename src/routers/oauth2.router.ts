@@ -19,7 +19,7 @@ import { OAuth2Ctrl } from "../controllers/oauth2/oauth2.controller";
 import { AccessPolicyCtrl } from "../controllers/application/access.policy.controller";
 import { OAuth2ModelCtrl } from "../controllers/oauth2/oauth2.model.controller";
 import { Settings } from "../controllers/settings.controller";
-import { JWTCtrl } from "@ecualead/auth";
+import { JWTCtrl, ReCaptcha } from "@ecualead/auth";
 
 export function register(router: Router, prefix: string) {
   const options = {
@@ -63,6 +63,15 @@ export function register(router: Router, prefix: string) {
   router.post(
     `${prefix}/token`,
     FormURLEncoded,
+
+    (req: Request, res: Response, next: NextFunction) => {
+      if (req.body["grant_type"] === "password") {
+        return ReCaptcha.v3("login")(req, res, next);
+      }else if (req.body["grant_type"] === "refresh_token") {
+        return ReCaptcha.v3("refresh")(req, res, next);
+      }
+      next();
+    },
     (req: Request, res: Response, next: NextFunction) => {
       const request = new ORequest(req);
       const response = new OResponse(res);

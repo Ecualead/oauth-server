@@ -38,6 +38,7 @@ import { EmailCtrl } from "../controllers/account/email.controller";
 import { PhoneCtrl } from "../controllers/account/phone.controller";
 import { Settings } from "../controllers/settings.controller";
 import { OAuth2ModelCtrl } from "../controllers/oauth2/oauth2.model.controller";
+import { ReCaptcha } from "@ecualead/auth";
 
 export function register(router: Router, prefix: string) {
   /**
@@ -50,6 +51,7 @@ export function register(router: Router, prefix: string) {
     `${prefix}/register`,
     FormURLEncoded,
     Validator.joi(RegisterValidation),
+    ReCaptcha.v3("register"),
     OAuth2Ctrl.authenticate(["application", "register"]),
     (req: Request, res: Response, next: NextFunction) => {
       /* Validate if user email is registered */
@@ -128,9 +130,9 @@ export function register(router: Router, prefix: string) {
 
       /* Look for the application client */
       const client: any = res.locals["token"].client;
-      
+
       /* Prepare user account */
-      const account: any = res.locals["account"]
+      const account: any = res.locals["account"];
       account["username"] = Objects.get(req, "body.email");
 
       /* Generate the access token */
@@ -214,6 +216,7 @@ export function register(router: Router, prefix: string) {
     `${prefix}/confirm`,
     FormURLEncoded,
     Validator.joi(AccountValidation),
+    ReCaptcha.v3("confirm"),
     OAuth2Ctrl.authenticate(["application", "confirm"]),
     (req: Request, res: Response, next: NextFunction) => {
       /* Confirm the user account */
@@ -256,6 +259,7 @@ export function register(router: Router, prefix: string) {
   router.post(
     `${prefix}/resend`,
     FormURLEncoded,
+    ReCaptcha.v3("resend"),
     (req: Request, res: Response, next: NextFunction) => {
       const request = new ORequest(req);
       const response = new OResponse(res);
@@ -333,6 +337,7 @@ export function register(router: Router, prefix: string) {
     `${prefix}/recover/request`,
     FormURLEncoded,
     Validator.joi(EmailValidation),
+    ReCaptcha.v3("recover"),
     OAuth2Ctrl.authenticate(["application", "recover"]),
     (req: Request, res: Response, next: NextFunction) => {
       /* Request a recover email */
@@ -369,6 +374,7 @@ export function register(router: Router, prefix: string) {
     `${prefix}/recover/validate`,
     FormURLEncoded,
     Validator.joi(AccountValidation),
+    ReCaptcha.v3("recover"),
     OAuth2Ctrl.authenticate(["application", "recover"]),
     (req: Request, res: Response, next: NextFunction) => {
       /* Validate the recover token */
@@ -394,6 +400,7 @@ export function register(router: Router, prefix: string) {
     `${prefix}/recover/store`,
     FormURLEncoded,
     Validator.joi(RecoverValidation),
+    ReCaptcha.v3("recover"),
     OAuth2Ctrl.authenticate(["application", "recover"]),
     (req: Request, res: Response, next: NextFunction) => {
       /* Recover the user account */

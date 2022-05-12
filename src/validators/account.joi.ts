@@ -10,6 +10,7 @@
 import { Joi } from "@ecualead/server";
 
 export const RegisterValidation = Joi.object().keys({
+  grt: Joi.string().required(),
   email: Joi.string().email().required(),
   password: Joi.string().required(),
   name: Joi.string().allow("").optional(),
@@ -23,6 +24,7 @@ export const RegisterValidation = Joi.object().keys({
 });
 
 export const AccountValidation = Joi.object().keys({
+  grt: Joi.string().required(),
   email: Joi.string().email().required(),
   token: Joi.string().required()
 });
@@ -32,6 +34,7 @@ export const EmailValidation = Joi.object().keys({
 });
 
 export const RecoverValidation = Joi.object().keys({
+  grt: Joi.string().required(),
   email: Joi.string().email().required(),
   token: Joi.string().required(),
   password: Joi.string().required()

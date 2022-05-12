@@ -23,6 +23,7 @@ export const ExternalAuthStateValidation = Joi.object().keys({
 });
 
 export const ExternalAuthParamsValidation = Joi.object().keys({
+  grt: Joi.string().required(),
   token: Joi.string().required(),
   redirect: Joi.string().required(),
   type: Joi.number().integer().optional(),

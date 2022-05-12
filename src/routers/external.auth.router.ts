@@ -7,7 +7,7 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import { EXTERNAL_AUTH_TYPE } from "@ecualead/auth";
+import { EXTERNAL_AUTH_TYPE, ReCaptcha } from "@ecualead/auth";
 import { AccessPolicyCtrl } from "../controllers/application/access.policy.controller";
 import { ExternalCtrl } from "../controllers/oauth2/external.controller";
 import { OAuth2Ctrl } from "../controllers/oauth2/oauth2.controller";
@@ -54,6 +54,7 @@ export function register(router: Router, prefix: string) {
     `${prefix}/:external`,
     Validator.joi(ExternalAuthValidation, "params"),
     Validator.joi(ExternalAuthParamsValidation, "query"),
+    ReCaptcha.v3("social"),
     (req: Request, res: Response, next: NextFunction) => {
       /* Force authentication with token */
       const token: string = Objects.get(req, "query.token", "").toString();
