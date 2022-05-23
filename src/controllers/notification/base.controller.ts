@@ -16,6 +16,11 @@ import { AccountDocument } from "../../models/account/account.model";
 export abstract class BaseNotification {
   protected _logger: Logger;
 
+  abstract doRegisterAutomatic(
+    profile: AccountDocument,
+    credential: EmailDocument | PhoneDocument,
+    payload?: any
+  ): Promise<void>;
   abstract doRegister(
     profile: AccountDocument,
     credential: EmailDocument | PhoneDocument,
@@ -54,6 +59,8 @@ export abstract class BaseNotification {
   ): Promise<void> {
     /* Validate notification by event type */
     switch (type) {
+      case EVENT_TYPE.REGISTER_AUTOMATIC /* Account signup notification */:
+        return this.doRegisterAutomatic(profile, credential, payload);
       case EVENT_TYPE.REGISTER /* Account signup notification */:
         return this.doRegister(profile, credential, payload);
       case EVENT_TYPE.CONFIRM /* Account confirmation notification */:

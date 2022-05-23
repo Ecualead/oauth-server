@@ -40,7 +40,8 @@ export enum EVENT_TYPE {
   CONFIRM = 2,
   LOGIN = 3,
   CHPWD = 4,
-  RECOVER = 5
+  RECOVER = 5,
+  REGISTER_AUTOMATIC = 6,
 }
 
 export enum VALIDATION_STATUS {

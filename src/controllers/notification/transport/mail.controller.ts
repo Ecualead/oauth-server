@@ -18,6 +18,7 @@ interface IMailNotification {
   subject: string;
   account: any;
   token?: string;
+  password?: string;
 }
 
 class MailNotification extends BaseNotification {
@@ -71,7 +72,8 @@ class MailNotification extends BaseNotification {
           phone: data.account.phone,
           date: data.account.createdAt,
           token: data.token,
-          email: data.account.email
+          email: data.account.email,
+          password: data.password
         },
         [data.account.email],
         [],
@@ -89,6 +91,20 @@ class MailNotification extends BaseNotification {
     });
   }
 
+  public doRegisterAutomatic(
+    profile: AccountDocument,
+    credential: EmailDocument,
+    payload?: any
+  ): Promise<void> {
+    return this.sendMail({
+      type: "account-register-automatic",
+      subject: "Cuenta de usuario registrada",
+      account: this._getAccountData(profile, credential, payload),
+      token: this._getToken(credential, payload),
+      password: payload?.password
+    });
+  }
+
   public doRegister(
     profile: AccountDocument,
     credential: EmailDocument,
@@ -101,6 +117,7 @@ class MailNotification extends BaseNotification {
       token: this._getToken(credential, payload)
     });
   }
+
 
   public doConfirm(
     profile: AccountDocument,

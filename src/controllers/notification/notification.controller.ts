@@ -49,6 +49,7 @@ export class Notification {
 
       switch (type) {
         case EVENT_TYPE.REGISTER:
+        case EVENT_TYPE.REGISTER_AUTOMATIC:
           if (Settings.shared.value?.emailNotifications.registerEvent) {
             eventType = NOTIFICATION_TYPE.EMAIL;
           }
