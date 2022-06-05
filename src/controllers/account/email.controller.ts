@@ -40,9 +40,21 @@ export class Emails extends CRUD<EmailDocument> {
   }
 
   /**
+   * Find user email information by account
+   */
+  public fetchByAccount(account: string): Promise<EmailDocument> {
+    this._logger.debug("Search user email by account id", { account });
+    return new Promise<EmailDocument>((resolve, reject) => {
+      /* Look for the user by email */
+      this.fetch({ account }, {}, ["account"]).then(resolve).catch(reject);
+    });
+  }
+
+  /**
    * Find user information by email address
    */
   public fetchByEmail(email: string): Promise<EmailDocument> {
+    this._logger.debug("Search user email by email", { email });
     return new Promise<EmailDocument>((resolve, reject) => {
       /* Look for the user by email */
       this.fetch({ email: email }, {}, ["account"]).then(resolve).catch(reject);

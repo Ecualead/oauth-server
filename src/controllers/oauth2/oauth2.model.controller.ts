@@ -247,22 +247,26 @@ class OAuth2Model
 
       // TODO XXX Check for scope scope
       /* Check if the token is for an user */
-      if (application.id !== user.id && !user.isSocial) {
-        this._logger.debug("Generating access token for user account", {
-          application: application.id,
-          user: user.id
-        });
-
+      if (application.id !== user.id) {
         /* Fill user account information */
         tokenInfo["name"] = user.name;
         tokenInfo["lname1"] = user.lastname1;
         tokenInfo["lname2"] = user.lastname2;
         tokenInfo["type"] = user.type;
         tokenInfo["email"] = user["username"];
-        tokenInfo["ut"] = OAUTH2_TOKEN_TYPE.USER;
+        tokenInfo["ut"] = user.isSocial ? OAUTH2_TOKEN_TYPE.EXTERNAL_AUTH : OAUTH2_TOKEN_TYPE.USER;
 
-        /* TODO XXX FIX SOCIAL ACCOUNT */
-        return EmailCtrl.fetchByEmail(user["username"])
+        this._logger.debug("Generating access token for user account", {
+          appliction: application.id,
+          user,
+          tokenInfo
+        });
+
+        return (
+          user.isSocial
+            ? EmailCtrl.fetchByAccount(user.id)
+            : EmailCtrl.fetchByEmail(user["username"])
+        )
           .then((userEmail: EmailDocument) => {
             /* Check user signin policy */
             AccessPolicyCtrl.canSignin(
@@ -271,6 +275,11 @@ class OAuth2Model
               user["isSocial"]
             )
               .then(() => {
+                if (user.isSocial) {
+                  tokenInfo["email"] = userEmail.email;
+                  user["username"] = userEmail.email;
+                }
+
                 /* Generate JWT access token for user */
                 resolve(JWTCtrl.encode(user["username"], accessTokenTtl, tokenInfo));
               })
