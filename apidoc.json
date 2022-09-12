@@ -1,0 +1,15 @@
+{
+  "name": "auth",
+  "version": "2.0.0",
+  "description": "IKOA Business Opportunity Auth Service",
+  "title": "API components documentation",
+  "url": "https://auth.ikoabo.com",
+  "header": {
+    "title": "IKOA Business Opportunity Auth Service",
+    "filename": "README.md"
+  },
+  "template": {
+    "withCompare": false,
+    "withGenerator": true
+  }
+}

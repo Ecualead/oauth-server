@@ -7,13 +7,12 @@
  * It can't be copied and/or distributed without the express
  * permission of the author.
  */
-import "mocha";
-import chai from "chai";
-const expect = chai.expect;
+declare module "gender-detection" {
+  const component: any;
+  export default component;
+}
 
-describe("Stub module unit test", () => {
-  it("Stub test", (done) => {
-    expect("hello").to.be.a("string").to.have.length(5);
-    done();
-  }).timeout(1000);
-});
+declare module "name-initials" {
+  const component: any;
+  export default component;
+}

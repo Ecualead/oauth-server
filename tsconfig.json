@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
+    "declaration": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "removeComments": true,
@@ -9,47 +10,20 @@
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "outDir": "./dist",
+    "sourceMap": true,
+    "outDir": "./lib",
     "baseUrl": ".",
     "lib": [
       "ES2018",
       "DOM"
     ],
-    "paths": {
-      "@/Modules/*": [
-        "src/packages/Modules/*"
-      ],
-      "@/Domains/*": [
-        "src/packages/Domains/*"
-      ],
-      "@/Projects/*": [
-        "src/packages/Projects/*"
-      ],
-      "@/Applications/*": [
-        "src/packages/Applications/*"
-      ],
-      "@/Accounts/*": [
-        "src/packages/Accounts/*"
-      ],
-      "@/OAuth2/*": [
-        "src/packages/OAuth2/*"
-      ],
-      "@/SocialNetworks/*": [
-        "src/packages/SocialNetworks/*"
-      ],
-      "@/KYC/*": [
-        "src/packages/KYC/*"
-      ],
-      "@/*": [
-        "src/*",
-        "src/packages/*"
-      ]
-    }
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.d.ts"
   ],
   "exclude": [
+    "src/scripts",
     "node_modules",
     "**/*.spec.ts"
   ]
