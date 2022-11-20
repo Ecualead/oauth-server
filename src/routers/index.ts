@@ -9,13 +9,11 @@
  */
 import { Router } from "express";
 import { register as registerAccount } from "./account";
-import { register as registerExternalAuth } from "./external.auth/";
 import { register as registerOAuth2 } from "./oauth2";
 
 const router = Router({ mergeParams: true });
 
 registerAccount(router, "");
 registerOAuth2(router, "");
-registerExternalAuth(router, "/external");
 
 export const OAuth2Router = router;

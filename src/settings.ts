@@ -8,18 +8,8 @@
  * permission of the author.
  */
 import { EMAIL_CONFIRMATION } from "./constants/oauth2.enum";
-import { EXTERNAL_AUTH_TYPE, EMAIL_TOKEN_TYPE } from "@ecualead/auth";
+import { EMAIL_TOKEN_TYPE } from "@ecualead/auth";
 import { Request, Response, NextFunction } from "express";
-
-export interface IExternalAuth {
-  name: string;
-  type: EXTERNAL_AUTH_TYPE;
-  clientId: string;
-  clientSecret: string;
-  scope?: string[] | string;
-  profile?: string[];
-  redirect?: string[];
-}
 
 export interface IPasswordPolicy {
   ttl?: number;
@@ -75,7 +65,6 @@ export interface IOauth2Settings {
   emailNotifications: IEmailNotifications;
 
   oauth2BaseUrl: string;
-  externalAuth?: IExternalAuth[];
   signKeys: ISignKeys;
   routerHooks: IRouterHooks;
 }
