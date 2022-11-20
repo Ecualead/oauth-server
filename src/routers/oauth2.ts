@@ -15,10 +15,10 @@ import {
   Request as ORequest,
   Response as OResponse
 } from "oauth2-server";
-import { OAuth2Ctrl } from "../controllers/oauth2/oauth2.controller";
-import { AccessPolicyCtrl } from "../controllers/application/access.policy.controller";
-import { OAuth2ModelCtrl } from "../controllers/oauth2/oauth2.model.controller";
-import { Settings } from "../controllers/settings.controller";
+import { OAuth2Ctrl } from "../controllers/oauth2/oauth2";
+import { AccessPolicyCtrl } from "../controllers/application/access.policy";
+import { OAuth2ModelCtrl } from "../controllers/oauth2/oauth2.model";
+import { Settings } from "../controllers/settings";
 import { JWTCtrl, ReCaptcha } from "@ecualead/auth";
 
 export function register(router: Router, prefix: string) {

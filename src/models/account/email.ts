@@ -11,17 +11,18 @@ import { BaseModel } from "@ecualead/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { VALIDATION_STATUS } from "../../constants/oauth2.enum";
-import { Account } from "./account.model";
-import { ValidationToken } from "./validation.token.model";
+import { Account } from "./account";
+import { ValidationToken } from "./validation.token";
 
 @index({ account: 1 })
-@index({ phone: 1 }, { unique: true })
-export class Phone extends BaseModel {
+@index({ email: 1 })
+@index({ email: 1, account: 1 }, { unique: true })
+export class Email extends BaseModel {
   @prop({ ref: Account })
   account?: Ref<Account>;
 
   @prop({ required: true })
-  phone!: string;
+  email!: string;
 
   @prop({ enum: VALIDATION_STATUS, required: true, default: VALIDATION_STATUS.REGISTERED })
   status!: VALIDATION_STATUS;
@@ -33,9 +34,9 @@ export class Phone extends BaseModel {
    * Get the mongoose data model
    */
   static get shared() {
-    return getModelForClass(Phone, {
+    return getModelForClass(Email, {
       schemaOptions: {
-        collection: "oauth2.accounts.phones",
+        collection: "oauth2.accounts.emails",
         timestamps: true,
         toJSON: {
           virtuals: true,
@@ -44,7 +45,7 @@ export class Phone extends BaseModel {
             return {
               id: ret.id,
               account: ret.account,
-              phone: ret.phone,
+              email: ret.email,
               status: ret.status,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt
@@ -57,5 +58,5 @@ export class Phone extends BaseModel {
   }
 }
 
-export type PhoneDocument = DocumentType<Phone>;
-export const PhoneModel: mongoose.Model<PhoneDocument> = Phone.shared;
+export type EmailDocument = DocumentType<Email>;
+export const EmailModel: mongoose.Model<EmailDocument> = Email.shared;

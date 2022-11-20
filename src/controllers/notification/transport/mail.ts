@@ -9,9 +9,9 @@
  */
 import { Objects } from "@ecualead/server";
 import { MailCtrl } from "@ecualead/msg";
-import { BaseNotification } from "../../../controllers/notification/base.controller";
-import { AccountDocument } from "../../../models/account/account.model";
-import { EmailDocument } from "../../../models/account/email.model";
+import { BaseNotification } from "../base";
+import { AccountDocument } from "../../../models/account/account";
+import { EmailDocument } from "../../../models/account/email";
 
 interface IMailNotification {
   type: string;

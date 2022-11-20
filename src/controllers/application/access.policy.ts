@@ -12,8 +12,8 @@ import { AUTH_ERRORS } from "@ecualead/auth";
 import { Logger, HTTP_STATUS } from "@ecualead/server";
 import { Request } from "express";
 import { APPLICATION_TYPE } from "../../constants/oauth2.enum";
-import { ApplicationCtrl } from "./application.controller";
-import { ApplicationDocument } from "../../models/application/application.model";
+import { ApplicationCtrl } from "./application";
+import { ApplicationDocument } from "../../models/application/application";
 
 class AccessPolicy {
   private static _instance: AccessPolicy;

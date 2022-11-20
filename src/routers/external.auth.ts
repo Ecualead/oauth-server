@@ -8,13 +8,13 @@
  * permission of the author.
  */
 import { EXTERNAL_AUTH_TYPE, ReCaptcha } from "@ecualead/auth";
-import { AccessPolicyCtrl } from "../controllers/application/access.policy.controller";
+import { AccessPolicyCtrl } from "../controllers/application/access.policy";
 import { ExternalCtrl } from "../controllers/oauth2/external.controller";
-import { OAuth2Ctrl } from "../controllers/oauth2/oauth2.controller";
+import { OAuth2Ctrl } from "../controllers/oauth2/oauth2";
 import {
   ExternalRequestDocument,
   ExternalRequestModel
-} from "../models/oauth2/external.request.model";
+} from "../models/oauth2/external.request";
 import {
   ExternalAuthParamsValidation,
   ExternalAuthStateValidation,
@@ -25,8 +25,8 @@ import { Validator, ResponseHandler, HTTP_STATUS, Objects } from "@ecualead/serv
 import { Router, Request, Response, NextFunction } from "express";
 import { Token } from "oauth2-server";
 import { ExternalAuthFacebook } from "../controllers/oauth2/schemas/facebook.controller";
-import { ExternalAuthCtrl } from "../controllers/account/external.auth.controller";
-import { Settings } from "../controllers/settings.controller";
+import { ExternalAuthCtrl } from "../controllers/account/external.auth";
+import { Settings } from "../controllers/settings";
 import { IExternalAuth } from "../settings";
 import mongoose from "mongoose";
 

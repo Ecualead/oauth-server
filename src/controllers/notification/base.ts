@@ -9,9 +9,9 @@
  */
 import { Logger } from "@ecualead/server";
 import { EVENT_TYPE } from "../../constants/oauth2.enum";
-import { EmailDocument } from "../../models/account/email.model";
-import { PhoneDocument } from "../../models/account/phone.model";
-import { AccountDocument } from "../../models/account/account.model";
+import { EmailDocument } from "../../models/account/email";
+import { PhoneDocument } from "../../models/account/phone";
+import { AccountDocument } from "../../models/account/account";
 
 export abstract class BaseNotification {
   protected _logger: Logger;

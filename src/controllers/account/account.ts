@@ -15,14 +15,14 @@ import {
   VALIDATION_TOKEN_STATUS
 } from "@ecualead/auth";
 import { Objects, Tokens, Arrays, HTTP_STATUS, CRUD } from "@ecualead/server";
-import { AccessPolicyCtrl } from "./access.policy.controller";
-import { IconCtrl } from "./icon.controller";
-import { ReferralCodeCtrl } from "./referral.code.controller";
+import { AccessPolicyCtrl } from "./access.policy";
+import { IconCtrl } from "./icon";
+import { ReferralCodeCtrl } from "./referral.code";
 import { EMAIL_CONFIRMATION, SCOPE_PREVENT, VALIDATION_STATUS } from "../../constants/oauth2.enum";
-import { AccountDocument, AccountModel } from "../../models/account/account.model";
-import { EmailCtrl } from "./email.controller";
-import { EmailDocument } from "../../models/account/email.model";
-import { Settings } from "../settings.controller";
+import { AccountDocument, AccountModel } from "../../models/account/account";
+import { EmailCtrl } from "./email";
+import { EmailDocument } from "../../models/account/email";
+import { Settings } from "../settings";
 
 const MAX_ATTEMPTS = 5;
 

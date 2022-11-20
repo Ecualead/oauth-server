@@ -18,7 +18,7 @@ import {
 } from "@ecualead/server";
 import { Router, Request, Response, NextFunction } from "express";
 import { Request as ORequest, Response as OResponse, Token } from "oauth2-server";
-import { AccountCtrl } from "../controllers/account/account.controller";
+import { AccountCtrl } from "../controllers/account/account";
 import { EMAIL_CONFIRMATION, EVENT_TYPE } from "../constants/oauth2.enum";
 import {
   RegisterValidation,
@@ -26,18 +26,18 @@ import {
   EmailValidation,
   RecoverValidation,
   PassowrdChangeValidation
-} from "../validators/account.joi";
-import { AccountDocument } from "../models/account/account.model";
-import { ApplicationCtrl } from "../controllers/application/application.controller";
-import { ApplicationDocument } from "../models/application/application.model";
-import { OAuth2Ctrl } from "../controllers/oauth2/oauth2.controller";
-import { EmailDocument } from "../models/account/email.model";
-import { NotificationCtrl } from "../controllers/notification/notification.controller";
-import { IconCtrl } from "../controllers/account/icon.controller";
-import { EmailCtrl } from "../controllers/account/email.controller";
-import { PhoneCtrl } from "../controllers/account/phone.controller";
-import { Settings } from "../controllers/settings.controller";
-import { OAuth2ModelCtrl } from "../controllers/oauth2/oauth2.model.controller";
+} from "../validators/account";
+import { AccountDocument } from "../models/account/account";
+import { ApplicationCtrl } from "../controllers/application/application";
+import { ApplicationDocument } from "../models/application/application";
+import { OAuth2Ctrl } from "../controllers/oauth2/oauth2";
+import { EmailDocument } from "../models/account/email";
+import { NotificationCtrl } from "../controllers/notification/notification";
+import { IconCtrl } from "../controllers/account/icon";
+import { EmailCtrl } from "../controllers/account/email";
+import { PhoneCtrl } from "../controllers/account/phone";
+import { Settings } from "../controllers/settings";
+import { OAuth2ModelCtrl } from "../controllers/oauth2/oauth2.model";
 import { ReCaptcha } from "@ecualead/auth";
 
 export function register(router: Router, prefix: string) {

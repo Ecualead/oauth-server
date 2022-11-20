@@ -16,7 +16,7 @@ import OAuth2Server, {
   Response as OResponse,
   OAuthError
 } from "oauth2-server";
-import { OAuth2ModelCtrl } from "./oauth2.model.controller";
+import { OAuth2ModelCtrl } from "./oauth2.model";
 
 class OAuth2 {
   private static _instance: OAuth2;

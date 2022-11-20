@@ -8,12 +8,12 @@
  * permission of the author.
  */
 import { EVENT_TYPE, NOTIFICATION_TYPE } from "../../constants/oauth2.enum";
-import { AccountDocument } from "../../models/account/account.model";
-import { EmailDocument } from "../../models/account/email.model";
-import { PhoneDocument } from "../../models/account/phone.model";
+import { AccountDocument } from "../../models/account/account";
+import { EmailDocument } from "../../models/account/email";
+import { PhoneDocument } from "../../models/account/phone";
 import { Logger } from "@ecualead/server";
-import { MailNotificationCtrl } from "./transport/mail.controller";
-import { Settings } from "../settings.controller";
+import { MailNotificationCtrl } from "./transport/mail";
+import { Settings } from "../settings";
 
 export class Notification {
   private static _instance: Notification;

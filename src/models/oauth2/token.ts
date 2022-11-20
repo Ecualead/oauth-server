@@ -11,8 +11,8 @@ import { BaseModel } from "@ecualead/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { Token as OAuth2Token, RefreshToken } from "oauth2-server";
-import { Account } from "../../models/account/account.model";
-import { Application } from "../../models/application/application.model";
+import { Account } from "../account/account";
+import { Application } from "../application/application";
 import { OAUTH2_TOKEN_TYPE } from "@ecualead/auth";
 
 function fillTokenTypeScope(token: any, scope: string[]): string[] {

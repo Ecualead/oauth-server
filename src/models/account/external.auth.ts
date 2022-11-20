@@ -10,7 +10,7 @@
 import { BaseModel } from "@ecualead/server";
 import { prop, index, Ref, getModelForClass, DocumentType, Severity } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { Account } from "./account.model";
+import { Account } from "./account";
 import { EXTERNAL_AUTH_TYPE } from "@ecualead/auth";
 
 @index({ account: 1 })

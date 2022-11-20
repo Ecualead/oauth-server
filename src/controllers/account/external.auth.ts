@@ -8,14 +8,14 @@
  * permission of the author.
  */
 import { CRUD, HTTP_STATUS, Objects } from "@ecualead/server";
-import { ExternalAuthDocument, ExternalAuthModel } from "../../models/account/external.auth.model";
+import { ExternalAuthDocument, ExternalAuthModel } from "../../models/account/external.auth";
 import { VALIDATION_STATUS } from "../../constants/oauth2.enum";
-import { IconCtrl } from "./icon.controller";
-import { AccountCtrl } from "./account.controller";
-import { AccountDocument } from "../../models/account/account.model";
+import { IconCtrl } from "./icon";
+import { AccountCtrl } from "./account";
+import { AccountDocument } from "../../models/account/account";
 import async from "async";
-import { EmailCtrl } from "./email.controller";
-import { externalAuthToStr } from "../../utils/external.auth.util";
+import { EmailCtrl } from "./email";
+import { externalAuthToStr } from "../../utils/external.auth";
 import {
   ACCOUNT_STATUS,
   AUTH_ERRORS,

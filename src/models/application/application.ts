@@ -13,7 +13,7 @@ import { getModelForClass, prop, DocumentType, index } from "@typegoose/typegoos
 import mongoose from "mongoose";
 import { LIFETIME_TYPE } from "@ecualead/auth";
 import { Client } from "oauth2-server";
-import { Settings } from "../../controllers/settings.controller";
+import { Settings } from "../../controllers/settings";
 
 @index({ type: 1 })
 @index({ canonical: 1 }, { unique: true })

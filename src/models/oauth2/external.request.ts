@@ -10,8 +10,8 @@
 import { BaseModel } from "@ecualead/server";
 import { prop, Ref, index, getModelForClass, DocumentType } from "@typegoose/typegoose";
 import mongoose from "mongoose";
-import { Account } from "../account/account.model";
-import { Application } from "../application/application.model";
+import { Account } from "../account/account";
+import { Application } from "../application/application";
 
 @index({ application: 1 })
 @index({ user: 1 })

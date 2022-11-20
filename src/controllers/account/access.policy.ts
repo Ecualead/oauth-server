@@ -10,9 +10,9 @@
 import { ACCOUNT_STATUS, AUTH_ERRORS } from "@ecualead/auth";
 import { Objects, HTTP_STATUS } from "@ecualead/server";
 import { VALIDATION_STATUS, EMAIL_CONFIRMATION } from "../../constants/oauth2.enum";
-import { AccountDocument } from "../../models/account/account.model";
-import { EmailDocument } from "../../models/account/email.model";
-import { Settings } from "../settings.controller";
+import { AccountDocument } from "../../models/account/account";
+import { EmailDocument } from "../../models/account/email";
+import { Settings } from "../settings";
 
 export class AccessPolicy {
   private static _instance: AccessPolicy;

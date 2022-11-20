@@ -8,7 +8,7 @@
  * permission of the author.
  */
 import { Tokens, SERVER_STATUS, CRUD } from "@ecualead/server";
-import { ApplicationDocument, ApplicationModel } from "../../models/application/application.model";
+import { ApplicationDocument, ApplicationModel } from "../../models/application/application";
 
 export class Applications extends CRUD<ApplicationDocument> {
   private static _instance: Applications;

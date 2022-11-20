@@ -9,7 +9,7 @@
  */
 import { AUTH_ERRORS, VALIDATION_TOKEN_STATUS } from "@ecualead/auth";
 import { CRUD, HTTP_STATUS } from "@ecualead/server";
-import { PhoneDocument, PhoneModel } from "../../models/account/phone.model";
+import { PhoneDocument, PhoneModel } from "../../models/account/phone";
 import { Request, Response, NextFunction } from "express";
 import { VALIDATION_STATUS } from "../../constants/oauth2.enum";
 

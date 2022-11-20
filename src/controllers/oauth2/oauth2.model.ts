@@ -21,17 +21,17 @@ import {
   Token,
   User
 } from "oauth2-server";
-import { AccessPolicyCtrl } from "../account/access.policy.controller";
-import { AccountCtrl } from "../account/account.controller";
-import { EmailCtrl } from "../account/email.controller";
-import { AccountDocument } from "../../models/account/account.model";
-import { ApplicationCtrl } from "../application/application.controller";
-import { ApplicationDocument } from "../../models/application/application.model";
-import { CodeDocument, CodeModel } from "../../models/oauth2/code.model";
-import { TokenModel, TokenDocument } from "../../models/oauth2/token.model";
+import { AccessPolicyCtrl } from "../account/access.policy";
+import { AccountCtrl } from "../account/account";
+import { EmailCtrl } from "../account/email";
+import { AccountDocument } from "../../models/account/account";
+import { ApplicationCtrl } from "../application/application";
+import { ApplicationDocument } from "../../models/application/application";
+import { CodeDocument, CodeModel } from "../../models/oauth2/code";
+import { TokenModel, TokenDocument } from "../../models/oauth2/token";
 import { SCOPE_PREVENT, APPLICATION_TYPE } from "../../constants/oauth2.enum";
-import { EmailDocument } from "../../models/account/email.model";
-import { Settings } from "../settings.controller";
+import { EmailDocument } from "../../models/account/email";
+import { Settings } from "../settings";
 
 function prepareScope(scope?: string | string[]): string[] {
   /* Check for valid value */

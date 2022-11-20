@@ -14,10 +14,10 @@ import {
   VALIDATION_TOKEN_STATUS
 } from "@ecualead/auth";
 import { Tokens, CRUD, HTTP_STATUS } from "@ecualead/server";
-import { EmailDocument, EmailModel } from "../../models/account/email.model";
+import { EmailDocument, EmailModel } from "../../models/account/email";
 import { Request, Response, NextFunction } from "express";
 import { VALIDATION_STATUS } from "../../constants/oauth2.enum";
-import { Settings } from "../settings.controller";
+import { Settings } from "../settings";
 
 export class Emails extends CRUD<EmailDocument> {
   private static _instance: Emails;

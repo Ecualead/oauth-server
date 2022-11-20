@@ -8,9 +8,9 @@
  * permission of the author.
  */
 import { Router } from "express";
-import { register as registerAccount } from "./account.router";
-import { register as registerExternalAuth } from "./external.auth.router";
-import { register as registerOAuth2 } from "./oauth2.router";
+import { register as registerAccount } from "./account";
+import { register as registerExternalAuth } from "./external.auth/";
+import { register as registerOAuth2 } from "./oauth2";
 
 const router = Router({ mergeParams: true });
 

@@ -11,8 +11,8 @@ import { BaseModel } from "@ecualead/server";
 import { prop, index, getModelForClass, DocumentType, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { AuthorizationCode } from "oauth2-server";
-import { Account } from "../../models/account/account.model";
-import { Application } from "../../models/application/application.model";
+import { Account } from "../account/account";
+import { Application } from "../application/application";
 
 @index({ code: 1 })
 @index({ expiresAt: 1 })
