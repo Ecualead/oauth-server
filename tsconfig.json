@@ -17,14 +17,25 @@
       "ES2018",
       "DOM"
     ],
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts"
   ],
   "exclude": [
-    "src/scripts",
     "node_modules",
+    "build",
+    "dist",
+    "__mocks__",
+    "coverage",
+    "*.config.js",
+    "*.babel.js",
+    "specs",
+    "src/scripts",
     "**/*.spec.ts"
+  ],
+  "types": [
+    "src/typings.d.ts"
   ]
 }
