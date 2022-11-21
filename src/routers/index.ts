@@ -10,10 +10,12 @@
 import { Router } from "express";
 import { register as registerAccount } from "./account";
 import { register as registerOAuth2 } from "./oauth2";
+import { register as registerExternal } from "./externals";
 
 const router = Router({ mergeParams: true });
 
 registerAccount(router, "");
 registerOAuth2(router, "");
+registerExternal(router, "");
 
 export const OAuth2Router = router;
