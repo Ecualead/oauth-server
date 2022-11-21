@@ -8,14 +8,16 @@
  * permission of the author.
  */
 import { Logger } from "@ecualead/server";
-import random from "random";
 import randomColor from "randomcolor";
 import gender from "gender-detection";
 import nameInitials from "name-initials";
 
 const MALE_COLORS: any[] = ["red", "brown", "green", "blue"];
 const FEMALE_COLORS: any[] = ["orange", "yellow", "purple", "pink"];
-const RandomCtrl = random;
+
+function random(max: number) {
+  return Math.ceil(Math.random() * 1000) % max;
+}
 
 export class Icon {
   private static _instance: Icon;
@@ -43,10 +45,11 @@ export class Icon {
       seed: name,
       hue:
         strGender === "male"
-          ? MALE_COLORS[RandomCtrl.int(0, MALE_COLORS.length - 1)]
-          : FEMALE_COLORS[RandomCtrl.int(0, FEMALE_COLORS.length - 1)]
+          ? MALE_COLORS[random(MALE_COLORS.length)]
+          : FEMALE_COLORS[random(FEMALE_COLORS.length)]
     });
     return colorBase;
+
   }
 }
 
