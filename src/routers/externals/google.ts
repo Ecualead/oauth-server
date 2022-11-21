@@ -142,7 +142,7 @@ export function register(router: Router, prefix: string) {
     OAuth2Ctrl.authenticate(["application", "register"]),
     (req: Request, res: Response, next: NextFunction) => {
       /* Validate the Google ID Token */
-      verifyGoogleIdToken(req.body?.token)
+      verifyGoogleIdToken(req.body?.idToken)
         .then((payload: TokenPayload) => {
           /* Find the user account with the given email address */
           EmailCtrl.fetchByEmail(payload.email)
@@ -224,7 +224,7 @@ export function register(router: Router, prefix: string) {
     OAuth2Ctrl.authenticate(["application", "register"]),
     (req: Request, res: Response, next: NextFunction) => {
       /* Validate the Google ID Token */
-      verifyGoogleIdToken(req.body?.token)
+      verifyGoogleIdToken(req.body?.idToken)
         .then((payload: TokenPayload) => {
           /* Find the user account with the given email address */
           EmailCtrl.fetchByEmail(payload.email)

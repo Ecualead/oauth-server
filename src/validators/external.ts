@@ -20,5 +20,5 @@ export const RegisterValidation = Joi.object().keys({
 
 export const LoginValidation = Joi.object().keys({
   grt: Joi.string().required(),
-  token: Joi.string().required(),
+  idToken: Joi.string().required(),
 });
