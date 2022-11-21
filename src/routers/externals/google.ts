@@ -154,9 +154,9 @@ export function register(router: Router, prefix: string) {
               let nameParts = (
                 payload.name || `${payload.given_name} ${payload.family_name}`
               ).split(" ");
-              let name;
-              let lastname1;
-              let lastname2;
+              let name = "Desconocido";
+              let lastname1 = "Desconocido";
+              let lastname2 = "";
               if (nameParts.length > 2) {
                 lastname2 = nameParts[nameParts.length - 1];
                 nameParts.pop();
@@ -164,14 +164,10 @@ export function register(router: Router, prefix: string) {
               if (nameParts.length > 1) {
                 lastname1 = nameParts[nameParts.length - 1];
                 nameParts.pop();
-              } else {
-                lastname1 = "Desconocido";
               }
               if (nameParts.length > 0) {
                 name = nameParts.join(" ");
                 nameParts.pop();
-              } else {
-                name = "Desconocido";
               }
 
               /* Initialize the account data */
