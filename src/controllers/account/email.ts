@@ -91,7 +91,7 @@ export class Emails extends CRUD<EmailDocument> {
   /**
    * Register user account email
    */
-  public register(email: string, account?: string): Promise<EmailDocument> {
+  public register(email: string, account?: string, confirmed = false): Promise<EmailDocument> {
     return new Promise<EmailDocument>((resolve, reject) => {
       /* Set the confirmation token information if its necessary */
       const tokenType = Settings.shared.value?.emailNotifications?.token;
@@ -103,7 +103,7 @@ export class Emails extends CRUD<EmailDocument> {
         expire: 0
       };
 
-      if (tokenType !== EMAIL_TOKEN_TYPE.DISABLED) {
+      if (!confirmed && tokenType !== EMAIL_TOKEN_TYPE.DISABLED) {
         validationToken.token = tokenType !== EMAIL_TOKEN_TYPE.LINK ? Tokens.short : Tokens.long;
         validationToken.attempts = 0;
         validationToken.status = VALIDATION_TOKEN_STATUS.TO_CONFIRM;
@@ -114,7 +114,7 @@ export class Emails extends CRUD<EmailDocument> {
       this.create({
         email: email,
         validation: validationToken,
-        status: VALIDATION_STATUS.REGISTERED,
+        status: confirmed ? VALIDATION_STATUS.CONFIRMED : VALIDATION_STATUS.REGISTERED,
         account: account
       })
         .then((obj: EmailDocument) => {
