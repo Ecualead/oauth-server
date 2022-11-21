@@ -67,4 +67,6 @@ export interface IOauth2Settings {
   oauth2BaseUrl: string;
   signKeys: ISignKeys;
   routerHooks: IRouterHooks;
+
+  googleClientId: string;
 }
