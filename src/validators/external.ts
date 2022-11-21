@@ -12,10 +12,6 @@ import { Joi } from "@ecualead/server";
 export const RegisterValidation = Joi.object().keys({
   grt: Joi.string().required(),
   idToken: Joi.string().required(),
-  email: Joi.string().email().required(),
-  name: Joi.string().allow("").optional(),
-  lastname1: Joi.string().allow("").optional(),
-  lastname2: Joi.string().allow("").optional(),
   referral: Joi.string().allow("").optional(),
   type: Joi.number().optional().default(0),
   custom1: Joi.string().allow("").optional(),
@@ -24,5 +20,5 @@ export const RegisterValidation = Joi.object().keys({
 
 export const LoginValidation = Joi.object().keys({
   grt: Joi.string().required(),
-  idToken: Joi.string().required(),
+  token: Joi.string().required(),
 });
