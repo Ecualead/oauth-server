@@ -28,10 +28,8 @@ import { EXTERNAL_ACCOUNT_TYPE } from '../../constants/account';
 import { AccountDocument } from '../../models/account/account';
 import { EmailDocument } from '../../models/account/email';
 import { OAuth2ModelCtrl } from '../../controllers/oauth2/oauth2.model';
-import { VALIDATION_STATUS } from 'src/constants/oauth2.enum';
+import { VALIDATION_STATUS } from '../../constants/oauth2.enum';
 
-const CLIENT_ID = Settings.shared.value.googleClientId;
-const GoogleClient = new OAuth2Client(CLIENT_ID);
 
 /**
  * Validate the Google ID Token
@@ -40,6 +38,8 @@ const GoogleClient = new OAuth2Client(CLIENT_ID);
  * @returns 
  */
 async function verifyGoogleIdToken(idToken: string): Promise<TokenPayload> {
+  const CLIENT_ID = Settings.shared.value.googleClientId;
+  const GoogleClient = new OAuth2Client(CLIENT_ID);
   const ticket: LoginTicket = await GoogleClient.verifyIdToken({
     idToken,
     audience: CLIENT_ID,
