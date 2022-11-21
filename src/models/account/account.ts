@@ -95,6 +95,9 @@ export class Account extends BaseModel {
   @prop()
   referral?: AccountReferral;
 
+  @prop({ required: true, default: 0 })
+  external?: number;
+
   /**
    * Get the mongoose data model
    */
@@ -114,6 +117,7 @@ export class Account extends BaseModel {
               lastname2: ret.lastname2,
               referral: ret.referral,
               status: ret.status,
+              external: ret.external,
               createdAt: ret.createdAt,
               updatedAt: ret.updatedAt
             };
@@ -138,9 +142,9 @@ export class Account extends BaseModel {
           err
             ? err
             : {
-                boError: AUTH_ERRORS.INVALID_CREDENTIALS,
-                boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
-              }
+              boError: AUTH_ERRORS.INVALID_CREDENTIALS,
+              boStatus: HTTP_STATUS.HTTP_4XX_UNAUTHORIZED
+            }
         );
       });
     });
