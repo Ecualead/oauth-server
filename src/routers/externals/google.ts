@@ -148,6 +148,7 @@ export function register(router: Router, prefix: string) {
           EmailCtrl.fetchByEmail(payload.email)
             .then((email: EmailDocument) => {
               /* The user exists then login with the user account */
+              res.locals['preventHook'] = true;
               loginWithGoogle(res, next, email, email.account);
             })
             .catch(() => {
@@ -200,7 +201,7 @@ export function register(router: Router, prefix: string) {
     },
     (req: Request, res: Response, next: NextFunction) => {
       /* Check for router hook */
-      if (Settings.shared.value?.routerHooks?.postRegister) {
+      if (Settings.shared.value?.routerHooks?.postRegister && !res.locals['preventHook']) {
         return Settings.shared.value.routerHooks.postRegister(req, res, next);
       }
       next();
